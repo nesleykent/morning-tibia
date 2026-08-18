@@ -1,10 +1,11 @@
 "use client";
 
 import { Share2 } from "lucide-react";
-import { useBriefingState } from "@/hooks/useBriefingState";
+import { useBriefingState, type UseBriefingStateProps } from "@/hooks/useBriefingState";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useIsClient } from "@/hooks/useIsClient";
 import { DailyHeader } from "./DailyHeader";
+import { ImportGameTextCard } from "./ImportGameTextCard";
 import { BoostedCard } from "./BoostedCard";
 import { WarzoneScheduleCard } from "./WarzoneScheduleCard";
 import { DromeCard } from "./DromeCard";
@@ -29,9 +30,9 @@ function DashboardSkeleton() {
   );
 }
 
-export function MorningTibiaDashboard() {
+export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   const mounted = useIsClient();
-  const state = useBriefingState();
+  const state = useBriefingState(props);
   const { copy } = useCopyToClipboard();
 
   if (!mounted) return <DashboardSkeleton />;
@@ -66,6 +67,11 @@ export function MorningTibiaDashboard() {
         isRefreshing={isRefreshing}
       />
 
+      <ImportGameTextCard
+        onApplyMiniWorldChange={state.updateMiniWorldChange}
+        onApplyMerchant={(id, location) => state.updateMerchant(id, { location })}
+      />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <BoostedCard
           creature={state.boostedQuery.data?.creature ?? null}
@@ -80,19 +86,11 @@ export function MorningTibiaDashboard() {
           isLoading={state.warzoneQuery.isLoading}
           error={state.warzoneQuery.error}
         />
-        <DromeCard drome={state.overrides.drome} onChange={state.updateDrome} />
+        <DromeCard drome={state.drome} />
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
         <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
-        <ActiveEventsCard
-          events={state.overrides.activeEvents}
-          onAdd={state.addActiveEvent}
-          onRemove={state.removeActiveEvent}
-        />
-        <UpcomingEventsCard
-          events={state.overrides.upcomingEvents}
-          onAdd={state.addUpcomingEvent}
-          onRemove={state.removeUpcomingEvent}
-        />
+        <ActiveEventsCard events={state.activeEvents} />
+        <UpcomingEventsCard events={state.upcomingEvents} />
       </div>
 
       <MiniWorldChangeGrid

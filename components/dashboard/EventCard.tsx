@@ -1,135 +1,80 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ExternalLink } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 
-interface ActiveEventsCardProps {
-  events: ActiveEvent[];
-  onAdd: (event: Omit<ActiveEvent, "id">) => void;
-  onRemove: (id: string) => void;
+const WIKI_CREDIT = (
+  <CardDescription>
+    Live from{" "}
+    <a
+      href="https://tibia.fandom.com/wiki/Events"
+      target="_blank"
+      rel="noreferrer"
+      className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+    >
+      TibiaWiki
+    </a>
+    , refreshed on each deploy
+  </CardDescription>
+);
+
+function EventList({ events, emptyLabel }: { events: (ActiveEvent | UpcomingEvent)[]; emptyLabel: string }) {
+  if (events.length === 0) {
+    return <p className="text-xs text-muted-foreground">{emptyLabel}</p>;
+  }
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {events.map((event) => (
+        <li key={event.id} className="rounded-md border border-border/70 bg-muted/30 px-2.5 py-1.5 text-sm">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-medium">{event.title}</span>
+            {event.url && (
+              <a
+                href={event.url}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label={`${event.title} on TibiaWiki`}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">{event.detail}</p>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
-export function ActiveEventsCard({ events, onAdd, onRemove }: ActiveEventsCardProps) {
-  const [title, setTitle] = useState("");
-  const [bonus, setBonus] = useState("");
-
-  const submit = () => {
-    if (!title.trim()) return;
-    onAdd({ title: title.trim(), bonus: bonus.trim() });
-    setTitle("");
-    setBonus("");
-  };
-
+export function ActiveEventsCard({ events }: { events: ActiveEvent[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           <span aria-hidden="true">🎉</span> Active events
         </CardTitle>
+        {WIKI_CREDIT}
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {events.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No active events added yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/30 px-2.5 py-1.5 text-sm"
-              >
-                <span className="truncate">
-                  {event.title}
-                  {event.bonus && <span className="text-muted-foreground"> — {event.bonus}</span>}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${event.title}`}
-                  onClick={() => onRemove(event.id)}
-                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3 sm:flex-row">
-          <Input placeholder="Event title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input placeholder="Bonus (optional)" value={bonus} onChange={(e) => setBonus(e.target.value)} />
-          <Button type="button" size="sm" variant="secondary" onClick={submit} className="shrink-0">
-            <Plus /> Add
-          </Button>
-        </div>
+      <CardContent>
+        <EventList events={events} emptyLabel="No official events are currently active." />
       </CardContent>
     </Card>
   );
 }
 
-interface UpcomingEventsCardProps {
-  events: UpcomingEvent[];
-  onAdd: (event: Omit<UpcomingEvent, "id">) => void;
-  onRemove: (id: string) => void;
-}
-
-export function UpcomingEventsCard({ events, onAdd, onRemove }: UpcomingEventsCardProps) {
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [note, setNote] = useState("");
-
-  const submit = () => {
-    if (!title.trim()) return;
-    onAdd({ title: title.trim(), startDate: startDate.trim() || null, note: note.trim() });
-    setTitle("");
-    setStartDate("");
-    setNote("");
-  };
-
+export function UpcomingEventsCard({ events }: { events: UpcomingEvent[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           <span aria-hidden="true">📅</span> Next eventos
         </CardTitle>
+        {WIKI_CREDIT}
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {events.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No upcoming events scheduled yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {events.map((event) => (
-              <li
-                key={event.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/30 px-2.5 py-1.5 text-sm"
-              >
-                <span className="truncate">
-                  {event.title}
-                  {event.startDate && <span className="text-muted-foreground"> ({event.startDate})</span>}
-                  {event.note && <span className="text-muted-foreground"> — {event.note}</span>}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${event.title}`}
-                  onClick={() => onRemove(event.id)}
-                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3 sm:flex-row">
-          <Input placeholder="Event title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input placeholder="Date (optional)" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          <Input placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
-          <Button type="button" size="sm" variant="secondary" onClick={submit} className="shrink-0">
-            <Plus /> Add
-          </Button>
-        </div>
+      <CardContent>
+        <EventList events={events} emptyLabel="Nothing scheduled yet." />
       </CardContent>
     </Card>
   );

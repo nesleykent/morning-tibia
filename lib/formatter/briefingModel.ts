@@ -2,6 +2,8 @@ import type { BriefingOverrides } from "@/types/briefing";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WarzoneSchedule } from "@/types/warzone";
 import type { MiniWorldChangeState } from "@/types/miniWorldChange";
+import type { ActiveEvent, UpcomingEvent } from "@/types/event";
+import type { DromeRotationInfo } from "@/types/drome";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
 
@@ -12,6 +14,9 @@ export interface BriefingInput {
   boostedCreature: BoostedEntity | null;
   boostedBoss: BoostedEntity | null;
   warzoneSchedule: WarzoneSchedule | null;
+  activeEvents: ActiveEvent[];
+  upcomingEvents: UpcomingEvent[];
+  drome: DromeRotationInfo | null;
 }
 
 export interface AchievementLine {
@@ -99,13 +104,16 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
         }`
       : null;
 
-  const drome = overrides.drome;
+  const drome = input.drome;
   const dromeLine =
-    drome.status === "unknown" && !drome.rotationLabel
-      ? null
-      : `${drome.status === "open" ? "Aberta" : drome.status === "closed" ? "Fechada" : "—"}${
-          drome.rotationLabel ? ` — ${drome.rotationLabel}` : ""
-        }`;
+    drome && (drome.rotationNumber || drome.nextRotationIn)
+      ? [
+          drome.rotationNumber ? `Rotation ${drome.rotationNumber}` : null,
+          drome.nextRotationIn ? `next in ${drome.nextRotationIn}` : null,
+        ]
+          .filter(Boolean)
+          .join(" — ")
+      : null;
 
   return {
     dateLabel: toBriefingDate(input.referenceDate),
@@ -113,20 +121,13 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     boostedCreatureLabel: input.boostedCreature?.name ?? "—",
     boostedBossLabel: input.boostedBoss?.name ?? "—",
     boostedRegionLabel: overrides.boostedRegion.trim() || "—",
-    activeEventLines: overrides.activeEvents.map((event) =>
-      event.bonus ? `${event.title}: ${event.bonus}` : event.title,
-    ),
+    activeEventLines: input.activeEvents.map((event) => `${event.title}: ${event.detail}`),
     dromeLine,
     warzoneLine,
     yasirLabel: overrides.merchants.yasir?.location.trim() || "—",
     rashidLabel: overrides.merchants.rashid?.location.trim() || "—",
     marketPriceLines,
     achievementLines,
-    upcomingEventLines: overrides.upcomingEvents.map((event) => {
-      const parts = [event.title];
-      if (event.startDate) parts.push(`(${event.startDate})`);
-      if (event.note) parts.push(`— ${event.note}`);
-      return parts.join(" ");
-    }),
+    upcomingEventLines: input.upcomingEvents.map((event) => `${event.title}: ${event.detail}`),
   };
 }

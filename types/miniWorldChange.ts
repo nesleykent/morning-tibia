@@ -25,6 +25,14 @@ export type MiniWorldChangeCategory =
   | "hunt"
   | "seasonal";
 
+/**
+ * "guide-npc" items have a documented, exact Guide NPC reply for every state (see
+ * lib/parser/guideMessages.ts) — those are populated by pasting a chat log above and are
+ * read-only in the grid. "manual" items have no such source (no public API or
+ * consistently-worded NPC/board text covers them) and stay directly editable.
+ */
+export type MiniWorldChangeSource = "manual" | "guide-npc";
+
 export interface MiniWorldChangeDefinition {
   id: string;
   label: string;
@@ -32,6 +40,7 @@ export interface MiniWorldChangeDefinition {
   emoji: string;
   category: MiniWorldChangeCategory;
   controlType: MiniWorldChangeControlType;
+  source: MiniWorldChangeSource;
   description: string;
   /** Suggested options for "location" / "creature" / "boss" control types, if any are known. */
   suggestions?: string[];

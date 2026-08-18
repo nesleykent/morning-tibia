@@ -3,8 +3,6 @@ import { toDateKey } from "@/lib/utils/date";
 import { createDefaultMiniWorldChangeValues } from "./miniWorldChanges";
 import { createDefaultMerchants } from "./merchants";
 import { createDefaultMarketPrices } from "./marketPrices";
-import { createDefaultActiveEvents, createDefaultUpcomingEvents } from "./events";
-import { createDefaultDrome } from "./drome";
 
 export function createDefaultOverrides(world: string, referenceDate: Date): BriefingOverrides {
   return {
@@ -13,9 +11,6 @@ export function createDefaultOverrides(world: string, referenceDate: Date): Brie
     miniWorldChanges: createDefaultMiniWorldChangeValues(),
     merchants: createDefaultMerchants(referenceDate),
     marketPrices: createDefaultMarketPrices(),
-    activeEvents: createDefaultActiveEvents(),
-    upcomingEvents: createDefaultUpcomingEvents(),
-    drome: createDefaultDrome(),
     boostedRegion: "",
     includeAllMiniWorldChanges: false,
   };
@@ -24,5 +19,3 @@ export function createDefaultOverrides(world: string, referenceDate: Date): Brie
 export * from "./miniWorldChanges";
 export * from "./merchants";
 export * from "./marketPrices";
-export * from "./events";
-export * from "./drome";

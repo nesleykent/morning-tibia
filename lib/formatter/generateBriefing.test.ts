@@ -30,6 +30,9 @@ function makeInput(overridesPatch: Partial<ReturnType<typeof createDefaultOverri
     boostedCreature: { kind: "creature", name: "Gore Horn", imageUrl: null },
     boostedBoss: { kind: "boss", name: "Ratmiral", imageUrl: null },
     warzoneSchedule: null,
+    activeEvents: [],
+    upcomingEvents: [],
+    drome: null,
   };
 }
 

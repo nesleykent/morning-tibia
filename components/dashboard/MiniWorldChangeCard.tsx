@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquareText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,17 +31,27 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
           </Badge>
         </div>
 
-        {definition.controlType === "toggle" && (
+        {definition.source === "guide-npc" && (
+          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
+            {value.detail
+              ? value.detail
+              : "Paste a Guide NPC chat log above to detect this automatically."}
+          </p>
+        )}
+
+        {definition.source === "manual" && definition.controlType === "toggle" && (
           <StatusSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {definition.controlType === "stage" && (
+        {definition.source === "manual" && definition.controlType === "stage" && (
           <StageSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {(definition.controlType === "location" ||
-          definition.controlType === "creature" ||
-          definition.controlType === "boss") && (
+        {definition.source === "manual" &&
+          (definition.controlType === "location" ||
+            definition.controlType === "creature" ||
+            definition.controlType === "boss") && (
           <>
             <Input
               value={value.detail}

@@ -1,13 +1,12 @@
-import type { ActiveEvent, UpcomingEvent } from "./event";
-import type { DromeRotation } from "./drome";
 import type { Merchant } from "./merchant";
 import type { MarketPrice } from "./market";
 import type { MiniWorldChangeValue } from "./miniWorldChange";
 
 /**
- * Everything the briefing formatter needs for one world, on one day. Live fields
- * (world/boosted/warzone) are merged in separately by useBriefingState; this is the
- * part that gets persisted to localStorage.
+ * Everything the briefing formatter needs for one world, on one day, that's actually
+ * user-editable. Live/global fields (world status, boosted, warzone, events, Drome) are
+ * merged in separately by useBriefingState from build-time or live queries — this is
+ * only the part that gets persisted to localStorage.
  */
 export interface BriefingOverrides {
   world: string;
@@ -15,9 +14,6 @@ export interface BriefingOverrides {
   miniWorldChanges: Record<string, MiniWorldChangeValue>;
   merchants: Record<string, Merchant>;
   marketPrices: Record<string, MarketPrice>;
-  activeEvents: ActiveEvent[];
-  upcomingEvents: UpcomingEvent[];
-  drome: DromeRotation;
   boostedRegion: string;
   includeAllMiniWorldChanges: boolean;
 }

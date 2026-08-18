@@ -6,7 +6,7 @@ import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
 import type { Merchant, MerchantId } from "@/types/merchant";
 import type { MarketPriceId } from "@/types/market";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
-import type { DromeRotation } from "@/types/drome";
+import type { DromeRotationInfo } from "@/types/drome";
 import {
   useBoostedQuery,
   useWarzoneScheduleQuery,
@@ -25,7 +25,14 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function useBriefingState() {
+export interface UseBriefingStateProps {
+  /** Build-time content from TibiaWiki (see lib/data/wikiContentClient.ts) — not user-editable. */
+  activeEvents: ActiveEvent[];
+  upcomingEvents: UpcomingEvent[];
+  drome: DromeRotationInfo | null;
+}
+
+export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBriefingStateProps) {
   const [referenceDate] = useState(() => new Date());
   const dateKey = useMemo(() => toDateKey(referenceDate), [referenceDate]);
 
@@ -54,9 +61,16 @@ export function useBriefingState() {
   const boostedQuery = useBoostedQuery();
   const warzoneQuery = useWarzoneScheduleQuery(world);
 
-  const persist = useCallback((next: BriefingOverrides) => {
-    setOverrides(next);
-    briefingRepository.setOverrides(next);
+  // Takes an updater (prev => next), not a plain object, so calling several update*
+  // functions synchronously in a loop (e.g. bulk-applying parsed signals) still sees
+  // each other's changes instead of each one clobbering the last based on a stale
+  // `overrides` closure.
+  const persist = useCallback((updater: (prev: BriefingOverrides) => BriefingOverrides) => {
+    setOverrides((prev) => {
+      const next = updater(prev);
+      briefingRepository.setOverrides(next);
+      return next;
+    });
   }, []);
 
   const setWorld = useCallback(
@@ -72,102 +86,66 @@ export function useBriefingState() {
 
   const updateMiniWorldChange = useCallback(
     (id: string, patch: Partial<MiniWorldChangeValue>) => {
-      persist({
-        ...overrides,
+      persist((prev) => ({
+        ...prev,
         miniWorldChanges: {
-          ...overrides.miniWorldChanges,
-          [id]: { ...overrides.miniWorldChanges[id]!, ...patch, id, updatedAt: nowIso() },
+          ...prev.miniWorldChanges,
+          [id]: { ...prev.miniWorldChanges[id]!, ...patch, id, updatedAt: nowIso() },
         },
-      });
+      }));
     },
-    [overrides, persist],
+    [persist],
   );
 
   const updateMerchant = useCallback(
     (id: MerchantId, patch: Partial<Merchant>) => {
-      persist({
-        ...overrides,
+      persist((prev) => ({
+        ...prev,
         merchants: {
-          ...overrides.merchants,
+          ...prev.merchants,
           [id]: {
-            ...overrides.merchants[id]!,
+            ...prev.merchants[id]!,
             ...patch,
             id,
             isComputed: false,
             updatedAt: nowIso(),
           },
         },
-      });
+      }));
     },
-    [overrides, persist],
+    [persist],
   );
 
   const updateMarketPrice = useCallback(
     (id: MarketPriceId, newValue: number | null) => {
-      const current = overrides.marketPrices[id];
-      if (!current) return;
-      persist({
-        ...overrides,
-        marketPrices: {
-          ...overrides.marketPrices,
-          [id]: applyPriceUpdate(current, newValue, { isLive: false, now: nowIso() }),
-        },
+      persist((prev) => {
+        const current = prev.marketPrices[id];
+        if (!current) return prev;
+        return {
+          ...prev,
+          marketPrices: {
+            ...prev.marketPrices,
+            [id]: applyPriceUpdate(current, newValue, { isLive: false, now: nowIso() }),
+          },
+        };
       });
     },
-    [overrides, persist],
+    [persist],
   );
 
   const setBoostedRegion = useCallback(
-    (value: string) => persist({ ...overrides, boostedRegion: value }),
-    [overrides, persist],
+    (value: string) => persist((prev) => ({ ...prev, boostedRegion: value })),
+    [persist],
   );
 
   const setIncludeAllMiniWorldChanges = useCallback(
-    (value: boolean) => persist({ ...overrides, includeAllMiniWorldChanges: value }),
-    [overrides, persist],
-  );
-
-  const updateDrome = useCallback(
-    (patch: Partial<DromeRotation>) => persist({ ...overrides, drome: { ...overrides.drome, ...patch } }),
-    [overrides, persist],
-  );
-
-  const addActiveEvent = useCallback(
-    (event: Omit<ActiveEvent, "id">) =>
-      persist({
-        ...overrides,
-        activeEvents: [...overrides.activeEvents, { ...event, id: crypto.randomUUID() }],
-      }),
-    [overrides, persist],
-  );
-
-  const removeActiveEvent = useCallback(
-    (id: string) =>
-      persist({ ...overrides, activeEvents: overrides.activeEvents.filter((e) => e.id !== id) }),
-    [overrides, persist],
-  );
-
-  const addUpcomingEvent = useCallback(
-    (event: Omit<UpcomingEvent, "id">) =>
-      persist({
-        ...overrides,
-        upcomingEvents: [...overrides.upcomingEvents, { ...event, id: crypto.randomUUID() }],
-      }),
-    [overrides, persist],
-  );
-
-  const removeUpcomingEvent = useCallback(
-    (id: string) =>
-      persist({
-        ...overrides,
-        upcomingEvents: overrides.upcomingEvents.filter((e) => e.id !== id),
-      }),
-    [overrides, persist],
+    (value: boolean) => persist((prev) => ({ ...prev, includeAllMiniWorldChanges: value })),
+    [persist],
   );
 
   const resetOverrides = useCallback(() => {
     briefingRepository.clearOverrides(world, dateKey);
-    persist(createDefaultOverrides(world, referenceDate));
+    persist(() => createDefaultOverrides(world, referenceDate));
   }, [world, dateKey, referenceDate, persist]);
 
   const refreshLiveData = useCallback(() => {
@@ -234,8 +212,11 @@ export function useBriefingState() {
       boostedCreature: boostedQuery.data?.creature ?? null,
       boostedBoss: boostedQuery.data?.boss ?? null,
       warzoneSchedule: warzoneQuery.data,
+      activeEvents,
+      upcomingEvents,
+      drome,
     }),
-    [world, referenceDate, overrides, boostedQuery.data, warzoneQuery.data],
+    [world, referenceDate, overrides, boostedQuery.data, warzoneQuery.data, activeEvents, upcomingEvents, drome],
   );
 
   const richBriefing = useMemo(() => generateBriefingMessage(briefingInput), [briefingInput]);
@@ -252,17 +233,16 @@ export function useBriefingState() {
     boostedQuery,
     warzoneQuery,
 
+    activeEvents,
+    upcomingEvents,
+    drome,
+
     overrides,
     updateMiniWorldChange,
     updateMerchant,
     updateMarketPrice,
     setBoostedRegion,
     setIncludeAllMiniWorldChanges,
-    updateDrome,
-    addActiveEvent,
-    removeActiveEvent,
-    addUpcomingEvent,
-    removeUpcomingEvent,
 
     resetOverrides,
     refreshLiveData,
