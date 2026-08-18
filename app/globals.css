@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 22% 7%;
+  --foreground: 40 22% 93%;
+
+  --card: 220 18% 10%;
+  --card-foreground: 40 22% 93%;
+
+  --popover: 222 20% 9%;
+  --popover-foreground: 40 22% 93%;
+
+  --muted: 220 15% 15%;
+  --muted-foreground: 220 10% 65%;
+
+  --border: 220 15% 19%;
+  --input: 220 15% 19%;
+  --ring: 42 65% 55%;
+
+  --primary: 42 65% 55%;
+  --primary-foreground: 222 25% 10%;
+
+  --secondary: 220 15% 16%;
+  --secondary-foreground: 40 22% 93%;
+
+  --accent: 220 15% 21%;
+  --accent-foreground: 40 22% 96%;
+
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --gold: 42 65% 55%;
+  --gold-foreground: 222 25% 10%;
+  --gold-muted: 42 35% 28%;
+
+  --parchment: 40 42% 89%;
+  --parchment-foreground: 28 35% 16%;
+  --parchment-border: 35 32% 70%;
+
+  --status-active: 142 55% 45%;
+  --status-inactive: 220 8% 46%;
+  --status-stage1: 45 78% 55%;
+  --status-stage2: 30 82% 55%;
+  --status-stage3: 12 78% 56%;
+  --status-unknown: 220 8% 34%;
+
+  --radius: 0.75rem;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: hsl(var(--gold) / 0.35);
+}
+
+.briefing-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.briefing-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--parchment-border) / 0.6);
+  border-radius: 999px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--accent)) 37%,
+    hsl(var(--muted)) 63%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
