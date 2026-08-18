@@ -32,10 +32,10 @@ export function parseBoardLog(rawText: string): ParseResult {
       continue;
     }
 
-    if (!entry.miniWorldChangeId) continue;
+    if (!entry.changeId) continue;
     signals.push({
-      miniWorldChangeId: entry.miniWorldChangeId,
-      label: LABEL_BY_ID.get(entry.miniWorldChangeId) ?? entry.miniWorldChangeId,
+      changeId: entry.changeId,
+      label: LABEL_BY_ID.get(entry.changeId) ?? entry.changeId,
       matchedText: entry.text,
       state: entry.state ?? null,
       detail: entry.detail ?? "",

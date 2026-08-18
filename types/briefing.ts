@@ -1,6 +1,7 @@
 import type { Merchant } from "./merchant";
 import type { MarketPrice } from "./market";
 import type { MiniWorldChangeValue } from "./miniWorldChange";
+import type { WorldChangeValue } from "./worldChange";
 
 /**
  * Everything the briefing formatter needs for one world, on one day, that's actually
@@ -12,8 +13,9 @@ export interface BriefingOverrides {
   world: string;
   date: string;
   miniWorldChanges: Record<string, MiniWorldChangeValue>;
+  worldChanges: Record<string, WorldChangeValue>;
   merchants: Record<string, Merchant>;
   marketPrices: Record<string, MarketPrice>;
   boostedRegion: string;
-  includeAllMiniWorldChanges: boolean;
+  includeAllChanges: boolean;
 }

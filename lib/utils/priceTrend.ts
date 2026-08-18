@@ -15,13 +15,14 @@ export function computeTrend(previousValue: number | null, newValue: number | nu
 export function applyPriceUpdate(
   price: MarketPrice,
   newValue: number | null,
-  options: { isLive: boolean; now: string },
+  options: { isLive: boolean; now: string; sourceTimestamp?: number | null },
 ): MarketPrice {
+  const sourceTimestamp = options.sourceTimestamp ?? (options.isLive ? price.sourceTimestamp : null);
   if (newValue === null) {
-    return { ...price, isLive: options.isLive };
+    return { ...price, isLive: options.isLive, sourceTimestamp };
   }
   if (price.value === newValue) {
-    return { ...price, isLive: options.isLive, updatedAt: options.now };
+    return { ...price, isLive: options.isLive, sourceTimestamp, updatedAt: options.now };
   }
   return {
     ...price,
@@ -29,6 +30,7 @@ export function applyPriceUpdate(
     value: newValue,
     trend: computeTrend(price.value, newValue),
     isLive: options.isLive,
+    sourceTimestamp,
     updatedAt: options.now,
   };
 }

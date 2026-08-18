@@ -23,6 +23,7 @@ describe("applyPriceUpdate", () => {
     previousValue: null,
     trend: "unchanged",
     isLive: false,
+    sourceTimestamp: null,
     updatedAt: null,
   };
 

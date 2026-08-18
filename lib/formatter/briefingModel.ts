@@ -5,7 +5,11 @@ import type { MiniWorldChangeState } from "@/types/miniWorldChange";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
+import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
+import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
+
+export type { BriefingLanguage } from "./translations";
 
 export interface BriefingInput {
   world: string;
@@ -17,6 +21,7 @@ export interface BriefingInput {
   activeEvents: ActiveEvent[];
   upcomingEvents: UpcomingEvent[];
   drome: DromeRotationInfo | null;
+  language: BriefingLanguage;
 }
 
 export interface AchievementLine {
@@ -32,8 +37,11 @@ export interface MarketPriceLine {
 }
 
 export interface BriefingModel {
+  language: BriefingLanguage;
+  t: BriefingTranslation;
   dateLabel: string;
   worldName: string;
+  greeting: string;
   boostedCreatureLabel: string;
   boostedBossLabel: string;
   boostedRegionLabel: string;
@@ -47,19 +55,24 @@ export interface BriefingModel {
   upcomingEventLines: string[];
 }
 
-const STAGE_ORDINAL: Partial<Record<MiniWorldChangeState, string>> = {
-  stage1: "1º",
-  stage2: "2º",
-  stage3: "3º",
+const NUMBER_LOCALE: Record<BriefingLanguage, string> = {
+  pt: "pt-BR",
+  en: "en-US",
+  es: "es-ES",
+  pl: "pl-PL",
 };
 
-function formatAchievementValue(state: MiniWorldChangeState, detail: string): string | null {
+function formatAchievementValue(
+  state: MiniWorldChangeState,
+  detail: string,
+  t: BriefingTranslation,
+): string | null {
   if (state === "unknown") return null;
   if (state === "inactive") return "❌";
   if (state === "active") return "✅";
-  if (state === "stage1" || state === "stage2" || state === "stage3") {
-    return `✅ - ${STAGE_ORDINAL[state]} Estágio`;
-  }
+  if (state === "stage1") return `✅ - ${t.stageOrdinal(1)}`;
+  if (state === "stage2") return `✅ - ${t.stageOrdinal(2)}`;
+  if (state === "stage3") return `✅ - ${t.stageOrdinal(3)}`;
   // location / creature / boss controlType values.
   return detail.trim().length > 0 ? detail.trim() : "—";
 }
@@ -72,13 +85,23 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
 
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const { overrides } = input;
+  const t = getTranslation(input.language);
+  const locale = NUMBER_LOCALE[input.language];
 
   const achievementLines: AchievementLine[] = [];
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
     if (!value) continue;
-    if (value.state === "inactive" && !overrides.includeAllMiniWorldChanges) continue;
-    const valueLabel = formatAchievementValue(value.state, value.detail);
+    if (value.state === "inactive" && !overrides.includeAllChanges) continue;
+    const valueLabel = formatAchievementValue(value.state, value.detail, t);
+    if (valueLabel === null) continue;
+    achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
+  }
+  for (const def of WORLD_CHANGE_DEFINITIONS) {
+    const value = overrides.worldChanges[def.id];
+    if (!value) continue;
+    if (value.state === "inactive" && !overrides.includeAllChanges) continue;
+    const valueLabel = formatAchievementValue(value.state, value.detail, t);
     if (valueLabel === null) continue;
     achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
   }
@@ -87,7 +110,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     .filter((price) => price.value !== null)
     .map((price) => ({
       label: price.label,
-      valueLabel: `${price.value!.toLocaleString("pt-BR")} gp`,
+      valueLabel: `${price.value!.toLocaleString(locale)} gp`,
       trendSymbol: trendSymbol(price.trend),
     }));
 
@@ -101,7 +124,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
                 .map((e) => e.warzoneSequence)
                 .join(" / ")})`
             : ""
-        }`
+        }${warzone.timezone ? ` [${warzone.timezone}]` : ""}`
       : null;
 
   const drome = input.drome;
@@ -116,8 +139,11 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       : null;
 
   return {
+    language: input.language,
+    t,
     dateLabel: toBriefingDate(input.referenceDate),
     worldName: input.world,
+    greeting: t.greeting(input.world),
     boostedCreatureLabel: input.boostedCreature?.name ?? "—",
     boostedBossLabel: input.boostedBoss?.name ?? "—",
     boostedRegionLabel: overrides.boostedRegion.trim() || "—",

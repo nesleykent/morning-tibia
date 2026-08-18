@@ -1,0 +1,163 @@
+import type { WorldChangeDefinition, WorldChangeValue } from "@/types/worldChange";
+
+/**
+ * World Changes — a larger, longer-running mechanic checked in-game by asking a Guide NPC
+ * one of a fixed set of keywords, per TibiaWiki's "World Changes" article. Distinct from
+ * "Mini World Changes" (lib/defaults/miniWorldChanges.ts), which are announced on the
+ * World Board instead — do not merge the two lists. Nine of these have a documented,
+ * verbatim Guide NPC reply for every state (lib/parser/guideMessages.ts) and are
+ * source: "guide-npc" — populated only by pasting a chat log. The rest have no such
+ * documented text and stay source: "manual".
+ */
+export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
+  {
+    id: "horestis",
+    label: "Horestis (The Mummy's Curse)",
+    shortLabel: "Horestis",
+    emoji: "🏺",
+    controlType: "stage",
+    source: "guide-npc",
+    description:
+      "Horestis cycle near Ankrahmun: Inactive slumbering, Stage 1 risen (killable), Stage 2 killed/desecrated, Stage 3 curse ending.",
+  },
+  {
+    id: "mage-tower",
+    label: "The Mage's Tower",
+    shortLabel: "Mage Tower",
+    emoji: "🗼",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether the Mage's Tower world change is currently active in Zao Steppe.",
+  },
+  {
+    id: "masters-voice",
+    label: "Their Master's Voice",
+    shortLabel: "Master's Voice",
+    emoji: "📯",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether the Mad Mage Dungeon world change is currently active in Edron.",
+  },
+  {
+    id: "swamp-fever",
+    label: "Swamp Fever",
+    shortLabel: "Swamp Fever",
+    emoji: "🦟",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether the Swamp Fever world change is currently active near Venore.",
+  },
+  {
+    id: "thornfire",
+    label: "Thornfire",
+    shortLabel: "Thornfire",
+    emoji: "🌵",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether the Thornfire world change is currently active in Shadowthorn.",
+  },
+  {
+    id: "twisted-waters",
+    label: "Twisted Waters",
+    shortLabel: "Twisted Waters",
+    emoji: "💧",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Cleanliness of the great lake near Port Hope — Inactive clean, Stage 3 dirty & exhausted.",
+  },
+  {
+    id: "awash",
+    label: "Awash",
+    shortLabel: "Awash",
+    emoji: "⛏️",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Kazordoon mine-tunnel drainage cycle (Deepling Scouts access).",
+  },
+  {
+    id: "steamship",
+    label: "Steamship",
+    shortLabel: "Steamship",
+    emoji: "🚢",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Thais–Kazordoon steamship service status.",
+  },
+  {
+    id: "horse-station",
+    label: "Horse Station",
+    shortLabel: "Horse Station",
+    emoji: "🐴",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether Horses (and possibly War Horses) can currently be rented/tamed.",
+  },
+  {
+    id: "overhunting-deer",
+    label: "Overhunting — White Deer",
+    shortLabel: "White Deer",
+    emoji: "🦌",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "White Deer / starving wolves population cycle near Ab'Dendriel.",
+  },
+  {
+    id: "demon-war",
+    label: "Demon War",
+    shortLabel: "Demon War",
+    emoji: "😈",
+    controlType: "stage",
+    source: "guide-npc",
+    description:
+      "Shaburak vs. Askarak control of the Hero Cave complex — the winning faction goes in the detail note.",
+  },
+  {
+    id: "sea-serpent",
+    label: "The Fire-Feathered Serpent",
+    shortLabel: "Sea Serpent",
+    emoji: "🐍",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Current stage of the Fire-Feathered Serpent event at Seacrest Grounds.",
+  },
+  {
+    id: "deeplings",
+    label: "Deeplings",
+    shortLabel: "Deeplings",
+    emoji: "🐙",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Current stage of the Deeplings invasion at Quirefang.",
+  },
+  {
+    id: "hive-born",
+    label: "Hive Born",
+    shortLabel: "Hive Born",
+    emoji: "👾",
+    controlType: "stage",
+    source: "guide-npc",
+    description: "Current stage of the Hive Born invasion cycle at Quirefang.",
+  },
+  {
+    id: "insectoid-invasion",
+    label: "Insectoid Invasion",
+    shortLabel: "Insectoid Invasion",
+    emoji: "🐜",
+    controlType: "toggle",
+    source: "manual",
+    description: "Whether the Insectoid Invasion world change is currently active in Greenshore.",
+  },
+];
+
+export function createDefaultWorldChangeValues(): Record<string, WorldChangeValue> {
+  const values: Record<string, WorldChangeValue> = {};
+  for (const def of WORLD_CHANGE_DEFINITIONS) {
+    values[def.id] = {
+      id: def.id,
+      state: "unknown",
+      detail: "",
+      updatedAt: null,
+    };
+  }
+  return values;
+}

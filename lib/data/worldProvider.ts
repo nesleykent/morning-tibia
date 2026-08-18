@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { World, WorldDetail } from "@/types/world";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WarzoneSchedule, WarzoneHealthMark } from "@/types/warzone";
+import type { MarketValueSnapshot } from "@/types/marketValues";
 import {
   mapBoostedBoss,
   mapBoostedCreature,
@@ -14,9 +15,11 @@ import {
   type RawWorldDetailResponse,
   type RawWorldsResponse,
 } from "./tibiaDataMapping";
+import { MARKET_ITEM_IDS } from "./marketItemIds";
 
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
 const WARZONE_SCHEDULE_URL = "https://nesleykent.github.io/tibia-warzones-schedule/data/worlds.json";
+const TIBIAMARKET_BASE = "https://api.tibiamarket.top";
 
 /**
  * Fetches straight from TibiaData and nesleykent/tibia-warzones-schedule in the browser —
@@ -62,11 +65,6 @@ interface RawWarzoneWorld {
   tracks_warzone_service?: boolean;
   mark?: string;
   warzone_executions?: RawWarzoneExecution[];
-  warzone_economic_ranking?: {
-    market?: {
-      tibia_coin?: { supply_price: number | null; demand_price: number | null; mid_price: number | null };
-    };
-  };
 }
 
 function normalizeMark(mark: string | undefined): WarzoneHealthMark {
@@ -97,8 +95,6 @@ async function fetchWarzoneScheduleDirect(
   const match = all.find((w) => w.name.toLowerCase() === worldName.toLowerCase());
   if (!match) return null;
 
-  const tibiaCoin = match.warzone_economic_ranking?.market?.tibia_coin;
-
   return {
     world: match.name,
     timezone: match.timezone ?? null,
@@ -109,14 +105,32 @@ async function fetchWarzoneScheduleDirect(
       scheduleTime: execution.schedule_time,
       warzoneSequence: execution.warzone_sequence,
     })),
-    tibiaCoin: tibiaCoin
-      ? {
-          supplyPrice: tibiaCoin.supply_price ?? null,
-          demandPrice: tibiaCoin.demand_price ?? null,
-          midPrice: tibiaCoin.mid_price ?? null,
-        }
-      : null,
   };
+}
+
+interface RawMarketValue {
+  id: number;
+  time: number;
+  buy_offer?: number;
+  sell_offer?: number;
+}
+
+/**
+ * api.tibiamarket.top — real player market data (buy/sell offers) per server, with a
+ * timestamp for each snapshot. CORS-open. Used for Tibia Coin, Gold Token, and Silver
+ * Token prices, all three of which it actually has (unlike tibia-warzones-schedule, which
+ * only ever populated Tibia Coin).
+ */
+async function fetchMarketValuesDirect(worldName: string): Promise<MarketValueSnapshot[]> {
+  const ids = [MARKET_ITEM_IDS.tibiaCoin, MARKET_ITEM_IDS.silverToken, MARKET_ITEM_IDS.goldToken].join(",");
+  const url = `${TIBIAMARKET_BASE}/market_values?server=${encodeURIComponent(worldName)}&item_ids=${ids}`;
+  const data = await fetchJson<RawMarketValue[]>(url);
+  return data.map((entry) => ({
+    itemId: entry.id,
+    buyOffer: typeof entry.buy_offer === "number" && entry.buy_offer >= 0 ? entry.buy_offer : null,
+    sellOffer: typeof entry.sell_offer === "number" && entry.sell_offer >= 0 ? entry.sell_offer : null,
+    time: Math.round(entry.time * 1000),
+  }));
 }
 
 interface ResourceState<T> {
@@ -220,5 +234,12 @@ export function useWarzoneScheduleQuery(worldName: string | null) {
   return useAsyncResource<WarzoneSchedule>(
     worldName ? `warzone:${worldName}` : null,
     (forceRefresh) => fetchWarzoneScheduleDirect(worldName!, forceRefresh),
+  );
+}
+
+export function useMarketValuesQuery(worldName: string | null) {
+  return useAsyncResource<MarketValueSnapshot[]>(
+    worldName ? `market:${worldName}` : null,
+    () => fetchMarketValuesDirect(worldName!),
   );
 }

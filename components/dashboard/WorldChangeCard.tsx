@@ -1,20 +1,21 @@
 "use client";
 
+import { MessageSquareText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { StatusSelector } from "./StatusSelector";
 import { StageSelector } from "./StageSelector";
-import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
+import type { WorldChangeDefinition, WorldChangeValue } from "@/types/worldChange";
 import { stateBadgeLabel, stateBadgeVariant, stateForDetailValue } from "@/lib/utils/miniWorldChangeDisplay";
 
-interface MiniWorldChangeCardProps {
-  definition: MiniWorldChangeDefinition;
-  value: MiniWorldChangeValue;
-  onChange: (patch: Partial<MiniWorldChangeValue>) => void;
+interface WorldChangeCardProps {
+  definition: WorldChangeDefinition;
+  value: WorldChangeValue;
+  onChange: (patch: Partial<WorldChangeValue>) => void;
 }
 
-export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldChangeCardProps) {
+export function WorldChangeCard({ definition, value, onChange }: WorldChangeCardProps) {
   const listId = `${definition.id}-suggestions`;
 
   return (
@@ -30,17 +31,27 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
           </Badge>
         </div>
 
-        {definition.controlType === "toggle" && (
+        {definition.source === "guide-npc" && (
+          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
+            {value.detail
+              ? value.detail
+              : "Paste a Guide NPC chat log above to detect this automatically."}
+          </p>
+        )}
+
+        {definition.source === "manual" && definition.controlType === "toggle" && (
           <StatusSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {definition.controlType === "stage" && (
+        {definition.source === "manual" && definition.controlType === "stage" && (
           <StageSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {(definition.controlType === "location" ||
-          definition.controlType === "creature" ||
-          definition.controlType === "boss") && (
+        {definition.source === "manual" &&
+          (definition.controlType === "location" ||
+            definition.controlType === "creature" ||
+            definition.controlType === "boss") && (
           <>
             <Input
               value={value.detail}

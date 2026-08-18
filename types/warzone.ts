@@ -8,13 +8,9 @@ export type WarzoneHealthMark = "healthy" | "inconclusive" | "degraded" | "unkno
 
 export interface WarzoneSchedule {
   world: string;
+  /** IANA timezone the schedule_time values are in, e.g. "America/Sao_Paulo". */
   timezone: string | null;
   tracksWarzoneService: boolean;
   mark: WarzoneHealthMark;
   executions: WarzoneExecution[];
-  tibiaCoin: {
-    supplyPrice: number | null;
-    demandPrice: number | null;
-    midPrice: number | null;
-  } | null;
 }

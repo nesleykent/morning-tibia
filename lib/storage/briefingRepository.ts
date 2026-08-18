@@ -1,7 +1,10 @@
 import type { BriefingOverrides } from "@/types/briefing";
+import type { BriefingLanguage } from "@/lib/formatter/translations";
 import { storageKeys } from "./storageKeys";
 
 export type BriefingFormat = "rich" | "plain";
+
+const VALID_LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
 
 /**
  * Everything the dashboard needs to persist. Kept as an interface so a future
@@ -13,6 +16,8 @@ export interface BriefingRepository {
   setLastWorld(world: string): void;
   getPreferredFormat(): BriefingFormat;
   setPreferredFormat(format: BriefingFormat): void;
+  getBriefingLanguage(): BriefingLanguage;
+  setBriefingLanguage(language: BriefingLanguage): void;
   getOverrides(world: string, dateKey: string): BriefingOverrides | null;
   setOverrides(overrides: BriefingOverrides): void;
   clearOverrides(world: string, dateKey: string): void;
@@ -65,6 +70,15 @@ export class LocalStorageBriefingRepository implements BriefingRepository {
 
   setPreferredFormat(format: BriefingFormat): void {
     safeWrite(storageKeys.preferredFormat, format);
+  }
+
+  getBriefingLanguage(): BriefingLanguage {
+    const raw = safeRead(storageKeys.briefingLanguage);
+    return VALID_LANGUAGES.includes(raw as BriefingLanguage) ? (raw as BriefingLanguage) : "pt";
+  }
+
+  setBriefingLanguage(language: BriefingLanguage): void {
+    safeWrite(storageKeys.briefingLanguage, language);
   }
 
   getOverrides(world: string, dateKey: string): BriefingOverrides | null {

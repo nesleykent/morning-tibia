@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { parseBoardLog } from "@/lib/parser/parseBoardLog";
 import { parseGuideLog } from "@/lib/parser/parseGuideLog";
 import type { ParseResult } from "@/types/parser";
-import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
 import type { MerchantId } from "@/types/merchant";
 
+type ApplyChangeFn = (id: string, patch: { state: NonNullable<ParseResult["signals"][number]["state"]>; detail: string }) => void;
+
 interface ImportGameTextCardProps {
-  onApplyMiniWorldChange: (id: string, patch: Partial<MiniWorldChangeValue>) => void;
+  onApplyMiniWorldChange: ApplyChangeFn;
+  onApplyWorldChange: ApplyChangeFn;
   onApplyMerchant: (id: MerchantId, location: string) => void;
 }
 
@@ -22,17 +24,11 @@ interface ImportPanelProps {
   instructions: string;
   placeholder: string;
   parse: (text: string) => ParseResult;
-  onApplyMiniWorldChange: ImportGameTextCardProps["onApplyMiniWorldChange"];
+  onApplyChange: ApplyChangeFn;
   onApplyMerchant: ImportGameTextCardProps["onApplyMerchant"];
 }
 
-function ImportPanel({
-  instructions,
-  placeholder,
-  parse,
-  onApplyMiniWorldChange,
-  onApplyMerchant,
-}: ImportPanelProps) {
+function ImportPanel({ instructions, placeholder, parse, onApplyChange, onApplyMerchant }: ImportPanelProps) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<ParseResult | null>(null);
   const [applied, setApplied] = useState(false);
@@ -46,10 +42,7 @@ function ImportPanel({
 
   const handleApply = () => {
     for (const signal of applicableSignals) {
-      onApplyMiniWorldChange(signal.miniWorldChangeId, {
-        state: signal.state!,
-        detail: signal.detail,
-      });
+      onApplyChange(signal.changeId, { state: signal.state!, detail: signal.detail });
     }
     setApplied(true);
   };
@@ -142,6 +135,7 @@ function ImportPanel({
 
 export function ImportGameTextCard({
   onApplyMiniWorldChange,
+  onApplyWorldChange,
   onApplyMerchant,
 }: ImportGameTextCardProps) {
   return (
@@ -151,8 +145,9 @@ export function ImportGameTextCard({
           <span aria-hidden="true">📋</span> Import from game text
         </CardTitle>
         <CardDescription>
-          Paste text straight from Tibia to auto-fill Mini World Changes below — no manual
-          lookup needed for the ones covered here.
+          Two different Tibia mechanics, two different sources: the World Board announces
+          Mini World Changes; a Guide NPC reports on World Changes. Paste the matching log
+          on each tab.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -166,16 +161,16 @@ export function ImportGameTextCard({
               instructions="In-game: use the world board at the Adventurer's Guild (floor +1, near Charos) — it prints today's active Mini World Changes to your server log. Paste that log below."
               placeholder="Paste your server log with the world board's contents…"
               parse={parseBoardLog}
-              onApplyMiniWorldChange={onApplyMiniWorldChange}
+              onApplyChange={onApplyMiniWorldChange}
               onApplyMerchant={onApplyMerchant}
             />
           </TabsContent>
           <TabsContent value="guide">
             <ImportPanel
-              instructions="In-game: ask any Guide NPC about Horestis, Hive, Awash, Deepling, Sea Serpent, Demon War, Twisted Waters, or Overhunting, then paste the chat log below."
+              instructions="In-game: ask any Guide NPC about Horestis, Hive, Awash, Deepling, Sea Serpent, Demon War, Twisted Waters, or Overhunting, then paste the chat log below. These are World Changes — a different mechanic from the World Board's Mini World Changes."
               placeholder="Paste your chat log with the Guide NPC…"
               parse={parseGuideLog}
-              onApplyMiniWorldChange={onApplyMiniWorldChange}
+              onApplyChange={onApplyWorldChange}
               onApplyMerchant={onApplyMerchant}
             />
           </TabsContent>

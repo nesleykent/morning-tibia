@@ -9,7 +9,9 @@ export interface MarketPrice {
   value: number | null;
   previousValue: number | null;
   trend: PriceTrend;
-  /** True when `value` came from the live warzone-schedule market feed rather than manual entry. */
+  /** True when `value` came from the live api.tibiamarket.top feed rather than manual entry. */
   isLive: boolean;
+  /** When the live feed's snapshot was taken (ms since epoch) — null for manual entries. */
+  sourceTimestamp: number | null;
   updatedAt: string | null;
 }

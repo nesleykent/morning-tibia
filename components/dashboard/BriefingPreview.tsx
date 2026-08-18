@@ -4,16 +4,20 @@ import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "./CopyButton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { BriefingFormat } from "@/lib/storage/briefingRepository";
+import { BRIEFING_LANGUAGES, type BriefingLanguage } from "@/lib/formatter/generateBriefing";
 
 interface BriefingPreviewProps {
   richBriefing: string;
   plainBriefing: string;
   preferredFormat: BriefingFormat;
   onPreferredFormatChange: (format: BriefingFormat) => void;
+  language: BriefingLanguage;
+  onLanguageChange: (language: BriefingLanguage) => void;
   worldName: string;
 }
 
@@ -22,6 +26,8 @@ export function BriefingPreview({
   plainBriefing,
   preferredFormat,
   onPreferredFormatChange,
+  language,
+  onLanguageChange,
   worldName,
 }: BriefingPreviewProps) {
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
@@ -44,19 +50,33 @@ export function BriefingPreview({
 
   return (
     <Card className="border-parchment-border/60 bg-parchment text-parchment-foreground shadow-elevated">
-      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-parchment-foreground">
           <span aria-hidden="true">📨</span> Briefing preview
         </CardTitle>
-        <Tabs
-          value={preferredFormat}
-          onValueChange={(value) => onPreferredFormatChange(value as BriefingFormat)}
-        >
-          <TabsList className="bg-parchment-foreground/10">
-            <TabsTrigger value="rich">Rich</TabsTrigger>
-            <TabsTrigger value="plain">Plain</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={language} onValueChange={(value) => onLanguageChange(value as BriefingLanguage)}>
+            <SelectTrigger className="h-8 w-32 border-parchment-border/60 bg-parchment-foreground/5 text-parchment-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BRIEFING_LANGUAGES.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Tabs
+            value={preferredFormat}
+            onValueChange={(value) => onPreferredFormatChange(value as BriefingFormat)}
+          >
+            <TabsList className="bg-parchment-foreground/10">
+              <TabsTrigger value="rich">Rich</TabsTrigger>
+              <TabsTrigger value="plain">Plain</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="briefing-scrollbar max-h-96 overflow-y-auto rounded-lg border border-parchment-border/60 bg-parchment-foreground/5 p-3">

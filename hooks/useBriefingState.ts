@@ -3,21 +3,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BriefingOverrides } from "@/types/briefing";
 import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
+import type { WorldChangeValue } from "@/types/worldChange";
 import type { Merchant, MerchantId } from "@/types/merchant";
 import type { MarketPriceId } from "@/types/market";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import {
   useBoostedQuery,
+  useMarketValuesQuery,
   useWarzoneScheduleQuery,
   useWorldDetailQuery,
   useWorldsQuery,
 } from "@/lib/data/worldProvider";
+import { MARKET_ITEM_IDS } from "@/lib/data/marketItemIds";
 import { briefingRepository, type BriefingFormat } from "@/lib/storage/briefingRepository";
-import { createDefaultOverrides } from "@/lib/defaults";
+import { createDefaultOverrides, mergeOverridesWithDefaults } from "@/lib/defaults";
 import { applyPriceUpdate } from "@/lib/utils/priceTrend";
 import { toDateKey } from "@/lib/utils/date";
 import { generateBriefingMessage, generatePlainTextBriefing } from "@/lib/formatter/generateBriefing";
+import type { BriefingLanguage } from "@/lib/formatter/translations";
 
 const FALLBACK_WORLD = "Antica";
 
@@ -41,6 +45,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     createDefaultOverrides(FALLBACK_WORLD, referenceDate),
   );
   const [preferredFormat, setPreferredFormatState] = useState<BriefingFormat>("rich");
+  const [briefingLanguage, setBriefingLanguageState] = useState<BriefingLanguage>("pt");
   const hasHydrated = useRef(false);
 
   // Hydrate from localStorage once on mount (client-only to avoid SSR/CSR mismatches; the
@@ -51,8 +56,9 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     const lastWorld = briefingRepository.getLastWorld() ?? FALLBACK_WORLD;
     const savedOverrides = briefingRepository.getOverrides(lastWorld, dateKey);
     setWorldState(lastWorld);
-    setOverrides(savedOverrides ?? createDefaultOverrides(lastWorld, referenceDate));
+    setOverrides(mergeOverridesWithDefaults(savedOverrides, lastWorld, referenceDate));
     setPreferredFormatState(briefingRepository.getPreferredFormat());
+    setBriefingLanguageState(briefingRepository.getBriefingLanguage());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,6 +66,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const worldDetailQuery = useWorldDetailQuery(world);
   const boostedQuery = useBoostedQuery();
   const warzoneQuery = useWarzoneScheduleQuery(world);
+  const marketValuesQuery = useMarketValuesQuery(world);
 
   // Takes an updater (prev => next), not a plain object, so calling several update*
   // functions synchronously in a loop (e.g. bulk-applying parsed signals) still sees
@@ -79,7 +86,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       briefingRepository.setLastWorld(nextWorld);
       const saved = briefingRepository.getOverrides(nextWorld, dateKey);
       setWorldState(nextWorld);
-      setOverrides(saved ?? createDefaultOverrides(nextWorld, referenceDate));
+      setOverrides(mergeOverridesWithDefaults(saved, nextWorld, referenceDate));
     },
     [world, dateKey, referenceDate],
   );
@@ -91,6 +98,19 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
         miniWorldChanges: {
           ...prev.miniWorldChanges,
           [id]: { ...prev.miniWorldChanges[id]!, ...patch, id, updatedAt: nowIso() },
+        },
+      }));
+    },
+    [persist],
+  );
+
+  const updateWorldChange = useCallback(
+    (id: string, patch: Partial<WorldChangeValue>) => {
+      persist((prev) => ({
+        ...prev,
+        worldChanges: {
+          ...prev.worldChanges,
+          [id]: { ...prev.worldChanges[id]!, ...patch, id, updatedAt: nowIso() },
         },
       }));
     },
@@ -138,8 +158,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     [persist],
   );
 
-  const setIncludeAllMiniWorldChanges = useCallback(
-    (value: boolean) => persist((prev) => ({ ...prev, includeAllMiniWorldChanges: value })),
+  const setIncludeAllChanges = useCallback(
+    (value: boolean) => persist((prev) => ({ ...prev, includeAllChanges: value })),
     [persist],
   );
 
@@ -153,56 +173,65 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     worldDetailQuery.refresh();
     boostedQuery.refresh();
     warzoneQuery.refresh();
-  }, [worldsQuery, worldDetailQuery, boostedQuery, warzoneQuery]);
+    marketValuesQuery.refresh();
+  }, [worldsQuery, worldDetailQuery, boostedQuery, warzoneQuery, marketValuesQuery]);
 
   const setPreferredFormat = useCallback((format: BriefingFormat) => {
     setPreferredFormatState(format);
     briefingRepository.setPreferredFormat(format);
   }, []);
 
-  // Merge the live Tibia Coin price feed in — but only while the field hasn't been
+  const setBriefingLanguage = useCallback((language: BriefingLanguage) => {
+    setBriefingLanguageState(language);
+    briefingRepository.setBriefingLanguage(language);
+  }, []);
+
+  // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
   // hand-edited (updatedAt === null) or was itself previously filled from this same feed
-  // (isLive === true), so a manual correction always sticks.
+  // (isLive === true), so a manual correction always sticks. Mapping: "sell price" (what
+  // you receive selling into the market) is the current highest buy_offer (bid); "buy
+  // price" (what you pay) is the current lowest sell_offer (ask).
   useEffect(() => {
-    const tibiaCoin = warzoneQuery.data?.tibiaCoin;
-    if (!tibiaCoin) return;
+    const snapshots = marketValuesQuery.data;
+    if (!snapshots || snapshots.length === 0) return;
     const timestamp = nowIso();
+    const byItemId = new Map(snapshots.map((s) => [s.itemId, s]));
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing an external feed in
     setOverrides((prev) => {
       let changed = false;
       const nextPrices = { ...prev.marketPrices };
 
-      const sellCurrent = prev.marketPrices.tibiaCoinSell;
-      if (sellCurrent && (sellCurrent.updatedAt === null || sellCurrent.isLive)) {
-        const updated = applyPriceUpdate(sellCurrent, tibiaCoin.supplyPrice, {
-          isLive: true,
-          now: timestamp,
-        });
-        if (updated !== sellCurrent) {
-          nextPrices.tibiaCoinSell = updated;
+      const applyLive = (
+        priceId: keyof typeof prev.marketPrices,
+        newValue: number | null,
+        sourceTimestamp: number,
+      ) => {
+        const current = nextPrices[priceId];
+        if (!current || !(current.updatedAt === null || current.isLive)) return;
+        const updated = applyPriceUpdate(current, newValue, { isLive: true, now: timestamp, sourceTimestamp });
+        if (updated !== current) {
+          nextPrices[priceId] = updated;
           changed = true;
         }
-      }
+      };
 
-      const buyCurrent = prev.marketPrices.tibiaCoinBuy;
-      if (buyCurrent && (buyCurrent.updatedAt === null || buyCurrent.isLive)) {
-        const updated = applyPriceUpdate(buyCurrent, tibiaCoin.demandPrice, {
-          isLive: true,
-          now: timestamp,
-        });
-        if (updated !== buyCurrent) {
-          nextPrices.tibiaCoinBuy = updated;
-          changed = true;
-        }
+      const tibiaCoin = byItemId.get(MARKET_ITEM_IDS.tibiaCoin);
+      if (tibiaCoin) {
+        applyLive("tibiaCoinSell", tibiaCoin.buyOffer, tibiaCoin.time);
+        applyLive("tibiaCoinBuy", tibiaCoin.sellOffer, tibiaCoin.time);
       }
+      const goldToken = byItemId.get(MARKET_ITEM_IDS.goldToken);
+      if (goldToken) applyLive("goldTokenSell", goldToken.buyOffer, goldToken.time);
+      const silverToken = byItemId.get(MARKET_ITEM_IDS.silverToken);
+      if (silverToken) applyLive("silverTokenSell", silverToken.buyOffer, silverToken.time);
 
       if (!changed) return prev;
       const next = { ...prev, marketPrices: nextPrices };
       briefingRepository.setOverrides(next);
       return next;
     });
-  }, [warzoneQuery.data]);
+  }, [marketValuesQuery.data]);
 
   const briefingInput = useMemo(
     () => ({
@@ -215,8 +244,19 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       activeEvents,
       upcomingEvents,
       drome,
+      language: briefingLanguage,
     }),
-    [world, referenceDate, overrides, boostedQuery.data, warzoneQuery.data, activeEvents, upcomingEvents, drome],
+    [
+      world,
+      referenceDate,
+      overrides,
+      boostedQuery.data,
+      warzoneQuery.data,
+      activeEvents,
+      upcomingEvents,
+      drome,
+      briefingLanguage,
+    ],
   );
 
   const richBriefing = useMemo(() => generateBriefingMessage(briefingInput), [briefingInput]);
@@ -232,6 +272,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     worldDetailQuery,
     boostedQuery,
     warzoneQuery,
+    marketValuesQuery,
 
     activeEvents,
     upcomingEvents,
@@ -239,10 +280,11 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
     overrides,
     updateMiniWorldChange,
+    updateWorldChange,
     updateMerchant,
     updateMarketPrice,
     setBoostedRegion,
-    setIncludeAllMiniWorldChanges,
+    setIncludeAllChanges,
 
     resetOverrides,
     refreshLiveData,
@@ -252,6 +294,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     plainBriefing,
     preferredFormat,
     setPreferredFormat,
+    briefingLanguage,
+    setBriefingLanguage,
   };
 }
 

@@ -7,7 +7,8 @@ import type { MiniWorldChangeState } from "./miniWorldChange";
  * note the user resolves manually instead of a value we'd be guessing at.
  */
 export interface ParsedSignal {
-  miniWorldChangeId: string;
+  /** id of a MiniWorldChangeDefinition (board parser) or WorldChangeDefinition (guide parser). */
+  changeId: string;
   label: string;
   matchedText: string;
   state: MiniWorldChangeState | null;

@@ -8,14 +8,14 @@ Player: hive
 Guide Ferob: The hive is well defended and prepared for war. 12 actions have been taken against the Hive Born. 200 actions are necessary to advance further into the hive.
 `;
     const result = parseGuideLog(log);
-    const hive = result.signals.find((s) => s.miniWorldChangeId === "hive");
+    const hive = result.signals.find((s) => s.changeId === "hive-born");
     expect(hive?.state).toBe("stage1");
   });
 
   it("carries extra nuance in detail when the catalog has it", () => {
     const log = `Guide: The Shaburak have summoned their leaders and dominate the complex.`;
     const result = parseGuideLog(log);
-    const demonWar = result.signals.find((s) => s.miniWorldChangeId === "demon-war");
+    const demonWar = result.signals.find((s) => s.changeId === "demon-war");
     expect(demonWar?.state).toBe("stage2");
     expect(demonWar?.detail).toMatch(/Shaburak/);
   });
@@ -27,7 +27,7 @@ Guide: Horestis near Ankrahmun is slumbering in his tomb.
 Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to crush all intruders.
 `;
     const result = parseGuideLog(log);
-    const horestis = result.signals.filter((s) => s.miniWorldChangeId === "horestis-jars");
+    const horestis = result.signals.filter((s) => s.changeId === "horestis");
     expect(horestis).toHaveLength(1);
     expect(horestis[0]?.state).toBe("stage1");
   });

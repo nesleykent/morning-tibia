@@ -13,6 +13,7 @@ import { MerchantCard } from "./MerchantCard";
 import { MarketPriceCard } from "./MarketPriceCard";
 import { ActiveEventsCard, UpcomingEventsCard } from "./EventCard";
 import { MiniWorldChangeGrid } from "./MiniWorldChangeGrid";
+import { WorldChangeGrid } from "./WorldChangeGrid";
 import { BriefingPreview } from "./BriefingPreview";
 import { CopyButton } from "./CopyButton";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
 
       <ImportGameTextCard
         onApplyMiniWorldChange={state.updateMiniWorldChange}
+        onApplyWorldChange={state.updateWorldChange}
         onApplyMerchant={(id, location) => state.updateMerchant(id, { location })}
       />
 
@@ -96,15 +98,19 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
       <MiniWorldChangeGrid
         values={state.overrides.miniWorldChanges}
         onChange={state.updateMiniWorldChange}
-        includeAll={state.overrides.includeAllMiniWorldChanges}
-        onIncludeAllChange={state.setIncludeAllMiniWorldChanges}
+        includeAll={state.overrides.includeAllChanges}
+        onIncludeAllChange={state.setIncludeAllChanges}
       />
+
+      <WorldChangeGrid values={state.overrides.worldChanges} onChange={state.updateWorldChange} />
 
       <BriefingPreview
         richBriefing={state.richBriefing}
         plainBriefing={state.plainBriefing}
         preferredFormat={state.preferredFormat}
         onPreferredFormatChange={state.setPreferredFormat}
+        language={state.briefingLanguage}
+        onLanguageChange={state.setBriefingLanguage}
         worldName={state.world}
       />
 

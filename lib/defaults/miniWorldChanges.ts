@@ -14,11 +14,11 @@ const COMMON_LOCATIONS = [
 ];
 
 /**
- * The Mini World Changes tracked by the reference tool. Tibia exposes none of these
- * through a public API. Nine of them (source: "guide-npc") have an exact, documented
- * Guide NPC reply for every state (lib/parser/guideMessages.ts) and are populated only
- * by pasting a chat log in the import panel above — everything else (source: "manual")
- * has no reliable source and is directly editable.
+ * Mini World Changes — announced on the World Board at the Adventurer's Guild, floor +1,
+ * near Charos (see lib/parser/boardMessages.ts for the verbatim board text catalog, from
+ * TibiaWiki's "The World Board" article). Distinct from "World Changes"
+ * (lib/defaults/worldChanges.ts), which are a different mechanic checked via Guide NPC —
+ * do not merge the two lists.
  */
 export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
@@ -28,38 +28,16 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🔥",
     category: "gate",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Fury Gate in Feyrist is currently open.",
   },
   {
-    id: "hive",
-    label: "Hive",
-    shortLabel: "Hive",
-    emoji: "👾",
-    category: "hive",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Current stage of the Hive invasion cycle.",
-  },
-  {
-    id: "hive-east",
-    label: "Hive — East",
-    shortLabel: "Hive East",
+    id: "hive-outpost",
+    label: "Hive Outpost",
+    shortLabel: "Hive Outpost",
     emoji: "👾",
     category: "hive",
     controlType: "toggle",
-    source: "manual",
-    description: "East hive status, when the cycle has a side-specific state.",
-  },
-  {
-    id: "hive-west",
-    label: "Hive — West",
-    shortLabel: "Hive West",
-    emoji: "👾",
-    category: "hive",
-    controlType: "toggle",
-    source: "manual",
-    description: "West hive status, when the cycle has a side-specific state.",
+    description: "Whether a Hive infestation has been sighted south-west of Liberty Bay.",
   },
   {
     id: "roshamuul",
@@ -68,7 +46,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🦇",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Roshamuul prison event is currently active.",
   },
   {
@@ -78,7 +55,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "👹",
     category: "arena",
     controlType: "boss",
-    source: "manual",
     description: "Which boss is currently up in the Dream Courts arena.",
   },
   {
@@ -88,20 +64,8 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏴‍☠️",
     category: "rotation",
     controlType: "location",
-    source: "manual",
     description: "Current location of the Bibby's Bloodbath ship event.",
     suggestions: COMMON_LOCATIONS,
-  },
-  {
-    id: "horestis-jars",
-    label: "Horestis Jars",
-    shortLabel: "Horestis",
-    emoji: "🏺",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description:
-      "Horestis cycle near Ankrahmun: Inactive slumbering, Stage 1 risen (killable), Stage 2 killed/desecrated, Stage 3 curse ending.",
   },
   {
     id: "devovorga-essence",
@@ -110,28 +74,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧪",
     category: "rotation",
     controlType: "stage",
-    source: "manual",
     description: "Current essence stage ahead of a Devovorga world event.",
-  },
-  {
-    id: "deeplings",
-    label: "Deeplings",
-    shortLabel: "Deeplings",
-    emoji: "🐙",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Current stage of the Deeplings invasion.",
-  },
-  {
-    id: "sea-serpent",
-    label: "Sea Serpent",
-    shortLabel: "Sea Serpent",
-    emoji: "🐍",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Current stage of the Sea Serpent event.",
   },
   {
     id: "big-iceberg",
@@ -140,7 +83,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧊",
     category: "rotation",
     controlType: "stage",
-    source: "manual",
     description: "Current phase of the Big Iceberg / Chakoya event.",
   },
   {
@@ -150,7 +92,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌀",
     category: "gate",
     controlType: "location",
-    source: "manual",
     description: "Where the current Spirit Gate is open — Darama, Ghostlands, or Vengoth.",
     suggestions: ["Darama", "Ghostlands", "Vengoth"],
   },
@@ -161,7 +102,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌑",
     category: "rotation",
     controlType: "location",
-    source: "manual",
     description: "Where the Nightmare Isles portal currently is, when accessible.",
     suggestions: [
       "Darama's northernmost coast",
@@ -176,7 +116,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "⚔️",
     category: "hunt",
     controlType: "creature",
-    source: "manual",
     description: "The creature currently flagged as overhunted on this world.",
   },
   {
@@ -186,7 +125,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌋",
     category: "rotation",
     controlType: "stage",
-    source: "manual",
     description: "Current eruption stage of the Goroma volcano.",
   },
   {
@@ -196,7 +134,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🐫",
     category: "rotation",
     controlType: "location",
-    source: "manual",
     description: "Current camp location of the Darama nomads.",
     suggestions: COMMON_LOCATIONS,
   },
@@ -207,7 +144,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧙",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether Witch Wyda is currently bored (visitable) or not.",
   },
   {
@@ -217,7 +153,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🍜",
     category: "rotation",
     controlType: "location",
-    source: "manual",
     description: "Current location of the Noodles NPC.",
     suggestions: COMMON_LOCATIONS,
   },
@@ -228,7 +163,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "👑",
     category: "seasonal",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Thais Kingsday festivities are currently active.",
   },
   {
@@ -238,7 +172,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "❄️",
     category: "seasonal",
     controlType: "stage",
-    source: "manual",
     description: "Current thaw stage of the Ice Flower event.",
   },
   {
@@ -248,19 +181,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🕷️",
     category: "hunt",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Spider's Nest task area is currently active.",
-  },
-  {
-    id: "horse-station",
-    label: "Horse Station",
-    shortLabel: "Horse Station",
-    emoji: "🐴",
-    category: "rotation",
-    controlType: "location",
-    source: "manual",
-    description: "Current location of the traveling Horse Station.",
-    suggestions: COMMON_LOCATIONS,
   },
   {
     id: "poacher-caves",
@@ -269,7 +190,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏹",
     category: "hunt",
     controlType: "stage",
-    source: "manual",
     description:
       "Dominance phase north of the Green Claw Swamp: Stage 1 game dominates, Stage 2 poachers dominate, Stage 3 vengeful ghost wolves dominate.",
   },
@@ -280,7 +200,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏕️",
     category: "hunt",
     controlType: "toggle",
-    source: "manual",
     description: "Whether hunters and dworcs are fighting over Trapwood's holy grounds.",
   },
   {
@@ -290,7 +209,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌲",
     category: "seasonal",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the full moon effect is active on the island of Grimvale.",
   },
   {
@@ -300,7 +218,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🐘",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether Tiquanda's elephants have been stirred into a stampede.",
   },
   {
@@ -310,7 +227,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "💰",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether banks in major coastal towns are currently being robbed.",
   },
   {
@@ -320,7 +236,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🎣",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Zao Steppe river currently has more fish than usual.",
   },
   {
@@ -330,59 +245,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🪓",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the Queen's royal trees are currently being cut down.",
-  },
-  {
-    id: "demon-war",
-    label: "Demon War",
-    shortLabel: "Demon War",
-    emoji: "😈",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description:
-      "Shaburak vs. Askarak control of the Hero Cave complex — the winning faction goes in the detail note.",
-  },
-  {
-    id: "twisted-waters",
-    label: "Twisted Waters",
-    shortLabel: "Twisted Waters",
-    emoji: "💧",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Cleanliness of the great lake near Port Hope — Inactive clean, Stage 3 dirty & exhausted.",
-  },
-  {
-    id: "awash",
-    label: "Awash",
-    shortLabel: "Awash",
-    emoji: "⛏️",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Kazordoon mine-tunnel drainage cycle (Deepling Scouts access).",
-  },
-  {
-    id: "steamship",
-    label: "Steamship",
-    shortLabel: "Steamship",
-    emoji: "🚢",
-    category: "rotation",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "Thais–Kazordoon steamship service status.",
-  },
-  {
-    id: "overhunting-deer",
-    label: "Overhunting — White Deer",
-    shortLabel: "White Deer",
-    emoji: "🦌",
-    category: "hunt",
-    controlType: "stage",
-    source: "guide-npc",
-    description: "White Deer / starving wolves population cycle near Ab'Dendriel.",
   },
   {
     id: "down-the-drain",
@@ -391,7 +254,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌊",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the river south of the outlaw camp is flooding a reachable island.",
   },
   {
@@ -401,7 +263,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🥶",
     category: "rotation",
     controlType: "toggle",
-    source: "manual",
     description: "Whether the ice bridge from Svargrond to the frosty island is open.",
   },
 ];

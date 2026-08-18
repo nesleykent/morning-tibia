@@ -3,7 +3,10 @@ import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBr
 import { createDefaultOverrides } from "@/lib/defaults";
 import type { BriefingInput } from "./briefingModel";
 
-function makeInput(overridesPatch: Partial<ReturnType<typeof createDefaultOverrides>> = {}): BriefingInput {
+function makeInput(
+  overridesPatch: Partial<ReturnType<typeof createDefaultOverrides>> = {},
+  language: BriefingInput["language"] = "pt",
+): BriefingInput {
   const referenceDate = new Date(2026, 7, 17); // 17 Aug 2026
   const overrides = { ...createDefaultOverrides("Ustebra", referenceDate), ...overridesPatch };
 
@@ -13,8 +16,8 @@ function makeInput(overridesPatch: Partial<ReturnType<typeof createDefaultOverri
     detail: "",
     updatedAt: null,
   };
-  overrides.miniWorldChanges["hive"] = {
-    id: "hive",
+  overrides.worldChanges["hive-born"] = {
+    id: "hive-born",
     state: "stage3",
     detail: "",
     updatedAt: null,
@@ -33,6 +36,7 @@ function makeInput(overridesPatch: Partial<ReturnType<typeof createDefaultOverri
     activeEvents: [],
     upcomingEvents: [],
     drome: null,
+    language,
   };
 }
 
@@ -48,7 +52,7 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("💰*YASIR:* Carlin");
     expect(message).toContain("👳🏼‍♂️*RASHID:* Svargrond");
     expect(message).toContain("🔥*FURY GATE:* ✅");
-    expect(message).toContain("👾*HIVE:* ✅ - 3º Estágio");
+    expect(message).toContain("👾*HIVE BORN:* ✅ - 3º Estágio");
     expect(message).toContain("📅 *NEXT EVENTOS:*");
   });
 
@@ -65,7 +69,7 @@ describe("generateBriefingMessage", () => {
     expect(message).not.toContain("ROSHAMUUL"); // still 'unknown', never shown
     expect(message).not.toContain("SPIDER'S NEST"); // 'inactive', hidden by default
 
-    input.overrides.includeAllMiniWorldChanges = true;
+    input.overrides.includeAllChanges = true;
     const fullMessage = generateBriefingMessage(input);
     expect(fullMessage).not.toContain("ROSHAMUUL"); // 'unknown' stays hidden even with includeAll
     expect(fullMessage).toContain("🕷️*SPIDER'S NEST:* ❌");
@@ -85,11 +89,36 @@ describe("generateBriefingMessage", () => {
       previousValue: 40000,
       trend: "up",
       isLive: true,
+      sourceTimestamp: null,
       updatedAt: "t",
     };
     const message = generateBriefingMessage(input);
     expect(message).toContain("🪙*Tibia Coin — sell:* 41.000 gp 🔺");
     expect(message).not.toContain("Gold Token");
+  });
+});
+
+describe("language support", () => {
+  it("renders section headers, greeting, and stage wording in English", () => {
+    const message = generateBriefingMessage(makeInput({}, "en"));
+    expect(message).toContain("🌞Good morning Ustebra!");
+    expect(message).toContain("🌎 *TODAY'S ACTIVE EVENTS & STATUS:*");
+    expect(message).toContain("👾*BOOSTED CREATURE:* Gore Horn");
+    expect(message).toContain("👾*HIVE BORN:* ✅ - Stage 3");
+    expect(message).toContain("📅 *NEXT EVENTS:*");
+  });
+
+  it("renders Spanish and Polish greetings distinctly", () => {
+    expect(generateBriefingMessage(makeInput({}, "es"))).toContain("🌞¡Buenos días Ustebra!");
+    expect(generateBriefingMessage(makeInput({}, "pl"))).toContain("🌞Dzień dobry Ustebra!");
+  });
+
+  it("keeps merchant names (Yasir/Rashid) untranslated across languages", () => {
+    for (const language of ["pt", "en", "es", "pl"] as const) {
+      const message = generateBriefingMessage(makeInput({}, language));
+      expect(message).toContain("YASIR:");
+      expect(message).toContain("RASHID:");
+    }
   });
 });
 

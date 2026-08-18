@@ -1,15 +1,15 @@
 import type { ParseResult, ParsedSignal } from "@/types/parser";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
+import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { GUIDE_MESSAGES } from "./guideMessages";
 import { normalizeForMatch } from "./textMatch";
 
-const LABEL_BY_ID = new Map(MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.label]));
+const LABEL_BY_ID = new Map(WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.label]));
 
 /**
  * Matches a pasted Guide NPC chat log against the known catalog of Guide reply text
  * (see guideMessages.ts) using substring matching on normalized text. If a keyword's
  * reply changed between when the world changed and when it settled (e.g. asking twice),
- * the LAST matching entry per Mini World Change wins, since it appears later in the log.
+ * the LAST matching entry per World Change wins, since it appears later in the log.
  */
 export function parseGuideLog(rawText: string): ParseResult {
   const normalizedInput = normalizeForMatch(rawText);
@@ -22,15 +22,15 @@ export function parseGuideLog(rawText: string): ParseResult {
     if (index === -1) continue;
     matchedCount += 1;
 
-    const existing = bestById.get(entry.miniWorldChangeId);
-    if (existing && existing.matchedText.length >= 0) {
+    const existing = bestById.get(entry.changeId);
+    if (existing) {
       const existingIndex = normalizedInput.indexOf(normalizeForMatch(existing.matchedText));
       if (existingIndex > index) continue; // keep the later occurrence
     }
 
-    bestById.set(entry.miniWorldChangeId, {
-      miniWorldChangeId: entry.miniWorldChangeId,
-      label: LABEL_BY_ID.get(entry.miniWorldChangeId) ?? entry.miniWorldChangeId,
+    bestById.set(entry.changeId, {
+      changeId: entry.changeId,
+      label: LABEL_BY_ID.get(entry.changeId) ?? entry.changeId,
       matchedText: entry.text,
       state: entry.state,
       detail: entry.detail ?? "",

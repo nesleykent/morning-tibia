@@ -1,8 +1,13 @@
 /**
- * A Mini World Change is a small daily/rotating world state that Tibia does not expose
- * through any public API (fansites traditionally read it off in-game board text). Each
- * definition declares which kind of inline control should edit it; the value is always
- * manual/local, seeded with a sensible "unknown" default.
+ * A Mini World Change: the small daily/rotating world states announced on the World
+ * Board at the Adventurer's Guild (Adventurer's Island). Tibia exposes none of these
+ * through a public API — the World Board's own text is the only source, so every value
+ * here is manual/local, seeded to "unknown" until the user fills it in (either by hand or
+ * by pasting the board's server log into the import panel — see lib/parser/boardMessages.ts).
+ *
+ * This is a distinct game mechanic from "World Changes" (types/worldChange.ts), which are
+ * checked via a Guide NPC instead — see World_Changes vs Mini_World_Changes on TibiaWiki.
+ * Do not merge the two lists.
  */
 export type MiniWorldChangeControlType = "toggle" | "stage" | "location" | "creature" | "boss";
 
@@ -25,14 +30,6 @@ export type MiniWorldChangeCategory =
   | "hunt"
   | "seasonal";
 
-/**
- * "guide-npc" items have a documented, exact Guide NPC reply for every state (see
- * lib/parser/guideMessages.ts) — those are populated by pasting a chat log above and are
- * read-only in the grid. "manual" items have no such source (no public API or
- * consistently-worded NPC/board text covers them) and stay directly editable.
- */
-export type MiniWorldChangeSource = "manual" | "guide-npc";
-
 export interface MiniWorldChangeDefinition {
   id: string;
   label: string;
@@ -40,7 +37,6 @@ export interface MiniWorldChangeDefinition {
   emoji: string;
   category: MiniWorldChangeCategory;
   controlType: MiniWorldChangeControlType;
-  source: MiniWorldChangeSource;
   description: string;
   /** Suggested options for "location" / "creature" / "boss" control types, if any are known. */
   suggestions?: string[];
