@@ -126,6 +126,27 @@ interface ResourceState<T> {
 }
 
 /**
+ * A handful of live-data fetches firing in parallel on first paint occasionally trips a
+ * transient rate-limit/edge hiccup on the external APIs (observed in production — an
+ * immediate retry always recovered), so every resource gets one automatic retry before
+ * surfacing an error to the user.
+ */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 900): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
  * Runs an async fetcher, exposing loading/error state and a manual `refresh`. Never
  * throws — a failed fetch just leaves `error` set so the rest of the dashboard (which is
  * mostly manual/local data) keeps working. `key` changes (e.g. a different world) trigger
@@ -152,7 +173,7 @@ function useAsyncResource<T>(key: string | null, fetcher: (forceRefresh: boolean
     let cancelled = false;
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    fetcher(refreshToken > 0)
+    withRetry(() => fetcher(refreshToken > 0))
       .then((data) => {
         if (cancelled) return;
         setState({ data, isLoading: false, error: null });
