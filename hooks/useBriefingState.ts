@@ -23,7 +23,7 @@ import { toDateKey } from "@/lib/utils/date";
 import { generateBriefingMessage, generatePlainTextBriefing } from "@/lib/formatter/generateBriefing";
 import type { BriefingLanguage } from "@/lib/formatter/translations";
 
-const FALLBACK_WORLD = "Antica";
+const FALLBACK_WORLD = "Ustebra";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -46,6 +46,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   );
   const [preferredFormat, setPreferredFormatState] = useState<BriefingFormat>("rich");
   const [briefingLanguage, setBriefingLanguageState] = useState<BriefingLanguage>("pt");
+  const [upcomingEventsWindowDays, setUpcomingEventsWindowDaysState] = useState<number>(7);
+  const [viewerTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const hasHydrated = useRef(false);
 
   // Hydrate from localStorage once on mount (client-only to avoid SSR/CSR mismatches; the
@@ -59,6 +61,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     setOverrides(mergeOverridesWithDefaults(savedOverrides, lastWorld, referenceDate));
     setPreferredFormatState(briefingRepository.getPreferredFormat());
     setBriefingLanguageState(briefingRepository.getBriefingLanguage());
+    setUpcomingEventsWindowDaysState(briefingRepository.getUpcomingEventsWindowDays());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -186,6 +189,11 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     briefingRepository.setBriefingLanguage(language);
   }, []);
 
+  const setUpcomingEventsWindowDays = useCallback((days: number) => {
+    setUpcomingEventsWindowDaysState(days);
+    briefingRepository.setUpcomingEventsWindowDays(days);
+  }, []);
+
   // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
   // hand-edited (updatedAt === null) or was itself previously filled from this same feed
   // (isLive === true), so a manual correction always sticks. Mapping: "sell price" (what
@@ -245,6 +253,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       upcomingEvents,
       drome,
       language: briefingLanguage,
+      viewerTimeZone,
+      upcomingEventsWindowDays,
     }),
     [
       world,
@@ -256,6 +266,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       upcomingEvents,
       drome,
       briefingLanguage,
+      viewerTimeZone,
+      upcomingEventsWindowDays,
     ],
   );
 
@@ -296,6 +308,9 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     setPreferredFormat,
     briefingLanguage,
     setBriefingLanguage,
+    upcomingEventsWindowDays,
+    setUpcomingEventsWindowDays,
+    viewerTimeZone,
   };
 }
 

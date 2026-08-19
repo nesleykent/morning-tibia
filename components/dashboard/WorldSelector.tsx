@@ -23,6 +23,7 @@ const FALLBACK_WORLDS = [
   "Ombra",
   "Secura",
   "Solidera",
+  "Ustebra",
   "Wintera",
 ];
 

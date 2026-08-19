@@ -92,7 +92,11 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
         <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
         <ActiveEventsCard events={state.activeEvents} />
-        <UpcomingEventsCard events={state.upcomingEvents} />
+        <UpcomingEventsCard
+          events={state.upcomingEvents}
+          windowDays={state.upcomingEventsWindowDays}
+          onWindowDaysChange={state.setUpcomingEventsWindowDays}
+        />
       </div>
 
       <MiniWorldChangeGrid

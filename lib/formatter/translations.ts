@@ -16,31 +16,37 @@ export interface BriefingTranslation {
   boostedCreature: string;
   boostedBoss: string;
   boostedRegion: string;
+  merchantYasir: string;
+  merchantRashid: string;
   warzoneToday: string;
   tibiaDrome: string;
   stageOrdinal: (n: 1 | 2 | 3) => string;
   noAchievements: string;
+  noActiveEvents: string;
   noUpcomingEvents: string;
 }
 
 const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
   pt: {
-    greeting: (world) => `🌞Bom dia ${world}!`,
+    greeting: (world) => `Bom dia, ${world}!`,
     sectionStatus: "EVENTOS ATIVOS E STATUS DO DIA",
     sectionMarket: "COMERCIANTES E CÂMBIO DO DIA",
     sectionAchievements: "ACHIEVEMENTS E BOSSES",
-    sectionNextEvents: "NEXT EVENTOS",
+    sectionNextEvents: "PRÓXIMOS EVENTOS",
     boostedCreature: "CRIATURA BOOSTADA",
     boostedBoss: "BOSS BOOSTADO",
     boostedRegion: "Região boostada",
-    warzoneToday: "Warzone hoje",
-    tibiaDrome: "Tibia Drome",
+    merchantYasir: "YASIR",
+    merchantRashid: "RASHID",
+    warzoneToday: "WARZONE",
+    tibiaDrome: "TIBIA DROME",
     stageOrdinal: (n) => `${n}º Estágio`,
-    noAchievements: "Nenhuma mudança registrada hoje.",
+    noAchievements: "Nenhuma mudança ativa identificada hoje.",
+    noActiveEvents: "Nenhum evento ativo no momento.",
     noUpcomingEvents: "Nenhum evento programado no momento.",
   },
   en: {
-    greeting: (world) => `🌞Good morning ${world}!`,
+    greeting: (world) => `Good morning, ${world}!`,
     sectionStatus: "TODAY'S ACTIVE EVENTS & STATUS",
     sectionMarket: "MERCHANTS & DAILY EXCHANGE",
     sectionAchievements: "ACHIEVEMENTS & BOSSES",
@@ -48,14 +54,17 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     boostedCreature: "BOOSTED CREATURE",
     boostedBoss: "BOOSTED BOSS",
     boostedRegion: "Boosted region",
-    warzoneToday: "Warzone today",
-    tibiaDrome: "Tibia Drome",
+    merchantYasir: "YASIR",
+    merchantRashid: "RASHID",
+    warzoneToday: "WARZONE",
+    tibiaDrome: "TIBIA DROME",
     stageOrdinal: (n) => `Stage ${n}`,
-    noAchievements: "No changes recorded today.",
+    noAchievements: "No active changes identified today.",
+    noActiveEvents: "No active events right now.",
     noUpcomingEvents: "No events scheduled right now.",
   },
   es: {
-    greeting: (world) => `🌞¡Buenos días ${world}!`,
+    greeting: (world) => `¡Buenos días, ${world}!`,
     sectionStatus: "EVENTOS ACTIVOS Y ESTADO DEL DÍA",
     sectionMarket: "COMERCIANTES Y CAMBIO DEL DÍA",
     sectionAchievements: "LOGROS Y JEFES",
@@ -63,14 +72,17 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     boostedCreature: "CRIATURA POTENCIADA",
     boostedBoss: "JEFE POTENCIADO",
     boostedRegion: "Región potenciada",
-    warzoneToday: "Warzone de hoy",
-    tibiaDrome: "Tibia Drome",
+    merchantYasir: "YASIR",
+    merchantRashid: "RASHID",
+    warzoneToday: "WARZONE",
+    tibiaDrome: "TIBIA DROME",
     stageOrdinal: (n) => `Etapa ${n}`,
-    noAchievements: "No se registraron cambios hoy.",
+    noAchievements: "No se identificaron cambios activos hoy.",
+    noActiveEvents: "No hay eventos activos ahora mismo.",
     noUpcomingEvents: "No hay eventos programados por ahora.",
   },
   pl: {
-    greeting: (world) => `🌞Dzień dobry ${world}!`,
+    greeting: (world) => `Dzień dobry, ${world}!`,
     sectionStatus: "AKTYWNE WYDARZENIA I STATUS DNIA",
     sectionMarket: "KUPCY I KURS DNIA",
     sectionAchievements: "OSIĄGNIĘCIA I BOSSOWIE",
@@ -78,10 +90,13 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     boostedCreature: "WZMOCNIONE STWORZENIE",
     boostedBoss: "WZMOCNIONY BOSS",
     boostedRegion: "Wzmocniony region",
-    warzoneToday: "Warzone dzisiaj",
-    tibiaDrome: "Tibia Drome",
+    merchantYasir: "YASIR",
+    merchantRashid: "RASHID",
+    warzoneToday: "WARZONE",
+    tibiaDrome: "TIBIA DROME",
     stageOrdinal: (n) => `Etap ${n}`,
-    noAchievements: "Dziś nie odnotowano żadnych zmian.",
+    noAchievements: "Dziś nie zidentyfikowano żadnych aktywnych zmian.",
+    noActiveEvents: "Obecnie brak aktywnych wydarzeń.",
     noUpcomingEvents: "Obecnie brak zaplanowanych wydarzeń.",
   },
 };

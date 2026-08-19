@@ -5,6 +5,6 @@
  */
 export interface DromeRotationInfo {
   rotationNumber: string | null;
-  startedAgo: string | null;
-  nextRotationIn: string | null;
+  /** ISO timestamp for when the current rotation ends (== when the next one starts). */
+  endsAt: string | null;
 }

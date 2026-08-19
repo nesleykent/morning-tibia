@@ -7,12 +7,22 @@ import type { DromeRotationInfo } from "@/types/drome";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
+import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
+import { eventEmoji } from "./eventEmoji";
+import {
+  formatActiveEventLine,
+  formatDromeLine,
+  formatMarketPriceLabel,
+  formatUpcomingEventLine,
+  notAvailableText,
+} from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 
 export type { BriefingLanguage } from "./translations";
 
 export interface BriefingInput {
   world: string;
+  /** "Now", for both the header date and all relative-date/deadline math. */
   referenceDate: Date;
   overrides: BriefingOverrides;
   boostedCreature: BoostedEntity | null;
@@ -22,6 +32,11 @@ export interface BriefingInput {
   upcomingEvents: UpcomingEvent[];
   drome: DromeRotationInfo | null;
   language: BriefingLanguage;
+  /** IANA zone the viewer is in — used for the Drome deadline's clock time. */
+  viewerTimeZone: string;
+  /** How many days ahead the briefing text's upcoming-events section reaches (5/7/14) —
+   * events further out than this are left off, so the section can't grow unbounded. */
+  upcomingEventsWindowDays: number;
 }
 
 export interface AchievementLine {
@@ -36,23 +51,31 @@ export interface MarketPriceLine {
   trendSymbol: string;
 }
 
+export interface EventLine {
+  emoji: string;
+  title: string;
+  detail: string;
+}
+
 export interface BriefingModel {
   language: BriefingLanguage;
   t: BriefingTranslation;
   dateLabel: string;
   worldName: string;
-  greeting: string;
+  greetingText: string;
   boostedCreatureLabel: string;
   boostedBossLabel: string;
-  boostedRegionLabel: string;
-  activeEventLines: string[];
+  /** null means the field is genuinely not applicable today and the line is omitted. */
+  boostedRegionValue: string | null;
+  activeEventLines: EventLine[];
   dromeLine: string | null;
   warzoneLine: string | null;
   yasirLabel: string;
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
   achievementLines: AchievementLine[];
-  upcomingEventLines: string[];
+  upcomingEventLines: EventLine[];
+  upcomingEventsHiddenCount: number;
 }
 
 const NUMBER_LOCALE: Record<BriefingLanguage, string> = {
@@ -62,6 +85,16 @@ const NUMBER_LOCALE: Record<BriefingLanguage, string> = {
   pl: "pl-PL",
 };
 
+const TREND_SYMBOL: Record<"up" | "down" | "unchanged", string> = {
+  up: "⬆️",
+  down: "⬇️",
+  unchanged: "➡️",
+};
+
+export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
+  return TREND_SYMBOL[trend];
+}
+
 function formatAchievementValue(
   state: MiniWorldChangeState,
   detail: string,
@@ -70,17 +103,11 @@ function formatAchievementValue(
   if (state === "unknown") return null;
   if (state === "inactive") return "❌";
   if (state === "active") return "✅";
-  if (state === "stage1") return `✅ - ${t.stageOrdinal(1)}`;
-  if (state === "stage2") return `✅ - ${t.stageOrdinal(2)}`;
-  if (state === "stage3") return `✅ - ${t.stageOrdinal(3)}`;
+  if (state === "stage1") return `✅ ${t.stageOrdinal(1)}`;
+  if (state === "stage2") return `✅ ${t.stageOrdinal(2)}`;
+  if (state === "stage3") return `✅ ${t.stageOrdinal(3)}`;
   // location / creature / boss controlType values.
-  return detail.trim().length > 0 ? detail.trim() : "—";
-}
-
-export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
-  if (trend === "up") return "🔺";
-  if (trend === "down") return "🔻";
-  return "➖";
+  return detail.trim().length > 0 ? detail.trim() : null;
 }
 
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
@@ -106,10 +133,10 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
   }
 
-  const marketPriceLines: MarketPriceLine[] = Object.values(overrides.marketPrices)
-    .filter((price) => price.value !== null)
-    .map((price) => ({
-      label: price.label,
+  const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
+    .filter(([, price]) => price.value !== null)
+    .map(([id, price]) => ({
+      label: formatMarketPriceLabel(id as Parameters<typeof formatMarketPriceLabel>[0], input.language),
       valueLabel: `${price.value!.toLocaleString(locale)} gp`,
       trendSymbol: trendSymbol(price.trend),
     }));
@@ -127,33 +154,55 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
         }${warzone.timezone ? ` [${warzone.timezone}]` : ""}`
       : null;
 
-  const drome = input.drome;
   const dromeLine =
-    drome && (drome.rotationNumber || drome.nextRotationIn)
-      ? [
-          drome.rotationNumber ? `Rotation ${drome.rotationNumber}` : null,
-          drome.nextRotationIn ? `next in ${drome.nextRotationIn}` : null,
-        ]
-          .filter(Boolean)
-          .join(" — ")
+    input.drome?.rotationNumber && input.drome.endsAt
+      ? formatDromeLine(
+          input.drome.rotationNumber,
+          input.drome.endsAt,
+          input.language,
+          input.referenceDate,
+          input.viewerTimeZone,
+        )
       : null;
+
+  const activeEventLines: EventLine[] = input.activeEvents.map((event) => ({
+    emoji: eventEmoji(event.title),
+    title: event.title,
+    detail: formatActiveEventLine(event, input.language),
+  }));
+
+  const sortedUpcoming = input.upcomingEvents; // already sorted ascending by the data source
+  const visibleUpcoming = sortedUpcoming.filter((event) => event.daysUntil <= input.upcomingEventsWindowDays);
+  const upcomingEventLines: EventLine[] = visibleUpcoming.map((event) => ({
+    emoji: eventEmoji(event.title),
+    title: event.title,
+    detail: formatUpcomingEventLine(event, input.language),
+  }));
+
+  const yasirLocation = overrides.merchants.yasir?.location.trim();
+  const rashidLocation = overrides.merchants.rashid?.location.trim();
 
   return {
     language: input.language,
     t,
     dateLabel: toBriefingDate(input.referenceDate),
     worldName: input.world,
-    greeting: t.greeting(input.world),
-    boostedCreatureLabel: input.boostedCreature?.name ?? "—",
-    boostedBossLabel: input.boostedBoss?.name ?? "—",
-    boostedRegionLabel: overrides.boostedRegion.trim() || "—",
-    activeEventLines: input.activeEvents.map((event) => `${event.title}: ${event.detail}`),
+    greetingText: t.greeting(input.world),
+    boostedCreatureLabel: input.boostedCreature?.name ?? notAvailableText(input.language),
+    boostedBossLabel: input.boostedBoss?.name ?? notAvailableText(input.language),
+    boostedRegionValue: overrides.boostedRegion.trim() || null,
+    activeEventLines,
     dromeLine,
     warzoneLine,
-    yasirLabel: overrides.merchants.yasir?.location.trim() || "—",
-    rashidLabel: overrides.merchants.rashid?.location.trim() || "—",
+    yasirLabel: yasirLocation || notAvailableText(input.language),
+    rashidLabel: rashidLocation || notAvailableText(input.language),
     marketPriceLines,
     achievementLines,
-    upcomingEventLines: input.upcomingEvents.map((event) => `${event.title}: ${event.detail}`),
+    upcomingEventLines,
+    upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
   };
 }
+
+// Re-exported so components can build their own zone-aware date/time labels the same way
+// the formatter does (e.g. the Drome card showing "ends 21/08 at 23:00" outside the briefing text).
+export { formatShortDateInZone, formatTimeInZone };

@@ -7,10 +7,14 @@ import type { WorldChangeState } from "@/types/worldChange";
  * per-change articles (community-documented under CC-BY-SA), not from any fansite's
  * parsing tool.
  *
- * Only World Changes with a documented Guide reply are listed here — TibiaWiki doesn't
- * quote verbatim Guide text for Mage Tower, Master's Voice, Swamp Fever, Thornfire,
- * Horse Station, or Insectoid Invasion, so those stay manual-only rather than guessing
- * at wording.
+ * Only World Changes with a documented Guide reply are listed here — no verbatim text is
+ * publicly findable anywhere for Swamp Fever, Horse Station, or Insectoid Invasion (both
+ * TibiaWiki and a broader web search came up empty), so those stay manual-only rather
+ * than guessing at wording. Mage Tower and Thornfire are sourced from a secondary fan
+ * reference (tibio-maniak.blogspot.com / a TibiaQA accepted answer) rather than TibiaWiki
+ * itself, since TibiaWiki doesn't quote them — flagged per entry. Master's Voice only has
+ * one state documented (the dungeon-unavailable message, from the Mad Mage creature
+ * page's History section), so only that state auto-detects.
  *
  * A few source quotes end mid-sentence on the wiki itself (Deeplings, Hive Born — the
  * numeric "X actions taken" portion varies and isn't quotable). Those entries use the
@@ -207,5 +211,50 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     text: "The hives defences have fallen. Its armies are confused and in shambles. All structures are open for invaders.",
     changeId: "hive-born",
     state: "stage3",
+  },
+  // Mage Tower — source: tibio-maniak.blogspot.com (not TibiaWiki; moderate confidence,
+  // not cross-verified elsewhere, may not cover every possible state)
+  {
+    text: "The raging mage is currently in his tower in Zao and experimenting with the portal into another dimension.",
+    changeId: "mage-tower",
+    state: "active",
+  },
+  {
+    text: "The raging mage in Zao has been slain and the portal into another dimension will close.",
+    changeId: "mage-tower",
+    state: "inactive",
+  },
+  // Master's Voice — source: the Mad Mage creature page's "History" section on
+  // TibiaWiki. Only this one state is documented anywhere publicly.
+  {
+    text: "The strange tower with the servants on Edron currently seems to be completely impassable because of a severe slime outbreak.",
+    changeId: "masters-voice",
+    state: "inactive",
+  },
+  // Thornfire — source: TibiaQA accepted answer (not TibiaWiki itself, but a complete,
+  // explicit 4-message transcript). Stage 4 (recovering) reuses "stage2" since our model
+  // only has 3 escalation stages — it's a de-escalation after the stage3 peak, not a
+  // literal fourth stage, and the detail note carries the distinction.
+  {
+    text: "Countless firestarters are in their cells bellow Shadowthorn, but right now they are safely guarded.",
+    changeId: "thornfire",
+    state: "stage1",
+  },
+  {
+    text: "Most guards and elves preventing the firestarters from breaking out have been slain. Shadowthorn is in danger of being set ablaze.",
+    changeId: "thornfire",
+    state: "stage2",
+    detail: "Breaking out",
+  },
+  {
+    text: "Shadowthorn burns, and the followers of the bog with it!",
+    changeId: "thornfire",
+    state: "stage3",
+  },
+  {
+    text: "Shadowthorn burns, but the Tibians have been successfully fighting the fire as well as the firefighters.",
+    changeId: "thornfire",
+    state: "stage2",
+    detail: "Recovering — fire being fought",
   },
 ];

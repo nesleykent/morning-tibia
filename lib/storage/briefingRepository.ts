@@ -5,6 +5,8 @@ import { storageKeys } from "./storageKeys";
 export type BriefingFormat = "rich" | "plain";
 
 const VALID_LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
+export const UPCOMING_EVENTS_WINDOW_OPTIONS = [5, 7, 14] as const;
+const DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS = 7;
 
 /**
  * Everything the dashboard needs to persist. Kept as an interface so a future
@@ -18,6 +20,9 @@ export interface BriefingRepository {
   setPreferredFormat(format: BriefingFormat): void;
   getBriefingLanguage(): BriefingLanguage;
   setBriefingLanguage(language: BriefingLanguage): void;
+  /** How many days ahead the briefing text's upcoming-events section reaches (5/7/14). */
+  getUpcomingEventsWindowDays(): number;
+  setUpcomingEventsWindowDays(days: number): void;
   getOverrides(world: string, dateKey: string): BriefingOverrides | null;
   setOverrides(overrides: BriefingOverrides): void;
   clearOverrides(world: string, dateKey: string): void;
@@ -79,6 +84,18 @@ export class LocalStorageBriefingRepository implements BriefingRepository {
 
   setBriefingLanguage(language: BriefingLanguage): void {
     safeWrite(storageKeys.briefingLanguage, language);
+  }
+
+  getUpcomingEventsWindowDays(): number {
+    const raw = safeRead(storageKeys.upcomingEventsWindowDays);
+    const parsed = raw === null ? NaN : Number(raw);
+    return (UPCOMING_EVENTS_WINDOW_OPTIONS as readonly number[]).includes(parsed)
+      ? parsed
+      : DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS;
+  }
+
+  setUpcomingEventsWindowDays(days: number): void {
+    safeWrite(storageKeys.upcomingEventsWindowDays, String(days));
   }
 
   getOverrides(world: string, dateKey: string): BriefingOverrides | null {

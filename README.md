@@ -20,16 +20,17 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 2. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
    on the World Board at the Adventurer's Guild) and World Changes (checked in-game by
    asking a Guide NPC) are different game systems with different in-game sources, so they
-   get separate sections, separate data models, and separate import flows — never merged.
-   A dedicated **Import from game text** panel — front and center on the dashboard, not
-   hidden behind a button — recreates Tibiopedia's paste-and-parse workflow with original
-   code: a "World Board" tab parses a pasted server log into Mini World Changes, and a
-   "Guide NPC chat" tab parses a pasted chat log into World Changes. The **9 World
-   Changes with an exact, documented Guide NPC reply for every state** (Hive Born,
-   Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship,
-   Overhunting) are populated *only* that way and shown read-only; everything else in
-   both lists has no such source and stays directly editable. See
-   [lib/parser](lib/parser).
+   get separate sections and separate data models — never merged. A dedicated **Import
+   from game text** panel — front and center on the dashboard, not hidden behind a
+   button — recreates Tibiopedia's paste-and-parse workflow with original code: a single
+   paste box accepts either or both logs at once (a World Board server log and/or a Guide
+   NPC chat log) and both catalogs are checked automatically, since the two mechanics'
+   source text never collides. The **12 World Changes with an exact, documented Guide NPC
+   reply for at least one state** (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War,
+   Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice,
+   Thornfire) are populated *only* that way and shown read-only; the rest (Swamp Fever,
+   Horse Station, Insectoid Invasion) have no publicly documented Guide NPC reply text and
+   stay directly editable. See [lib/parser](lib/parser).
 3. **Merchants & market** — Yasir and Rashid's location (Rashid defaults to the known
    weekday rotation, always editable), live Tibia Coin buy/sell, Gold Token, and Silver
    Token prices with automatic up/down/unchanged trend indicators and an "X minutes ago"
@@ -57,8 +58,8 @@ defaults and stay manually editable.
 | Tibia Coin, Gold Token, Silver Token buy/sell prices | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as a freshness label ("Xm ago"). "Sell price" (what you receive) maps to the current highest buy offer; "buy price" (what you pay) maps to the current lowest sell offer. |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation. Best-effort — doesn't account for the ~10:00 CET server-save rollover — always overridable. |
-| 9 specific World Changes (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| The rest of the World Changes, all Mini World Changes, Yasir's location, boosted region | Manual, local | No reliable public API or consistently-worded source covers these. The World Board import panel can still auto-fill many Mini World Changes from pasted board text; both grids stay directly editable regardless. |
+| 12 specific World Changes (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
+| The rest of the World Changes (Swamp Fever, Horse Station, Insectoid Invasion), all Mini World Changes, Yasir's location, boosted region | Manual, local | No reliable public API or consistently-worded source covers these. The import panel can still auto-fill many Mini World Changes from pasted board text; both grids stay directly editable regardless. |
 
 ## Architecture
 
@@ -85,7 +86,9 @@ lib/
                    tested), wikiContentClient.ts (build-time-only TibiaWiki fetcher, unit
                    tested), marketItemIds.ts
   parser/        — boardMessages.ts / guideMessages.ts (verbatim catalogs, one per
-                   mechanic) + parseBoardLog.ts / parseGuideLog.ts, all unit tested
+                   mechanic) + parseBoardLog.ts / parseGuideLog.ts, combined into a single
+                   parseGameText.ts so the import panel can check one paste against both
+                   catalogs at once — all unit tested
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
                    (PT/EN/ES/PL section labels), unit tested
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
@@ -148,9 +151,14 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 
 ## Current limitations
 
-- Most Mini World Changes and World Changes, Yasir's location, and boosted region are
-  manual by design — there is no reliable public API for them (9 World Changes are
-  covered by the Guide NPC parser instead, see the data source table above).
+- Most Mini World Changes and 3 World Changes (Swamp Fever, Horse Station, Insectoid
+  Invasion), plus Yasir's location and boosted region, are manual by design — there is no
+  reliable public API for them and no publicly documented Guide NPC reply text to parse
+  (12 other World Changes are covered by the Guide NPC parser instead, see the data
+  source table above).
+- The upcoming-events section of the generated briefing only reaches as far as the
+  selected day window (5/7/14 days) — further-out events still show on the dashboard's
+  own Upcoming events card, just not in the generated text.
 - Rashid's location default is a fixed weekday rotation; it can be briefly wrong right
   around the ~10:00 CET server-save boundary.
 - Timezone conversion for the warzone schedule compares UTC offsets for a single

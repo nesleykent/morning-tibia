@@ -1,8 +1,9 @@
 import "server-only";
-import type { ActiveEvent, UpcomingEvent } from "@/types/event";
+import type { ActiveEvent, EventCertainty, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 
 const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Build-time only. Fetches rendered HTML from TibiaWiki's "gadget" pages — small,
@@ -60,27 +61,64 @@ function stripTags(html: string): string {
   return decodeEntities(html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 }
 
-export async function fetchActiveEvents(): Promise<ActiveEvent[]> {
+/** The gadget's own "N days" countdown, already computed by the wiki relative to its
+ * render time — using it directly (rather than parsing "on Month Day" and guessing the
+ * year) avoids any year-rollover ambiguity. */
+function extractDaysNumber(strippedBlockText: string): number {
+  const match = stripTags(strippedBlockText).match(/(\d+)\s*days?/i);
+  return match ? Number(match[1]) : 0;
+}
+
+export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEvent[]> {
   const html = await fetchWikiPageHtml("Active_Events");
   if (!html) return [];
   return extractDivBlocks(html, "active").map((block, index) => {
     const { title, href } = extractLinkTitleAndHref(block);
-    const detail = stripTags(block.replace(/<a[^>]*>.*?<\/a>/, "")).replace(/^\s*is\s*/i, "");
-    return { id: `active-${index}-${title}`, title, detail, url: href };
+    const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
+    const daysRemaining = extractDaysNumber(strippedBlock);
+    const endAt = new Date(referenceDate.getTime() + daysRemaining * DAY_MS).toISOString();
+    return { id: `active-${index}-${title}`, title, url: href, endAt, daysRemaining };
   });
 }
 
-export async function fetchUpcomingEvents(): Promise<UpcomingEvent[]> {
+export async function fetchUpcomingEvents(referenceDate: Date): Promise<UpcomingEvent[]> {
   const html = await fetchWikiPageHtml("Upcoming_Events");
   if (!html) return [];
-  return extractDivBlocks(html, "upcoming").map((block, index) => {
+
+  const raw = extractDivBlocks(html, "upcoming").map((block, index) => {
     const { title, href } = extractLinkTitleAndHref(block);
-    const detail = stripTags(block.replace(/<a[^>]*>.*?<\/a>/, "")).replace(/^\s*will\s*/i, "");
-    return { id: `upcoming-${index}-${title}`, title, detail, url: href };
+    const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
+    const daysUntil = extractDaysNumber(strippedBlock);
+    const certainty: EventCertainty = /\bmight\b/i.test(strippedBlock) ? "estimated" : "confirmed";
+    const startAt = new Date(referenceDate.getTime() + daysUntil * DAY_MS).toISOString();
+    return { id: `upcoming-${index}-${title}`, title, url: href, startAt, daysUntil, certainty };
+  });
+
+  // Sort chronologically — don't rely on the wiki's own DOM order.
+  raw.sort((a, b) => a.daysUntil - b.daysUntil);
+
+  // Some recurring events (e.g. a two-window seasonal sale) appear more than once with
+  // the identical title — tag each occurrence so the formatter can label them distinctly
+  // instead of presenting apparent duplicates with no context.
+  const occurrenceCounts = new Map<string, number>();
+  for (const event of raw) occurrenceCounts.set(event.title, (occurrenceCounts.get(event.title) ?? 0) + 1);
+  const seenSoFar = new Map<string, number>();
+
+  return raw.map((event) => {
+    const occurrenceIndex = seenSoFar.get(event.title) ?? 0;
+    seenSoFar.set(event.title, occurrenceIndex + 1);
+    return { ...event, occurrenceIndex, occurrenceCount: occurrenceCounts.get(event.title)! };
   });
 }
 
-export async function fetchDromeRotation(): Promise<DromeRotationInfo | null> {
+function parseDurationToMinutes(text: string | null): number | null {
+  if (!text) return null;
+  const match = text.match(/(\d+)\s*days?,\s*(\d+)h,\s*(\d+)\s*min/i);
+  if (!match) return null;
+  return Number(match[1]) * 24 * 60 + Number(match[2]) * 60 + Number(match[3]);
+}
+
+export async function fetchDromeRotation(referenceDate: Date): Promise<DromeRotationInfo | null> {
   const html = await fetchWikiPageHtml("Tibiadrome/Rotation");
   if (!html) return null;
 
@@ -93,9 +131,12 @@ export async function fetchDromeRotation(): Promise<DromeRotationInfo | null> {
   // Each call finds the first (leftmost) match, and "Current rotation</th>" occurs
   // earlier in the source than "Current rotation started</th>", so order matters here
   // but no lookahead is needed to keep them from colliding.
-  return {
-    rotationNumber: extractRow("Current rotation"),
-    startedAgo: extractRow("Current rotation started"),
-    nextRotationIn: extractRow("Next rotation starts in"),
-  };
+  const rotationNumber = extractRow("Current rotation");
+  const nextRotationInMinutes = parseDurationToMinutes(extractRow("Next rotation starts in"));
+  const endsAt =
+    nextRotationInMinutes !== null
+      ? new Date(referenceDate.getTime() + nextRotationInMinutes * 60_000).toISOString()
+      : null;
+
+  return { rotationNumber, endsAt };
 }

@@ -4,10 +4,11 @@ import type { WorldChangeDefinition, WorldChangeValue } from "@/types/worldChang
  * World Changes — a larger, longer-running mechanic checked in-game by asking a Guide NPC
  * one of a fixed set of keywords, per TibiaWiki's "World Changes" article. Distinct from
  * "Mini World Changes" (lib/defaults/miniWorldChanges.ts), which are announced on the
- * World Board instead — do not merge the two lists. Nine of these have a documented,
- * verbatim Guide NPC reply for every state (lib/parser/guideMessages.ts) and are
- * source: "guide-npc" — populated only by pasting a chat log. The rest have no such
- * documented text and stay source: "manual".
+ * World Board instead — do not merge the two lists. 12 of these have at least one
+ * documented, verbatim Guide NPC reply (lib/parser/guideMessages.ts) and are source:
+ * "guide-npc" — populated only by pasting a chat log (a couple only have partial state
+ * coverage documented — see their description). Swamp Fever and Horse Station have no
+ * verbatim Guide text findable anywhere publicly and stay source: "manual".
  */
 export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
@@ -26,8 +27,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     shortLabel: "Mage Tower",
     emoji: "🗼",
     controlType: "toggle",
-    source: "manual",
-    description: "Whether the Mage's Tower world change is currently active in Zao Steppe.",
+    source: "guide-npc",
+    description: "Whether the Raging Mage's portal is currently active in Zao Steppe.",
   },
   {
     id: "masters-voice",
@@ -35,8 +36,9 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     shortLabel: "Master's Voice",
     emoji: "📯",
     controlType: "toggle",
-    source: "manual",
-    description: "Whether the Mad Mage Dungeon world change is currently active in Edron.",
+    source: "guide-npc",
+    description:
+      "Whether the Mad Mage Dungeon in Edron is accessible. Only the \"unavailable\" reply is documented, so only that state auto-detects.",
   },
   {
     id: "swamp-fever",
@@ -52,9 +54,10 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     label: "Thornfire",
     shortLabel: "Thornfire",
     emoji: "🌵",
-    controlType: "toggle",
-    source: "manual",
-    description: "Whether the Thornfire world change is currently active in Shadowthorn.",
+    controlType: "stage",
+    source: "guide-npc",
+    description:
+      "Shadowthorn firestarter containment: Stage 1 guarded, Stage 2 breaking out, Stage 3 burning, Stage 2 (recovering) once the fire is being fought back.",
   },
   {
     id: "twisted-waters",

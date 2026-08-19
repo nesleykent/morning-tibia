@@ -3,8 +3,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { DromeRotationInfo } from "@/types/drome";
+import { formatShortDateInZone, formatTimeInZone } from "@/lib/formatter/dateFormat";
 
 export function DromeCard({ drome }: { drome: DromeRotationInfo | null }) {
+  const viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const endsAtDate = drome?.endsAt ? new Date(drome.endsAt) : null;
+
   return (
     <Card>
       <CardHeader>
@@ -24,15 +28,13 @@ export function DromeCard({ drome }: { drome: DromeRotationInfo | null }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {drome && (drome.rotationNumber || drome.nextRotationIn) ? (
+        {drome?.rotationNumber ? (
           <div className="flex flex-wrap items-center gap-2">
-            {drome.rotationNumber && <Badge variant="gold">Rotation {drome.rotationNumber}</Badge>}
-            {drome.startedAgo && (
-              <span className="text-xs text-muted-foreground">Started {drome.startedAgo}</span>
-            )}
-            {drome.nextRotationIn && (
+            <Badge variant="gold">Rotation {drome.rotationNumber}</Badge>
+            {endsAtDate && (
               <span className="text-xs text-muted-foreground">
-                Next in {drome.nextRotationIn}
+                Ends {formatShortDateInZone(endsAtDate, viewerTimeZone)} at{" "}
+                {formatTimeInZone(endsAtDate, viewerTimeZone)}
               </span>
             )}
           </div>

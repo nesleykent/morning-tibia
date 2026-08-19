@@ -37,6 +37,8 @@ function makeInput(
     upcomingEvents: [],
     drome: null,
     language,
+    viewerTimeZone: "America/Sao_Paulo",
+    upcomingEventsWindowDays: 14,
   };
 }
 
@@ -45,15 +47,15 @@ describe("generateBriefingMessage", () => {
     const message = generateBriefingMessage(makeInput());
 
     expect(message).toContain("📌17/08/2026");
-    expect(message).toContain("🌞Bom dia Ustebra!");
-    expect(message).toContain("👾*CRIATURA BOOSTADA:* Gore Horn");
-    expect(message).toContain("👹*BOSS BOOSTADO:* Ratmiral");
-    expect(message).toContain("🗺️*Região boostada:* Venore");
-    expect(message).toContain("💰*YASIR:* Carlin");
-    expect(message).toContain("👳🏼‍♂️*RASHID:* Svargrond");
-    expect(message).toContain("🔥*FURY GATE:* ✅");
-    expect(message).toContain("👾*HIVE BORN:* ✅ - 3º Estágio");
-    expect(message).toContain("📅 *NEXT EVENTOS:*");
+    expect(message).toContain("🌞 Bom dia, Ustebra!");
+    expect(message).toContain("👾 CRIATURA BOOSTADA: Gore Horn");
+    expect(message).toContain("👹 BOSS BOOSTADO: Ratmiral");
+    expect(message).toContain("🗺️ Região boostada: Venore");
+    expect(message).toContain("💰 YASIR: Carlin");
+    expect(message).toContain("👳🏼‍♂️ RASHID: Svargrond");
+    expect(message).toContain("🔥 FURY GATE: ✅");
+    expect(message).toContain("👾 HIVE BORN: ✅ 3º Estágio");
+    expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
   });
 
   it("omits unknown mini world changes always, and inactive ones unless includeAll is set", () => {
@@ -72,7 +74,7 @@ describe("generateBriefingMessage", () => {
     input.overrides.includeAllChanges = true;
     const fullMessage = generateBriefingMessage(input);
     expect(fullMessage).not.toContain("ROSHAMUUL"); // 'unknown' stays hidden even with includeAll
-    expect(fullMessage).toContain("🕷️*SPIDER'S NEST:* ❌");
+    expect(fullMessage).toContain("🕷️ SPIDER'S NEST: ❌");
   });
 
   it("shows a graceful empty state when there are no upcoming events", () => {
@@ -93,24 +95,24 @@ describe("generateBriefingMessage", () => {
       updatedAt: "t",
     };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("🪙*Tibia Coin — sell:* 41.000 gp 🔺");
-    expect(message).not.toContain("Gold Token");
+    expect(message).toContain("🪙 TIBIA COIN VENDENDO: 41.000 gp ⬆️");
+    expect(message).not.toContain("GOLD TOKEN");
   });
 });
 
 describe("language support", () => {
   it("renders section headers, greeting, and stage wording in English", () => {
     const message = generateBriefingMessage(makeInput({}, "en"));
-    expect(message).toContain("🌞Good morning Ustebra!");
-    expect(message).toContain("🌎 *TODAY'S ACTIVE EVENTS & STATUS:*");
-    expect(message).toContain("👾*BOOSTED CREATURE:* Gore Horn");
-    expect(message).toContain("👾*HIVE BORN:* ✅ - Stage 3");
-    expect(message).toContain("📅 *NEXT EVENTS:*");
+    expect(message).toContain("🌞 Good morning, Ustebra!");
+    expect(message).toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
+    expect(message).toContain("👾 BOOSTED CREATURE: Gore Horn");
+    expect(message).toContain("👾 HIVE BORN: ✅ Stage 3");
+    expect(message).toContain("*📅 NEXT EVENTS*");
   });
 
   it("renders Spanish and Polish greetings distinctly", () => {
-    expect(generateBriefingMessage(makeInput({}, "es"))).toContain("🌞¡Buenos días Ustebra!");
-    expect(generateBriefingMessage(makeInput({}, "pl"))).toContain("🌞Dzień dobry Ustebra!");
+    expect(generateBriefingMessage(makeInput({}, "es"))).toContain("🌞 ¡Buenos días, Ustebra!");
+    expect(generateBriefingMessage(makeInput({}, "pl"))).toContain("🌞 Dzień dobry, Ustebra!");
   });
 
   it("keeps merchant names (Yasir/Rashid) untranslated across languages", () => {
