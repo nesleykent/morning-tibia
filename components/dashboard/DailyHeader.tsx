@@ -1,11 +1,13 @@
 "use client";
 
-import { Sunrise, Users, Shield, ArrowLeftRight, MapPin } from "lucide-react";
+import { Sunrise, Users, Shield, ArrowLeftRight, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WorldSelector } from "./WorldSelector";
 import { ToolbarActions } from "./ToolbarActions";
 import type { World, WorldDetail } from "@/types/world";
 import { toBriefingDate } from "@/lib/utils/date";
+import { COMMON_TIME_ZONES } from "@/lib/utils/timezoneList";
 
 interface DailyHeaderProps {
   world: string;
@@ -18,6 +20,9 @@ interface DailyHeaderProps {
   onRefresh: () => void;
   onReset: () => void;
   isRefreshing: boolean;
+  viewerTimeZoneOverride: string | null;
+  autoViewerTimeZone: string;
+  onViewerTimeZoneChange: (timeZone: string | null) => void;
 }
 
 export function DailyHeader({
@@ -31,7 +36,13 @@ export function DailyHeader({
   onRefresh,
   onReset,
   isRefreshing,
+  viewerTimeZoneOverride,
+  autoViewerTimeZone,
+  onViewerTimeZoneChange,
 }: DailyHeaderProps) {
+  const timeZoneOptions = COMMON_TIME_ZONES.some((tz) => tz.value === autoViewerTimeZone)
+    ? COMMON_TIME_ZONES
+    : [{ value: autoViewerTimeZone, label: autoViewerTimeZone }, ...COMMON_TIME_ZONES];
   return (
     <header className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -53,6 +64,25 @@ export function DailyHeader({
             isLoading={worldsLoading}
             onChange={onWorldChange}
           />
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <Select
+              value={viewerTimeZoneOverride ?? "auto"}
+              onValueChange={(value) => onViewerTimeZoneChange(value === "auto" ? null : value)}
+            >
+              <SelectTrigger className="h-9 w-[180px]" aria-label="Your timezone (used for the generated briefing)">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto ({autoViewerTimeZone})</SelectItem>
+                {timeZoneOptions.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <ToolbarActions onRefresh={onRefresh} onReset={onReset} isRefreshing={isRefreshing} />
         </div>
       </div>

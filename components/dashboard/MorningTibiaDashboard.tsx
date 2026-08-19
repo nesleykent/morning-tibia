@@ -66,6 +66,9 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         onRefresh={state.refreshLiveData}
         onReset={state.resetOverrides}
         isRefreshing={isRefreshing}
+        viewerTimeZoneOverride={state.viewerTimeZoneOverride}
+        autoViewerTimeZone={state.autoViewerTimeZone}
+        onViewerTimeZoneChange={state.setViewerTimeZoneOverride}
       />
 
       <ImportGameTextCard
@@ -87,8 +90,9 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
           schedule={state.warzoneQuery.data}
           isLoading={state.warzoneQuery.isLoading}
           error={state.warzoneQuery.error}
+          viewerTimeZone={state.viewerTimeZone}
         />
-        <DromeCard drome={state.drome} />
+        <DromeCard drome={state.drome} viewerTimeZone={state.viewerTimeZone} />
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
         <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
         <ActiveEventsCard events={state.activeEvents} />

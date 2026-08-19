@@ -23,6 +23,9 @@ export interface BriefingRepository {
   /** How many days ahead the briefing text's upcoming-events section reaches (5/7/14). */
   getUpcomingEventsWindowDays(): number;
   setUpcomingEventsWindowDays(days: number): void;
+  /** null means "auto — use the browser-detected zone". */
+  getViewerTimeZoneOverride(): string | null;
+  setViewerTimeZoneOverride(timeZone: string | null): void;
   getOverrides(world: string, dateKey: string): BriefingOverrides | null;
   setOverrides(overrides: BriefingOverrides): void;
   clearOverrides(world: string, dateKey: string): void;
@@ -96,6 +99,15 @@ export class LocalStorageBriefingRepository implements BriefingRepository {
 
   setUpcomingEventsWindowDays(days: number): void {
     safeWrite(storageKeys.upcomingEventsWindowDays, String(days));
+  }
+
+  getViewerTimeZoneOverride(): string | null {
+    const raw = safeRead(storageKeys.viewerTimeZoneOverride);
+    return raw === null || raw === "auto" ? null : raw;
+  }
+
+  setViewerTimeZoneOverride(timeZone: string | null): void {
+    safeWrite(storageKeys.viewerTimeZoneOverride, timeZone ?? "auto");
   }
 
   getOverrides(world: string, dateKey: string): BriefingOverrides | null {

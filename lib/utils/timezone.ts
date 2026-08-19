@@ -21,14 +21,6 @@ export function getTimezoneOffsetMinutes(timeZone: string, at: Date): number {
   return sign * (hours * 60 + minutes);
 }
 
-export function getViewerTimeZone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch {
-    return "UTC";
-  }
-}
-
 /**
  * Shifts a "HH:MM" wall-clock time by a number of minutes (positive or negative,
  * wrapping across midnight), appending "(+1d)"/"(-1d)" when it crosses a day boundary.
@@ -65,11 +57,4 @@ export function convertTimeBetweenZones(
 ): string {
   const diffMinutes = getTimezoneOffsetMinutes(toZone, referenceDate) - getTimezoneOffsetMinutes(fromZone, referenceDate);
   return shiftTimeByMinutes(timeStr, diffMinutes);
-}
-
-/** Converts a "HH:MM" time from `sourceTimeZone` to the viewer's browser-local timezone. */
-export function convertTimeToViewerZone(timeStr: string, sourceTimeZone: string, referenceDate: Date): string {
-  const sourceOffsetMin = getTimezoneOffsetMinutes(sourceTimeZone, referenceDate);
-  const localOffsetMin = -referenceDate.getTimezoneOffset();
-  return shiftTimeByMinutes(timeStr, localOffsetMin - sourceOffsetMin);
 }

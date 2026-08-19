@@ -54,8 +54,42 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("💰 YASIR: Carlin");
     expect(message).toContain("👳🏼‍♂️ RASHID: Svargrond");
     expect(message).toContain("🔥 FURY GATE: ✅");
-    expect(message).toContain("👾 HIVE BORN: ✅ 3º Estágio");
+    expect(message).toContain("*🌍 WORLD CHANGES*");
+    expect(message).toContain("👾 HIVE BORN");
+    expect(message).toContain("Todas as estruturas da Hive estão abertas.");
     expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
+  });
+
+  it("renders a rich narrative for World Changes, with detail-driven variants and a fixed extra fact", () => {
+    const input = makeInput();
+    input.overrides.worldChanges["demon-war"] = {
+      id: "demon-war",
+      state: "stage2",
+      detail: "Shaburak dominant",
+      updatedAt: null,
+    };
+    input.overrides.worldChanges["sea-serpent"] = {
+      id: "sea-serpent",
+      state: "stage2",
+      detail: "",
+      updatedAt: null,
+    };
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("Os Shaburak convocaram seus líderes e dominam o complexo.");
+    expect(message).toContain("A Serpent está desperta.");
+    expect(message).toContain("⚔️ Renegade Quara dominam as regiões submersas de Oramond");
+  });
+
+  it("falls back to the compact form for a World Change state with no authored narrative", () => {
+    const input = makeInput();
+    input.overrides.worldChanges["hive-born"] = {
+      id: "hive-born",
+      state: "unknown",
+      detail: "",
+      updatedAt: null,
+    };
+    const message = generateBriefingMessage(input);
+    expect(message).not.toContain("HIVE BORN");
   });
 
   it("omits unknown mini world changes always, and inactive ones unless includeAll is set", () => {
@@ -123,7 +157,7 @@ describe("language support", () => {
     expect(message).toContain("🌞 Good morning, Ustebra!");
     expect(message).toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
     expect(message).toContain("👾 BOOSTED CREATURE: Gore Horn");
-    expect(message).toContain("👾 HIVE BORN: ✅ Stage 3");
+    expect(message).toContain("Every Hive structure is open.");
     expect(message).toContain("*📅 NEXT EVENTS*");
   });
 
@@ -147,10 +181,12 @@ describe("generatePlainTextBriefing", () => {
     expect(plain).not.toContain("*");
     // Decorative section/field emoji should be gone; the ✅/❌ status glyphs stay
     // (they're functional content, not decoration).
-    for (const decorative of ["📌", "🌞", "👾", "👹", "🗺️", "💰", "👳🏼‍♂️", "🎎", "📅", "🪙"]) {
+    for (const decorative of ["📌", "🌞", "👾", "👹", "🗺️", "💰", "👳🏼‍♂️", "🎎", "🌍", "📅", "🪙"]) {
       expect(plain).not.toContain(decorative);
     }
     expect(plain).toContain("CRIATURA BOOSTADA: Gore Horn");
     expect(plain).toContain("FURY GATE: ✅");
+    expect(plain).toContain("HIVE BORN");
+    expect(plain).toContain("Todas as estruturas da Hive estão abertas.");
   });
 });

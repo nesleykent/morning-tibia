@@ -5,5 +5,6 @@ export const storageKeys = {
   preferredFormat: `${NAMESPACE}:preferredFormat`,
   briefingLanguage: `${NAMESPACE}:briefingLanguage`,
   upcomingEventsWindowDays: `${NAMESPACE}:upcomingEventsWindowDays`,
+  viewerTimeZoneOverride: `${NAMESPACE}:viewerTimeZoneOverride`,
   overrides: (world: string, dateKey: string) => `${NAMESPACE}:overrides:${world}:${dateKey}`,
 };

@@ -5,8 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import type { DromeRotationInfo } from "@/types/drome";
 import { formatShortDateInZone, formatTimeInZone } from "@/lib/formatter/dateFormat";
 
-export function DromeCard({ drome }: { drome: DromeRotationInfo | null }) {
-  const viewerTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+interface DromeCardProps {
+  drome: DromeRotationInfo | null;
+  viewerTimeZone: string;
+}
+
+export function DromeCard({ drome, viewerTimeZone }: DromeCardProps) {
   const endsAtDate = drome?.endsAt ? new Date(drome.endsAt) : null;
 
   return (

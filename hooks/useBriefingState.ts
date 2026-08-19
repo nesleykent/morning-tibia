@@ -47,7 +47,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const [preferredFormat, setPreferredFormatState] = useState<BriefingFormat>("rich");
   const [briefingLanguage, setBriefingLanguageState] = useState<BriefingLanguage>("pt");
   const [upcomingEventsWindowDays, setUpcomingEventsWindowDaysState] = useState<number>(7);
-  const [viewerTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [autoViewerTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [viewerTimeZoneOverride, setViewerTimeZoneOverrideState] = useState<string | null>(null);
   const hasHydrated = useRef(false);
 
   // Hydrate from localStorage once on mount (client-only to avoid SSR/CSR mismatches; the
@@ -62,6 +63,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     setPreferredFormatState(briefingRepository.getPreferredFormat());
     setBriefingLanguageState(briefingRepository.getBriefingLanguage());
     setUpcomingEventsWindowDaysState(briefingRepository.getUpcomingEventsWindowDays());
+    setViewerTimeZoneOverrideState(briefingRepository.getViewerTimeZoneOverride());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -194,6 +196,13 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     briefingRepository.setUpcomingEventsWindowDays(days);
   }, []);
 
+  const setViewerTimeZoneOverride = useCallback((timeZone: string | null) => {
+    setViewerTimeZoneOverrideState(timeZone);
+    briefingRepository.setViewerTimeZoneOverride(timeZone);
+  }, []);
+
+  const viewerTimeZone = viewerTimeZoneOverride ?? autoViewerTimeZone;
+
   // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
   // hand-edited (updatedAt === null) or was itself previously filled from this same feed
   // (isLive === true), so a manual correction always sticks. Mapping: "sell price" (what
@@ -311,6 +320,9 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     upcomingEventsWindowDays,
     setUpcomingEventsWindowDays,
     viewerTimeZone,
+    viewerTimeZoneOverride,
+    autoViewerTimeZone,
+    setViewerTimeZoneOverride,
   };
 }
 

@@ -14,9 +14,12 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 
 1. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
    status, boosted creature & boss (with official artwork), boosted region, today's
-   warzone schedule (shown in the world's own timezone *and* yours, since a world's
-   playerbase and a visitor's browser are rarely in the same one), live Tibia Drome
-   rotation, and live official Active/Upcoming events.
+   warzone schedule (shown per-execution as `12:00 (1-2-3)`, in both the world's own
+   timezone and yours), live Tibia Drome rotation, and live official Active/Upcoming
+   events. **A viewer-timezone selector sits at the top of the dashboard**, next to the
+   world selector — the generated briefing text always uses this timezone (auto-detected
+   from the browser by default, manually overridable), since it's written for whoever is
+   about to read it, not for the world's own server clock.
 2. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
    on the World Board at the Adventurer's Guild) and World Changes (checked in-game by
    asking a Guide NPC) are different game systems with different in-game sources, so they
@@ -42,7 +45,14 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 4. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
-   (native share sheet with a clipboard fallback), Reset, and Refresh.
+   (native share sheet with a clipboard fallback), Reset, and Refresh. World Changes get
+   their own dedicated section with a short, human-written narrative per state (what
+   changed, what it unlocks) instead of a bare status symbol — e.g. "Os Shaburak
+   convocaram seus líderes e dominam o complexo," not "✅ Stage 2" — sourced from
+   [`lib/formatter/worldChangeNarratives.ts`](lib/formatter/worldChangeNarratives.ts) and
+   fully localized across all 4 languages; a few (Demon War, Awash, Overhunting,
+   Thornfire) even vary their wording by the parsed detail (which faction is winning,
+   whether today's quota was met).
 5. **Editing workflow** — every editable field is inline-editable; manual corrections are
    saved per world/day in `localStorage` so a recurring user can update quickly without
    re-entering everything. Loading an older save after a data-model change (a renamed
@@ -94,12 +104,14 @@ lib/
                    parseGameText.ts so the import panel can check one paste against both
                    catalogs at once — all unit tested
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
-                   (PT/EN/ES/PL section labels), unit tested
+                   (PT/EN/ES/PL section labels) + worldChangeNarratives.ts (the per-state
+                   narrative text catalog for the World Changes section), unit tested
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
   rashid/        — the weekday rotation calculator, unit tested
   defaults/      — seed data for every manual field, plus mergeOverridesWithDefaults
                    for safely loading an older localStorage save
-  utils/         — cn, date/timezone/time-ago helpers, price-trend calculator
+  utils/         — cn, date/timezone/time-ago helpers, timezoneList.ts (the viewer-
+                   timezone override options), price-trend calculator
 types/           — one file per domain concept (World, MiniWorldChange, WorldChange,
                    Merchant, …) — miniWorldChange.ts and worldChange.ts are intentionally
                    separate types, matching the two distinct in-game mechanics
@@ -222,6 +234,12 @@ The formatter is intentionally isolated from React:
   model two ways — `renderRichBriefing` (WhatsApp-style, `*bold*` + emoji) and
   `renderPlainBriefing` (no markdown, no emoji) — and exports
   `generateBriefingMessage` / `generatePlainTextBriefing` as the public API.
+- [`lib/formatter/worldChangeNarratives.ts`](lib/formatter/worldChangeNarratives.ts) holds
+  the human-written headline/body/extra text per World Change and state, in all 4
+  languages — `getWorldChangeNarrative(changeId, state, detail, language)` — with a
+  `detail`-driven variant for states whose wording depends on parsed context (which
+  faction is winning, whether a daily quota was met). A state with no entry here falls
+  back to the compact ✅/stage line instead of disappearing.
 
 To add a new language, add an entry to `translations.ts`'s `TRANSLATIONS` map and to
 `BRIEFING_LANGUAGES`. To change wording, section order, or add a new section, edit the

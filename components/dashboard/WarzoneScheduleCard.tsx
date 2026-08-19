@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { convertTimeToViewerZone, getViewerTimeZone } from "@/lib/utils/timezone";
+import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import type { WarzoneSchedule } from "@/types/warzone";
 
 interface WarzoneScheduleCardProps {
   schedule: WarzoneSchedule | null;
   isLoading: boolean;
   error: string | null;
+  viewerTimeZone: string;
 }
 
 const MARK_VARIANT: Record<string, "active" | "stage2" | "inactive" | "unknown"> = {
@@ -19,9 +20,7 @@ const MARK_VARIANT: Record<string, "active" | "stage2" | "inactive" | "unknown">
   unknown: "unknown",
 };
 
-export function WarzoneScheduleCard({ schedule, isLoading, error }: WarzoneScheduleCardProps) {
-  // Read once at mount (Intl/Date lookups are impure) — good enough for a same-session label.
-  const [viewerTimeZone] = useState(getViewerTimeZone);
+export function WarzoneScheduleCard({ schedule, isLoading, error, viewerTimeZone }: WarzoneScheduleCardProps) {
   const [referenceDate] = useState(() => new Date());
 
   const showViewerTime = Boolean(schedule?.timezone) && schedule?.timezone !== viewerTimeZone;
@@ -76,11 +75,11 @@ export function WarzoneScheduleCard({ schedule, isLoading, error }: WarzoneSched
                   <span className="font-medium">{execution.scheduleTime}</span>
                   {showViewerTime && schedule.timezone && (
                     <span className="text-muted-foreground">
-                      ({convertTimeToViewerZone(execution.scheduleTime, schedule.timezone, referenceDate)} your time)
+                      ({convertTimeBetweenZones(execution.scheduleTime, schedule.timezone, viewerTimeZone, referenceDate)} your time)
                     </span>
                   )}
                   {execution.warzoneSequence && (
-                    <span className="text-muted-foreground">— {execution.warzoneSequence}</span>
+                    <span className="text-muted-foreground">({execution.warzoneSequence})</span>
                   )}
                 </li>
               ))}

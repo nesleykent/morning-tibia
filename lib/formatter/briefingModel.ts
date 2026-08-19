@@ -18,6 +18,7 @@ import {
   notAvailableText,
 } from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
+import { getWorldChangeNarrative } from "./worldChangeNarratives";
 
 export type { BriefingLanguage } from "./translations";
 
@@ -58,6 +59,14 @@ export interface EventLine {
   detail: string;
 }
 
+export interface WorldChangeLine {
+  emoji: string;
+  label: string;
+  headline: string;
+  body: string | null;
+  extra: { emoji: string; text: string } | null;
+}
+
 export interface BriefingModel {
   language: BriefingLanguage;
   t: BriefingTranslation;
@@ -75,6 +84,7 @@ export interface BriefingModel {
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
   achievementLines: AchievementLine[];
+  worldChangeLines: WorldChangeLine[];
   upcomingEventLines: EventLine[];
   upcomingEventsHiddenCount: number;
 }
@@ -125,13 +135,34 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     if (valueLabel === null) continue;
     achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
   }
+
+  const worldChangeLines: WorldChangeLine[] = [];
   for (const def of WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.worldChanges[def.id];
-    if (!value) continue;
+    if (!value || value.state === "unknown") continue;
     if (value.state === "inactive" && !overrides.includeAllChanges) continue;
+    const narrative = getWorldChangeNarrative(def.id, value.state, value.detail, input.language);
+    if (narrative) {
+      worldChangeLines.push({
+        emoji: def.emoji,
+        label: def.shortLabel.toUpperCase(),
+        headline: narrative.headline,
+        body: narrative.body ?? null,
+        extra: narrative.extra ?? null,
+      });
+      continue;
+    }
+    // Fallback for a state with no authored narrative yet — keep the compact form so
+    // nothing silently disappears from the briefing.
     const valueLabel = formatAchievementValue(value.state, value.detail, t);
     if (valueLabel === null) continue;
-    achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
+    worldChangeLines.push({
+      emoji: def.emoji,
+      label: def.shortLabel.toUpperCase(),
+      headline: valueLabel,
+      body: null,
+      extra: null,
+    });
   }
 
   const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
@@ -204,6 +235,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     rashidLabel: rashidLocation || notAvailableText(input.language),
     marketPriceLines,
     achievementLines,
+    worldChangeLines,
     upcomingEventLines,
     upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
   };

@@ -45,13 +45,28 @@ export function renderRichBriefing(model: BriefingModel): string {
       : `_${t.noAchievements}_`;
   const achievementSection = joinNonEmpty([`*🎎 ${t.sectionAchievements}*`, achievementBody]);
 
+  const worldChangeBody =
+    model.worldChangeLines.length > 0
+      ? model.worldChangeLines
+          .map((line) => {
+            const parts = [`${line.emoji} ${line.label}`, line.headline];
+            if (line.body) parts.push(line.body);
+            if (line.extra) parts.push(`${line.extra.emoji} ${line.extra.text}`);
+            return parts.join("\n");
+          })
+          .join("\n\n")
+      : `_${t.noWorldChanges}_`;
+  const worldChangeSection = joinNonEmpty([`*🌍 ${t.sectionWorldChanges}*`, worldChangeBody]);
+
   const upcomingBody =
     model.upcomingEventLines.length > 0
       ? joinNonEmpty(model.upcomingEventLines.map((line) => `▫️ ${eventLineText(line)}`))
       : `_${t.noUpcomingEvents}_`;
   const upcomingSection = joinNonEmpty([`*📅 ${t.sectionNextEvents}*`, upcomingBody]);
 
-  return [header, statusSection, marketSection, achievementSection, upcomingSection].join("\n\n");
+  return [header, statusSection, marketSection, achievementSection, worldChangeSection, upcomingSection].join(
+    "\n\n",
+  );
 }
 
 /** Strips markdown bold and emoji for platforms that render them poorly (SMS, plain email). */
@@ -82,13 +97,28 @@ export function renderPlainBriefing(model: BriefingModel): string {
       : t.noAchievements;
   const achievementSection = joinNonEmpty([`${t.sectionAchievements}:`, achievementBody]);
 
+  const worldChangeBody =
+    model.worldChangeLines.length > 0
+      ? model.worldChangeLines
+          .map((line) => {
+            const parts = [line.label, line.headline];
+            if (line.body) parts.push(line.body);
+            if (line.extra) parts.push(line.extra.text);
+            return parts.join("\n");
+          })
+          .join("\n\n")
+      : t.noWorldChanges;
+  const worldChangeSection = joinNonEmpty([`${t.sectionWorldChanges}:`, worldChangeBody]);
+
   const upcomingBody =
     model.upcomingEventLines.length > 0
       ? joinNonEmpty(model.upcomingEventLines.map((line) => `${line.title}: ${line.detail}`))
       : t.noUpcomingEvents;
   const upcomingSection = joinNonEmpty([`${t.sectionNextEvents}:`, upcomingBody]);
 
-  return [header, statusSection, marketSection, achievementSection, upcomingSection].join("\n\n");
+  return [header, statusSection, marketSection, achievementSection, worldChangeSection, upcomingSection].join(
+    "\n\n",
+  );
 }
 
 export function generateBriefingMessage(input: BriefingInput): string {
