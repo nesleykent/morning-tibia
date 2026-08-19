@@ -19,6 +19,13 @@ import type { WorldChangeState } from "@/types/worldChange";
  * A few source quotes end mid-sentence on the wiki itself (Deeplings, Hive Born — the
  * numeric "X actions taken" portion varies and isn't quotable). Those entries use the
  * stable leading sentence as a prefix match, which is enough to disambiguate the stage.
+ *
+ * Swamp Fever and Horse Station — source: github.com/s2ward/tibia's Guide Elena
+ * transcript (a community project recording live NPC dialogue verbatim), mirrored at
+ * tibiasecrets.com. Both mechanics likely have more states than are documented here (a
+ * 2012 TibiaWiki Talk-page comment on Swamp Fever describes 3 tiers; only the calmest one
+ * has ever been publicly transcribed) — only the state below auto-detects, the rest stay
+ * manually selectable in the UI.
  */
 export interface GuideMessageEntry {
   text: string;
@@ -256,5 +263,21 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     changeId: "thornfire",
     state: "stage2",
     detail: "Recovering — fire being fought",
+  },
+  // Swamp Fever — source: Guide Elena transcript (github.com/s2ward/tibia). Only the calm
+  // state is documented; the escalation tiers ("medicine direly needed" / "not under
+  // control") have no publicly transcribed verbatim text yet.
+  {
+    text: "The swamp fever in Venore is currently under control and there is enough medicine for everyone.",
+    changeId: "swamp-fever",
+    state: "inactive",
+  },
+  // Horse Station (keyword "Horses") — source: Guide Elena transcript, corroborated by
+  // the Appaloosa/Palomino horse-rental NPCs' own dialogue. Only the "escaped" state is
+  // documented; the normal "horses confined, rentable" reply has never been transcribed.
+  {
+    text: "Horses are on the loose near Thais! As long as there haven't been enough horses chased back into the pen, the service is on hold.",
+    changeId: "horse-station",
+    state: "active",
   },
 ];

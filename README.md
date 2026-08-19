@@ -25,16 +25,20 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    button — recreates Tibiopedia's paste-and-parse workflow with original code: a single
    paste box accepts either or both logs at once (a World Board server log and/or a Guide
    NPC chat log) and both catalogs are checked automatically, since the two mechanics'
-   source text never collides. The **12 World Changes with an exact, documented Guide NPC
-   reply for at least one state** (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War,
-   Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice,
-   Thornfire) are populated *only* that way and shown read-only; the rest (Swamp Fever,
-   Horse Station, Insectoid Invasion) have no publicly documented Guide NPC reply text and
-   stay directly editable. See [lib/parser](lib/parser).
-3. **Merchants & market** — Yasir and Rashid's location (Rashid defaults to the known
-   weekday rotation, always editable), live Tibia Coin buy/sell, Gold Token, and Silver
-   Token prices with automatic up/down/unchanged trend indicators and an "X minutes ago"
-   freshness label for every live price.
+   source text never collides. Every one of the **14 World Changes with an exact,
+   documented Guide NPC reply for at least one state** (Hive Born, Horestis, Deeplings,
+   Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's
+   Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) is populated *only*
+   that way and shown read-only. "Insectoid Invasion" — which TibiaWiki still files under
+   the "World Changes" article for historical reasons — is deliberately left out of this
+   list entirely: it has no Guide NPC keyword at all (confirmed by Guide Elena's own
+   in-game keyword list) and behaves more like a Mini World Change (random, unannounced)
+   despite predating that category. See [lib/parser](lib/parser).
+3. **Merchants & market** — Yasir's location (manual) and Rashid's location (computed
+   from Tibia's own clock — the fixed weekday rotation, rolled over at the 10:00 CET/CEST
+   server save rather than local midnight, always editable), live Tibia Coin buy/sell,
+   Gold Token, and Silver Token prices with automatic up/down/unchanged trend indicators
+   and an "X minutes ago" freshness label for every live price.
 4. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
@@ -54,12 +58,12 @@ defaults and stay manually editable.
 | Data | Source | Notes |
 |---|---|---|
 | World list, PvP type, BattlEye, transfer type, online count, boosted creature/boss | [TibiaData API v4](https://docs.tibiadata.com/) | Public, no auth, CORS-open — fetched directly from the browser (`lib/data/worldProvider.ts`). |
-| Warzone schedule, warzone health | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone, used to show times in both the world's zone and the viewer's (`lib/utils/timezone.ts`). |
+| Warzone schedule, warzone health | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); the dashboard card shows both the world's time and the viewer's, but the generated briefing text always converts to the viewer's own timezone, since that's who's reading it. |
 | Tibia Coin, Gold Token, Silver Token buy/sell prices | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as a freshness label ("Xm ago"). "Sell price" (what you receive) maps to the current highest buy offer; "buy price" (what you pay) maps to the current lowest sell offer. |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
-| Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation. Best-effort — doesn't account for the ~10:00 CET server-save rollover — always overridable. |
-| 12 specific World Changes (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| The rest of the World Changes (Swamp Fever, Horse Station, Insectoid Invasion), all Mini World Changes, Yasir's location, boosted region | Manual, local | No reliable public API or consistently-worded source covers these. The import panel can still auto-fill many Mini World Changes from pasted board text; both grids stay directly editable regardless. |
+| Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe, always overridable. |
+| All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
+| All Mini World Changes, Yasir's location, boosted region | Manual, local | No reliable public API or consistently-worded source covers these. The import panel can still auto-fill many Mini World Changes from pasted board text; the grid stays directly editable regardless. |
 
 ## Architecture
 
@@ -151,19 +155,21 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 
 ## Current limitations
 
-- Most Mini World Changes and 3 World Changes (Swamp Fever, Horse Station, Insectoid
-  Invasion), plus Yasir's location and boosted region, are manual by design — there is no
-  reliable public API for them and no publicly documented Guide NPC reply text to parse
-  (12 other World Changes are covered by the Guide NPC parser instead, see the data
-  source table above).
+- Mini World Changes, Yasir's location, and boosted region are manual by design — there
+  is no reliable public API for them (every World Change with publicly documented Guide
+  NPC reply text is covered by the parser instead, see the data source table above;
+  "Insectoid Invasion" isn't a Guide-NPC-checkable mechanic at all, so it isn't listed as
+  one).
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
-- Rashid's location default is a fixed weekday rotation; it can be briefly wrong right
-  around the ~10:00 CET server-save boundary.
+- Several World Changes (Swamp Fever, Horse Station, and a couple of others) only have
+  one state's Guide NPC reply publicly documented, not the full escalation — those
+  changes auto-detect for that one state and stay manually correctable for the rest.
 - Timezone conversion for the warzone schedule compares UTC offsets for a single
   reference date rather than doing full calendar-aware conversion — it can be off by a
-  day boundary or mid-window DST transition in rare edge cases.
+  day boundary or mid-window DST transition in rare edge cases. (Rashid's rotation uses a
+  precise `Intl`-based conversion instead, so it isn't affected by this.)
 - Active events, upcoming events, and the Tibia Drome rotation are as fresh as the last
   deploy (scheduled every 6 hours), not truly real-time — there's no server to poll them
   live from a static GitHub Pages site.

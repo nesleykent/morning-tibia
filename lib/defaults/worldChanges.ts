@@ -4,11 +4,18 @@ import type { WorldChangeDefinition, WorldChangeValue } from "@/types/worldChang
  * World Changes — a larger, longer-running mechanic checked in-game by asking a Guide NPC
  * one of a fixed set of keywords, per TibiaWiki's "World Changes" article. Distinct from
  * "Mini World Changes" (lib/defaults/miniWorldChanges.ts), which are announced on the
- * World Board instead — do not merge the two lists. 12 of these have at least one
- * documented, verbatim Guide NPC reply (lib/parser/guideMessages.ts) and are source:
- * "guide-npc" — populated only by pasting a chat log (a couple only have partial state
- * coverage documented — see their description). Swamp Fever and Horse Station have no
- * verbatim Guide text findable anywhere publicly and stay source: "manual".
+ * World Board instead — do not merge the two lists. Every entry here has at least one
+ * documented, verbatim Guide NPC reply (lib/parser/guideMessages.ts) and is source:
+ * "guide-npc" — populated only by pasting a chat log (several only have partial state
+ * coverage documented — see their description).
+ *
+ * "Insectoid Invasion" is deliberately NOT listed here even though TibiaWiki files it
+ * under the "World Changes" article: it has no Guide NPC keyword at all — confirmed both
+ * by Guide Elena's own in-game keyword list and by players who tried and failed to find
+ * one (see e.g. tibiaqa.com/11906). It's a legacy, pre-Mini-World-Changes-era mechanic
+ * (Version 9.10) that behaves like an MWC (random, unannounced) but isn't in Tibiopedia's
+ * official 24-item MWC catalog either — it doesn't fit either category, so it's left out
+ * rather than misfiled under one with an implied check method it doesn't have.
  */
 export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
@@ -46,8 +53,9 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     shortLabel: "Swamp Fever",
     emoji: "🦟",
     controlType: "toggle",
-    source: "manual",
-    description: "Whether the Swamp Fever world change is currently active near Venore.",
+    source: "guide-npc",
+    description:
+      "Whether the swamp fever near Venore is under control. Only the calm \"under control\" reply is documented, so only that state auto-detects.",
   },
   {
     id: "thornfire",
@@ -92,8 +100,9 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     shortLabel: "Horse Station",
     emoji: "🐴",
     controlType: "toggle",
-    source: "manual",
-    description: "Whether Horses (and possibly War Horses) can currently be rented/tamed.",
+    source: "guide-npc",
+    description:
+      "Whether horses have escaped near Thais and rental is on hold. Only the \"escaped\" reply is documented, so only that state auto-detects.",
   },
   {
     id: "overhunting-deer",
@@ -140,15 +149,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     controlType: "stage",
     source: "guide-npc",
     description: "Current stage of the Hive Born invasion cycle at Quirefang.",
-  },
-  {
-    id: "insectoid-invasion",
-    label: "Insectoid Invasion",
-    shortLabel: "Insectoid Invasion",
-    emoji: "🐜",
-    controlType: "toggle",
-    source: "manual",
-    description: "Whether the Insectoid Invasion world change is currently active in Greenshore.",
   },
 ];
 

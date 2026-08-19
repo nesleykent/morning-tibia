@@ -7,6 +7,7 @@ import type { DromeRotationInfo } from "@/types/drome";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
+import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
 import {
@@ -144,14 +145,19 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const warzone = input.warzoneSchedule;
   const warzoneLine =
     warzone && warzone.executions.length > 0
-      ? `${warzone.executions.map((e) => e.scheduleTime).join(", ")}${
-          warzone.executions.some((e) => e.warzoneSequence)
-            ? ` (${warzone.executions
-                .filter((e) => e.warzoneSequence)
-                .map((e) => e.warzoneSequence)
-                .join(" / ")})`
-            : ""
-        }${warzone.timezone ? ` [${warzone.timezone}]` : ""}`
+      ? warzone.executions
+          .map((execution) => {
+            const time = warzone.timezone
+              ? convertTimeBetweenZones(
+                  execution.scheduleTime,
+                  warzone.timezone,
+                  input.viewerTimeZone,
+                  input.referenceDate,
+                )
+              : execution.scheduleTime;
+            return execution.warzoneSequence ? `${time} (${execution.warzoneSequence})` : time;
+          })
+          .join("; ")
       : null;
 
   const dromeLine =

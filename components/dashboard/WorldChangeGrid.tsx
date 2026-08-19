@@ -51,25 +51,27 @@ export function WorldChangeGrid({ values, onChange }: WorldChangeGridProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Manual
-        </h3>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-          {MANUAL_DEFINITIONS.map((definition) => {
-            const value = values[definition.id];
-            if (!value) return null;
-            return (
-              <WorldChangeCard
-                key={definition.id}
-                definition={definition}
-                value={value}
-                onChange={(patch) => onChange(definition.id, patch)}
-              />
-            );
-          })}
+      {MANUAL_DEFINITIONS.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Manual
+          </h3>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {MANUAL_DEFINITIONS.map((definition) => {
+              const value = values[definition.id];
+              if (!value) return null;
+              return (
+                <WorldChangeCard
+                  key={definition.id}
+                  definition={definition}
+                  value={value}
+                  onChange={(patch) => onChange(definition.id, patch)}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

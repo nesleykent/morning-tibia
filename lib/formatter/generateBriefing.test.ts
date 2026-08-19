@@ -82,6 +82,23 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("Nenhum evento programado no momento.");
   });
 
+  it("renders warzone times converted to the viewer's own timezone, semicolon-separated", () => {
+    const input = makeInput();
+    input.warzoneSchedule = {
+      world: "Ustebra",
+      timezone: "Europe/Berlin", // CEST (UTC+2) in August
+      tracksWarzoneService: true,
+      mark: "healthy",
+      executions: [
+        { executionId: 1, scheduleTime: "12:00", warzoneSequence: "1-2-3" },
+        { executionId: 2, scheduleTime: "20:00", warzoneSequence: "1-3-2" },
+      ],
+    };
+    // viewerTimeZone is America/Sao_Paulo (UTC-3, no DST) — 5h behind Berlin in August.
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("⚔️ WARZONES: 07:00 (1-2-3); 15:00 (1-3-2)");
+  });
+
   it("renders market prices with a trend symbol only when a value is set", () => {
     const input = makeInput();
     input.overrides.marketPrices.tibiaCoinSell = {
