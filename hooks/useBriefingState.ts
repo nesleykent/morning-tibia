@@ -5,7 +5,7 @@ import type { BriefingOverrides } from "@/types/briefing";
 import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
 import type { WorldChangeValue } from "@/types/worldChange";
 import type { Merchant, MerchantId } from "@/types/merchant";
-import type { MarketPriceId } from "@/types/market";
+import type { MarketTrendBasis } from "@/types/market";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import {
@@ -48,8 +48,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const [preferredFormat, setPreferredFormatState] = useState<BriefingFormat>("rich");
   const [briefingLanguage, setBriefingLanguageState] = useState<BriefingLanguage>("pt");
   const [upcomingEventsWindowDays, setUpcomingEventsWindowDaysState] = useState<number>(7);
-  const { viewerTimeZone, viewerTimeZoneOverride, autoViewerTimeZone, setViewerTimeZoneOverride } =
-    useViewerSettings();
+  const [marketTrendBasis, setMarketTrendBasisState] = useState<MarketTrendBasis>("last");
+  const { viewerTimeZone, setViewerTimeZone } = useViewerSettings();
   const hasHydrated = useRef(false);
 
   // Hydrate from localStorage once on mount (client-only to avoid SSR/CSR mismatches; the
@@ -64,6 +64,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     setPreferredFormatState(briefingRepository.getPreferredFormat());
     setBriefingLanguageState(briefingRepository.getBriefingLanguage());
     setUpcomingEventsWindowDaysState(briefingRepository.getUpcomingEventsWindowDays());
+    setMarketTrendBasisState(briefingRepository.getMarketTrendBasis());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -141,23 +142,6 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     [persist],
   );
 
-  const updateMarketPrice = useCallback(
-    (id: MarketPriceId, newValue: number | null) => {
-      persist((prev) => {
-        const current = prev.marketPrices[id];
-        if (!current) return prev;
-        return {
-          ...prev,
-          marketPrices: {
-            ...prev.marketPrices,
-            [id]: applyPriceUpdate(current, newValue, { isLive: false, now: nowIso() }),
-          },
-        };
-      });
-    },
-    [persist],
-  );
-
   const setBoostedRegions = useCallback(
     (regions: string[]) => persist((prev) => ({ ...prev, boostedRegions: regions })),
     [persist],
@@ -194,6 +178,11 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const setUpcomingEventsWindowDays = useCallback((days: number) => {
     setUpcomingEventsWindowDaysState(days);
     briefingRepository.setUpcomingEventsWindowDays(days);
+  }, []);
+
+  const setMarketTrendBasis = useCallback((basis: MarketTrendBasis) => {
+    setMarketTrendBasisState(basis);
+    briefingRepository.setMarketTrendBasis(basis);
   }, []);
 
   // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
@@ -258,6 +247,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       language: briefingLanguage,
       viewerTimeZone,
       upcomingEventsWindowDays,
+      marketTrendBasis,
     }),
     [
       world,
@@ -271,6 +261,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       briefingLanguage,
       viewerTimeZone,
       upcomingEventsWindowDays,
+      marketTrendBasis,
     ],
   );
 
@@ -297,7 +288,6 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     updateMiniWorldChange,
     updateWorldChange,
     updateMerchant,
-    updateMarketPrice,
     setBoostedRegions,
     setIncludeAllChanges,
 
@@ -313,10 +303,10 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     setBriefingLanguage,
     upcomingEventsWindowDays,
     setUpcomingEventsWindowDays,
+    marketTrendBasis,
+    setMarketTrendBasis,
     viewerTimeZone,
-    viewerTimeZoneOverride,
-    autoViewerTimeZone,
-    setViewerTimeZoneOverride,
+    setViewerTimeZone,
   };
 }
 

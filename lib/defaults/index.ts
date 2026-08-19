@@ -71,6 +71,10 @@ function migrateMiniWorldChanges(
  * `label` is always taken from the current defaults rather than the save — it's a static
  * catalog string, never user-edited, so an older save's stale wording (e.g. before a
  * relabel) should never stick around instead of the current one.
+ *
+ * `trend` used to be a stored field, recomputed and persisted on every update; it's now
+ * always derived on the fly from `history` and the selected MarketTrendBasis (see
+ * lib/utils/priceTrend.ts), so an older save's stale value is dropped rather than kept.
  */
 function migrateMarketPrices(
   defaults: Record<string, MarketPrice>,
@@ -84,6 +88,7 @@ function migrateMarketPrices(
     if (!defaultPrice) continue; // a price id that no longer exists — drop it
     const price = { ...defaultPrice, ...value, label: defaultPrice.label } as MarketPrice & {
       previousValue?: unknown;
+      trend?: unknown;
     };
     if (!Array.isArray(price.history)) {
       price.history =
@@ -92,6 +97,7 @@ function migrateMarketPrices(
           : [];
     }
     delete price.previousValue;
+    delete price.trend;
     merged[id] = price;
   }
   return merged;

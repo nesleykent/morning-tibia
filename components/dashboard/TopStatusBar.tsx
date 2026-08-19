@@ -31,11 +31,7 @@ function useNow(enabled: boolean): Date {
 export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
   const isClient = useIsClient();
   const now = useNow(isClient);
-  const { viewerTimeZoneOverride, autoViewerTimeZone, setViewerTimeZoneOverride } = useViewerSettings();
-
-  const timeZoneOptions = COMMON_TIME_ZONES.some((tz) => tz.value === autoViewerTimeZone)
-    ? COMMON_TIME_ZONES
-    : [{ value: autoViewerTimeZone, label: autoViewerTimeZone }, ...COMMON_TIME_ZONES];
+  const { viewerTimeZone, setViewerTimeZone } = useViewerSettings();
 
   const serverSaveMsLeft = isClient ? getNextServerSave(now).getTime() - now.getTime() : null;
   const dromeMsLeft = isClient && drome?.endsAt ? new Date(drome.endsAt).getTime() - now.getTime() : null;
@@ -66,16 +62,12 @@ export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
       )}
       <div className="flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <Select
-          value={viewerTimeZoneOverride ?? "auto"}
-          onValueChange={(value) => setViewerTimeZoneOverride(value === "auto" ? null : value)}
-        >
+        <Select value={viewerTimeZone} onValueChange={setViewerTimeZone}>
           <SelectTrigger className="h-8 w-[190px] text-xs" aria-label="Show times in">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="auto">Auto ({autoViewerTimeZone})</SelectItem>
-            {timeZoneOptions.map((tz) => (
+            {COMMON_TIME_ZONES.map((tz) => (
               <SelectItem key={tz.value} value={tz.value}>
                 {tz.label}
               </SelectItem>

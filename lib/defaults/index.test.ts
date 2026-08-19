@@ -92,3 +92,26 @@ describe("mergeOverridesWithDefaults — Bibby/Noodles closed-location migration
     expect(merged.miniWorldChanges["fury-gate"]).toMatchObject({ state: "active" });
   });
 });
+
+describe("mergeOverridesWithDefaults — market price trend migration", () => {
+  it("drops an older save's stale stored trend field (now always derived on the fly)", () => {
+    const saved = {
+      marketPrices: {
+        tibiaCoinSell: {
+          id: "tibiaCoinSell",
+          label: "stale label",
+          value: 41000,
+          trend: "down",
+          isLive: false,
+          sourceTimestamp: null,
+          updatedAt: "t",
+          history: [{ value: 41000, timestamp: 1000 }],
+        },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.marketPrices.tibiaCoinSell).not.toHaveProperty("trend");
+    expect(merged.marketPrices.tibiaCoinSell?.value).toBe(41000);
+    expect(merged.marketPrices.tibiaCoinSell?.label).toBe("Tibia Coin Sell Offer"); // current default, not the stale save
+  });
+});

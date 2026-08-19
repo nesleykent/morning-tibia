@@ -58,7 +58,15 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
             onValueChange={(detail) => onChange({ detail, state: "location" })}
           >
             <SelectTrigger aria-label={`${definition.label} location`}>
-              <SelectValue placeholder="Active — pending location…" />
+              <SelectValue
+                placeholder={
+                  value.state === "inactive"
+                    ? "Inactive — no location"
+                    : value.state === "unknown"
+                      ? "Not checked yet…"
+                      : "Active — pending location…"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {definition.suggestions!.map((suggestion) => (

@@ -2,6 +2,10 @@ export type MarketPriceId = "tibiaCoinSell" | "tibiaCoinBuy" | "goldTokenSell" |
 
 export type PriceTrend = "up" | "down" | "unchanged";
 
+/** Which window the displayed price and trend arrow are computed over — an entry count,
+ * not a day count, since the feed doesn't update daily (see lib/utils/priceTrend.ts). */
+export type MarketTrendBasis = "last" | "avg3" | "avg7" | "avg14";
+
 export interface PriceSnapshot {
   value: number;
   /** ms since epoch — the source data's own timestamp for a live entry (when the price
@@ -15,8 +19,6 @@ export interface MarketPrice {
   label: string;
   /** Current (most recent) price in gold coins. Null when never set. */
   value: number | null;
-  /** Trend computed from the last 3 distinct observed values (see lib/utils/priceTrend.ts). */
-  trend: PriceTrend;
   /** True when `value` came from the live api.tibiamarket.top feed rather than manual entry. */
   isLive: boolean;
   /** When the live feed's current snapshot was taken (ms since epoch) — null for manual entries. */

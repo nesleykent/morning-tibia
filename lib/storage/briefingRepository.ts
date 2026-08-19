@@ -1,4 +1,5 @@
 import type { BriefingOverrides } from "@/types/briefing";
+import type { MarketTrendBasis } from "@/types/market";
 import type { BriefingLanguage } from "@/lib/formatter/translations";
 import { storageKeys } from "./storageKeys";
 
@@ -7,6 +8,8 @@ export type BriefingFormat = "rich" | "plain";
 const VALID_LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
 export const UPCOMING_EVENTS_WINDOW_OPTIONS = [5, 7, 14] as const;
 const DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS = 7;
+const VALID_MARKET_TREND_BASES: MarketTrendBasis[] = ["last", "avg3", "avg7", "avg14"];
+const DEFAULT_MARKET_TREND_BASIS: MarketTrendBasis = "last";
 
 /**
  * Everything the dashboard needs to persist. Kept as an interface so a future
@@ -23,9 +26,14 @@ export interface BriefingRepository {
   /** How many days ahead the briefing text's upcoming-events section reaches (5/7/14). */
   getUpcomingEventsWindowDays(): number;
   setUpcomingEventsWindowDays(days: number): void;
-  /** null means "auto — use the browser-detected zone". */
-  getViewerTimeZoneOverride(): string | null;
-  setViewerTimeZoneOverride(timeZone: string | null): void;
+  /** null means nothing saved yet — callers fall back to DEFAULT_VIEWER_TIME_ZONE
+   * (Curitiba). There's no "auto, browser-detected" mode. */
+  getViewerTimeZone(): string | null;
+  setViewerTimeZone(timeZone: string): void;
+  /** Window (entry count, not days) the market cards' displayed price/trend and the
+   * briefing's market lines are computed over — see lib/utils/priceTrend.ts. */
+  getMarketTrendBasis(): MarketTrendBasis;
+  setMarketTrendBasis(basis: MarketTrendBasis): void;
   getOverrides(world: string, dateKey: string): BriefingOverrides | null;
   setOverrides(overrides: BriefingOverrides): void;
   clearOverrides(world: string, dateKey: string): void;
@@ -101,13 +109,26 @@ export class LocalStorageBriefingRepository implements BriefingRepository {
     safeWrite(storageKeys.upcomingEventsWindowDays, String(days));
   }
 
-  getViewerTimeZoneOverride(): string | null {
+  getViewerTimeZone(): string | null {
     const raw = safeRead(storageKeys.viewerTimeZoneOverride);
+    // An older save may hold the literal sentinel "auto" from before the auto-detected
+    // mode was removed — treat it the same as nothing saved, not as a real IANA zone.
     return raw === null || raw === "auto" ? null : raw;
   }
 
-  setViewerTimeZoneOverride(timeZone: string | null): void {
-    safeWrite(storageKeys.viewerTimeZoneOverride, timeZone ?? "auto");
+  setViewerTimeZone(timeZone: string): void {
+    safeWrite(storageKeys.viewerTimeZoneOverride, timeZone);
+  }
+
+  getMarketTrendBasis(): MarketTrendBasis {
+    const raw = safeRead(storageKeys.marketTrendBasis);
+    return VALID_MARKET_TREND_BASES.includes(raw as MarketTrendBasis)
+      ? (raw as MarketTrendBasis)
+      : DEFAULT_MARKET_TREND_BASIS;
+  }
+
+  setMarketTrendBasis(basis: MarketTrendBasis): void {
+    safeWrite(storageKeys.marketTrendBasis, basis);
   }
 
   getOverrides(world: string, dateKey: string): BriefingOverrides | null {

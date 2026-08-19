@@ -9,6 +9,10 @@ export interface TimeZoneOption {
   label: string;
 }
 
+/** Curitiba — the default viewer timezone until the person picks a different one. No
+ * "auto, browser-detected" mode: one explicit zone is always in effect. */
+export const DEFAULT_VIEWER_TIME_ZONE = "America/Sao_Paulo";
+
 export const COMMON_TIME_ZONES: TimeZoneOption[] = [
   { value: "America/Los_Angeles", label: "Los Angeles (PDT, GMT-7)" },
   { value: "America/Tijuana", label: "Tijuana (PDT, GMT-7)" },

@@ -165,8 +165,17 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 2, delayMs = 900): 
  * throws — a failed fetch just leaves `error` set so the rest of the dashboard (which is
  * mostly manual/local data) keeps working. `key` changes (e.g. a different world) trigger
  * a refetch the same way a dependency-array change would.
+ *
+ * `pollIntervalMs`, when given, also refetches on a timer while the key stays the same —
+ * needed for the market feed specifically: its trend/average is derived from a rolling
+ * history of *distinct* observed values (see lib/utils/priceTrend.ts), which never
+ * accumulates past a single entry if the price is only ever sampled once per page load.
  */
-function useAsyncResource<T>(key: string | null, fetcher: (forceRefresh: boolean) => Promise<T | null>) {
+function useAsyncResource<T>(
+  key: string | null,
+  fetcher: (forceRefresh: boolean) => Promise<T | null>,
+  pollIntervalMs?: number,
+) {
   const [state, setState] = useState<ResourceState<T>>({
     data: null,
     isLoading: Boolean(key),
@@ -209,8 +218,18 @@ function useAsyncResource<T>(key: string | null, fetcher: (forceRefresh: boolean
 
   const refresh = useCallback(() => setRefreshToken((n) => n + 1), []);
 
+  useEffect(() => {
+    if (!key || !pollIntervalMs) return;
+    const id = setInterval(() => setRefreshToken((n) => n + 1), pollIntervalMs);
+    return () => clearInterval(id);
+  }, [key, pollIntervalMs]);
+
   return { ...state, refresh };
 }
+
+/** How often the market feed is re-sampled while the dashboard stays open, so a trend
+ * has a realistic chance to see more than one distinct value within a single visit. */
+const MARKET_POLL_INTERVAL_MS = 10 * 60 * 1000;
 
 export function useWorldsQuery() {
   return useAsyncResource<World[]>("worlds", fetchWorldsDirect);
@@ -241,5 +260,6 @@ export function useMarketValuesQuery(worldName: string | null) {
   return useAsyncResource<MarketValueSnapshot[]>(
     worldName ? `market:${worldName}` : null,
     () => fetchMarketValuesDirect(worldName!),
+    MARKET_POLL_INTERVAL_MS,
   );
 }

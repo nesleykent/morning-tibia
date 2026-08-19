@@ -2,14 +2,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { briefingRepository } from "@/lib/storage/briefingRepository";
+import { DEFAULT_VIEWER_TIME_ZONE } from "@/lib/utils/timezoneList";
 
 interface ViewerSettingsValue {
-  /** null means "auto — use the browser-detected zone". */
-  viewerTimeZoneOverride: string | null;
-  autoViewerTimeZone: string;
-  /** The zone actually in effect — override if set, else the auto-detected one. */
   viewerTimeZone: string;
-  setViewerTimeZoneOverride: (timeZone: string | null) => void;
+  setViewerTimeZone: (timeZone: string) => void;
 }
 
 const ViewerSettingsContext = createContext<ViewerSettingsValue | null>(null);
@@ -20,27 +17,24 @@ const ViewerSettingsContext = createContext<ViewerSettingsValue | null>(null);
  * (above the page) and the dashboard's briefing generator (inside the page). Both read
  * and write through this context instead of each keeping — and risking desyncing — their
  * own copy of the same localStorage value.
+ *
+ * Defaults to Curitiba (America/Sao_Paulo) rather than the browser's auto-detected zone —
+ * there's no "auto" mode; the viewer always has one explicit zone in effect.
  */
 export function ViewerSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [autoViewerTimeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [viewerTimeZoneOverride, setOverrideState] = useState<string | null>(null);
+  const [viewerTimeZone, setState] = useState(DEFAULT_VIEWER_TIME_ZONE);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time localStorage hydration on mount, same as useBriefingState's own hydration effect
-    setOverrideState(briefingRepository.getViewerTimeZoneOverride());
+    setState(briefingRepository.getViewerTimeZone() ?? DEFAULT_VIEWER_TIME_ZONE);
   }, []);
 
-  const setViewerTimeZoneOverride = useCallback((timeZone: string | null) => {
-    setOverrideState(timeZone);
-    briefingRepository.setViewerTimeZoneOverride(timeZone);
+  const setViewerTimeZone = useCallback((timeZone: string) => {
+    setState(timeZone);
+    briefingRepository.setViewerTimeZone(timeZone);
   }, []);
 
-  const value: ViewerSettingsValue = {
-    viewerTimeZoneOverride,
-    autoViewerTimeZone,
-    viewerTimeZone: viewerTimeZoneOverride ?? autoViewerTimeZone,
-    setViewerTimeZoneOverride,
-  };
+  const value: ViewerSettingsValue = { viewerTimeZone, setViewerTimeZone };
 
   return <ViewerSettingsContext.Provider value={value}>{children}</ViewerSettingsContext.Provider>;
 }

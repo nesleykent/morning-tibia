@@ -1,32 +1,41 @@
-import type { MarketPrice, PriceSnapshot, PriceTrend } from "@/types/market";
+import type { MarketPrice, MarketTrendBasis, PriceSnapshot, PriceTrend } from "@/types/market";
 
 const MAX_HISTORY_ENTRIES = 30;
-const TREND_WINDOW = 3;
 
-/**
- * Trend from the last 3 distinct observed values (oldest vs newest in that window) rather
- * than a plain two-point comparison — a single noisy tick can't flip it on its own. Fewer
- * than 2 entries means there's nothing to compare yet.
- */
-export function computeTrendFromHistory(history: PriceSnapshot[]): PriceTrend {
-  if (history.length < 2) return "unchanged";
-  const window = history.slice(-TREND_WINDOW);
-  const oldest = window[0]!.value;
-  const newest = window[window.length - 1]!.value;
-  if (newest > oldest) return "up";
-  if (newest < oldest) return "down";
-  return "unchanged";
+/** How many history entries each basis averages over — an entry count, not a day count,
+ * since the feed doesn't update daily (a "7-day window" could span 2 entries or 20). */
+export const ENTRIES_BY_BASIS: Record<MarketTrendBasis, number> = {
+  last: 1,
+  avg3: 3,
+  avg7: 7,
+  avg14: 14,
+};
+
+/** Average of the last `count` history entries (fewer if there aren't that many yet).
+ * Null only when there's no history at all. */
+export function averageOfLastEntries(history: PriceSnapshot[], count: number): number | null {
+  if (history.length === 0) return null;
+  const window = history.slice(-count);
+  const sum = window.reduce((total, entry) => total + entry.value, 0);
+  return sum / window.length;
 }
 
-/** Average of every history entry whose timestamp falls within the last `days` days —
- * however many that is, since the feed isn't updated daily. Null when there's nothing in
- * that window (e.g. the price hasn't changed in longer than the window). */
-export function averageOverDays(history: PriceSnapshot[], days: number, now: number): number | null {
-  const cutoff = now - days * 24 * 60 * 60 * 1000;
-  const inWindow = history.filter((entry) => entry.timestamp >= cutoff);
-  if (inWindow.length === 0) return null;
-  const sum = inWindow.reduce((total, entry) => total + entry.value, 0);
-  return sum / inWindow.length;
+/**
+ * Trend for a given basis: compares that basis's average including the latest entry
+ * against the same basis computed one entry earlier (i.e. as of just before the latest
+ * update) — so "avg7" trend reflects whether the 7-entry average moved, not just whether
+ * the single newest tick moved. For `count === 1` this reduces to a plain two-point
+ * comparison, matching "last entry" trend exactly. Fewer than 2 entries total means
+ * there's nothing to compare yet.
+ */
+export function computeTrendForBasis(history: PriceSnapshot[], count: number): PriceTrend {
+  if (history.length < 2) return "unchanged";
+  const current = averageOfLastEntries(history, count);
+  const previous = averageOfLastEntries(history.slice(0, -1), count);
+  if (current === null || previous === null) return "unchanged";
+  if (current > previous) return "up";
+  if (current < previous) return "down";
+  return "unchanged";
 }
 
 function pushHistory(history: PriceSnapshot[], entry: PriceSnapshot): PriceSnapshot[] {
@@ -60,7 +69,6 @@ export function applyPriceUpdate(
   return {
     ...price,
     value: newValue,
-    trend: computeTrendFromHistory(history),
     isLive: options.isLive,
     sourceTimestamp,
     updatedAt: options.now,

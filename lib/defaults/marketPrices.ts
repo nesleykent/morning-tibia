@@ -18,7 +18,6 @@ export function createDefaultMarketPrices(): Record<string, MarketPrice> {
       id,
       label: LABELS[id],
       value: null,
-      trend: "unchanged",
       isLive: false,
       sourceTimestamp: null,
       updatedAt: null,

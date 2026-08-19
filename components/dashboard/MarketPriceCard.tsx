@@ -2,28 +2,40 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trendSymbol } from "@/lib/formatter/briefingModel";
 import { formatTimeAgo } from "@/lib/utils/timeAgo";
-import { averageOverDays } from "@/lib/utils/priceTrend";
-import type { MarketPrice, MarketPriceId } from "@/types/market";
+import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "@/lib/utils/priceTrend";
+import type { MarketPrice, MarketPriceId, MarketTrendBasis } from "@/types/market";
 
 interface MarketPriceCardProps {
   prices: Record<string, MarketPrice>;
-  onChange: (id: MarketPriceId, value: number | null) => void;
+  basis: MarketTrendBasis;
+  onBasisChange: (basis: MarketTrendBasis) => void;
 }
 
 const ORDER: MarketPriceId[] = ["tibiaCoinSell", "tibiaCoinBuy", "goldTokenSell", "silverTokenSell"];
-const AVERAGE_WINDOW_OPTIONS = [3, 7, 14] as const;
+const BASIS_OPTIONS: { value: MarketTrendBasis; label: string }[] = [
+  { value: "last", label: "Last entry" },
+  { value: "avg3", label: "Avg 3 entries" },
+  { value: "avg7", label: "Avg 7 entries" },
+  { value: "avg14", label: "Avg 14 entries" },
+];
 
-export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
+/**
+ * Fully read-only, same as Rashid's location card — there's no way for a person to know
+ * the current market price better than the live feed itself, so unlike Mini World
+ * Changes/World Changes (which genuinely need manual input the game doesn't expose), a
+ * manual override here could only ever be wrong. The only thing the viewer controls is
+ * which window the shown value and trend arrow are computed over.
+ */
+export function MarketPriceCard({ prices, basis, onBasisChange }: MarketPriceCardProps) {
   // Read once at mount rather than every render (Date.now() is impure) — this is just a
   // cosmetic "how fresh is this price" label, not something that needs to tick live.
   const [now] = useState(() => Date.now());
-  const [averageWindowDays, setAverageWindowDays] = useState<number>(7);
+  const entryCount = ENTRIES_BY_BASIS[basis];
 
   return (
     <Card>
@@ -45,14 +57,14 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
               </a>
             </CardDescription>
           </div>
-          <Select value={String(averageWindowDays)} onValueChange={(value) => setAverageWindowDays(Number(value))}>
-            <SelectTrigger className="w-28 shrink-0" aria-label="Average over how many days">
+          <Select value={basis} onValueChange={(value) => onBasisChange(value as MarketTrendBasis)}>
+            <SelectTrigger className="w-32 shrink-0" aria-label="Price and trend based on">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {AVERAGE_WINDOW_OPTIONS.map((days) => (
-                <SelectItem key={days} value={String(days)}>
-                  Avg {days}d
+              {BASIS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -63,13 +75,12 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
         {ORDER.map((id) => {
           const price = prices[id];
           if (!price) return null;
-          const average = averageOverDays(price.history, averageWindowDays, now);
-          const cutoff = now - averageWindowDays * 86400000;
-          const entryCount = price.history.filter((entry) => entry.timestamp >= cutoff).length;
+          const trend = computeTrendForBasis(price.history, entryCount);
+          const displayValue = averageOfLastEntries(price.history, entryCount);
           return (
             <div key={id} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor={`price-${id}`}>{price.label}</Label>
+                <Label>{price.label}</Label>
                 <div className="flex items-center gap-1.5">
                   {price.isLive && price.sourceTimestamp && (
                     <span className="text-[10px] text-muted-foreground">
@@ -81,27 +92,12 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
                       auto
                     </Badge>
                   )}
-                  <span aria-hidden="true">{trendSymbol(price.trend)}</span>
+                  <span aria-hidden="true">{trendSymbol(trend)}</span>
                 </div>
               </div>
-              <Input
-                id={`price-${id}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                placeholder="gp"
-                value={price.value ?? ""}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  onChange(id, raw === "" ? null : Number(raw));
-                }}
-              />
-              {average !== null && (
-                <p className="text-[11px] text-muted-foreground">
-                  Avg ({averageWindowDays}d, {entryCount} {entryCount === 1 ? "entry" : "entries"}):{" "}
-                  {Math.round(average).toLocaleString()} gp
-                </p>
-              )}
+              <p className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-sm font-medium">
+                {displayValue !== null ? `${Math.round(displayValue).toLocaleString()} gp` : "—"}
+              </p>
             </div>
           );
         })}

@@ -4,10 +4,12 @@ import type { WarzoneSchedule } from "@/types/warzone";
 import type { MiniWorldChangeState } from "@/types/miniWorldChange";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
+import type { MarketTrendBasis } from "@/types/market";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
+import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "@/lib/utils/priceTrend";
 import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
 import {
@@ -42,6 +44,9 @@ export interface BriefingInput {
   /** How many days ahead the briefing text's upcoming-events section reaches (5/7/14) —
    * events further out than this are left off, so the section can't grow unbounded. */
   upcomingEventsWindowDays: number;
+  /** Window (entry count) the market lines' displayed price and trend arrow are computed
+   * over — see lib/utils/priceTrend.ts. */
+  marketTrendBasis: MarketTrendBasis;
 }
 
 export interface AchievementLine {
@@ -181,15 +186,17 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     });
   }
 
+  const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
   const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
     .filter(([, price]) => price.value !== null)
     .map(([id, price]) => {
       const latestEntry = price.history[price.history.length - 1];
       const ageTimestamp = price.sourceTimestamp ?? latestEntry?.timestamp ?? null;
+      const basisValue = averageOfLastEntries(price.history, marketEntryCount) ?? price.value!;
       return {
         label: formatMarketPriceLabel(id as Parameters<typeof formatMarketPriceLabel>[0], input.language),
-        valueLabel: `${price.value!.toLocaleString(locale)} gp`,
-        trendSymbol: trendSymbol(price.trend),
+        valueLabel: `${Math.round(basisValue).toLocaleString(locale)} gp`,
+        trendSymbol: trendSymbol(computeTrendForBasis(price.history, marketEntryCount)),
         ageLabel:
           ageTimestamp !== null
             ? formatPriceAge(ageTimestamp, input.referenceDate.getTime(), input.language)

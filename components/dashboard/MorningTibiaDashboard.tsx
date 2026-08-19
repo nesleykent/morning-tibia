@@ -73,7 +73,10 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         onApplyMerchant={state.updateMerchant}
       />
 
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* No items-start here on purpose — cards in the same row should stretch to match
+          the tallest one (default CSS Grid behavior), not end at whatever height their own
+          content happens to reach. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <BoostedCard
           creature={state.boostedQuery.data?.creature ?? null}
           boss={state.boostedQuery.data?.boss ?? null}
@@ -89,7 +92,11 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
           viewerTimeZone={state.viewerTimeZone}
         />
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
-        <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
+        <MarketPriceCard
+          prices={state.overrides.marketPrices}
+          basis={state.marketTrendBasis}
+          onBasisChange={state.setMarketTrendBasis}
+        />
         <EventsCard
           activeEvents={state.activeEvents}
           upcomingEvents={state.upcomingEvents}

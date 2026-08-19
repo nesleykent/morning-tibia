@@ -53,6 +53,7 @@ function makeInput(
     language,
     viewerTimeZone: "America/Sao_Paulo",
     upcomingEventsWindowDays: 14,
+    marketTrendBasis: "last",
   };
 }
 
@@ -152,9 +153,8 @@ describe("generateBriefingMessage", () => {
     const sourceTimestamp = input.referenceDate.getTime() - 2 * 60 * 60 * 1000; // 2h before "now"
     input.overrides.marketPrices.tibiaCoinSell = {
       id: "tibiaCoinSell",
-      label: "Tibia Coins (Sell)",
+      label: "Tibia Coin Sell Offer",
       value: 41000,
-      trend: "up",
       isLive: true,
       sourceTimestamp,
       updatedAt: "t",
@@ -166,6 +166,32 @@ describe("generateBriefingMessage", () => {
     const message = generateBriefingMessage(input);
     expect(message).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 41.000 gp ⬆️ (há 2h)");
     expect(message).not.toContain("GOLD TOKEN");
+  });
+
+  it("reflects the selected marketTrendBasis in both the shown value and the trend arrow", () => {
+    const input = makeInput();
+    const sourceTimestamp = input.referenceDate.getTime();
+    input.overrides.marketPrices.tibiaCoinSell = {
+      id: "tibiaCoinSell",
+      label: "Tibia Coin Sell Offer",
+      value: 300,
+      isLive: false,
+      sourceTimestamp: null,
+      updatedAt: "t",
+      history: [
+        { value: 100, timestamp: sourceTimestamp - 3 * 86400000 },
+        { value: 200, timestamp: sourceTimestamp - 2 * 86400000 },
+        { value: 300, timestamp: sourceTimestamp - 1 * 86400000 },
+      ],
+    };
+
+    const lastMessage = generateBriefingMessage(input);
+    expect(lastMessage).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 300 gp ⬆️");
+
+    input.marketTrendBasis = "avg3";
+    const avg3Message = generateBriefingMessage(input);
+    // avg(100,200,300) = 200 — a different headline number than the raw last entry.
+    expect(avg3Message).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 200 gp");
   });
 });
 
