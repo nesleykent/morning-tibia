@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ENTRIES_BY_BASIS, applyPriceUpdate, averageOfLastEntries, computeTrendForBasis } from "./priceTrend";
-import type { MarketPrice, PriceSnapshot } from "@/types/market";
+import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "./priceTrend";
+import type { PriceSnapshot } from "@/types/market";
 
 describe("averageOfLastEntries", () => {
   it("returns null with no history", () => {
@@ -93,53 +93,5 @@ describe("computeTrendForBasis", () => {
       { value: 100, timestamp: 3 },
     ];
     expect(computeTrendForBasis(history, 3)).toBe("unchanged");
-  });
-});
-
-describe("applyPriceUpdate", () => {
-  const base: MarketPrice = {
-    id: "tibiaCoinSell",
-    label: "Tibia Coin Sell Offer",
-    value: null,
-    isLive: false,
-    sourceTimestamp: null,
-    updatedAt: null,
-    history: [],
-  };
-
-  it("sets the first value, seeding history with one entry", () => {
-    const result = applyPriceUpdate(base, 40000, { isLive: true, now: "2026-08-18T10:00:00Z" });
-    expect(result.value).toBe(40000);
-    expect(result.isLive).toBe(true);
-    expect(result.history).toHaveLength(1);
-    expect(result.history[0]?.value).toBe(40000);
-  });
-
-  it("appends a history entry on a real change", () => {
-    const withValue = applyPriceUpdate(base, 40000, { isLive: true, now: "2026-08-18T10:00:00Z" });
-    const updated = applyPriceUpdate(withValue, 41000, { isLive: true, now: "2026-08-19T10:00:00Z" });
-    expect(updated.value).toBe(41000);
-    expect(updated.history.map((e) => e.value)).toEqual([40000, 41000]);
-  });
-
-  it("does not grow history when the new value repeats the current one", () => {
-    const withValue = applyPriceUpdate(base, 40000, { isLive: true, now: "t1" });
-    const repeated = applyPriceUpdate(withValue, 40000, { isLive: true, now: "t2" });
-    expect(repeated.history).toHaveLength(1);
-    expect(repeated.updatedAt).toBe("t2"); // freshness label still refreshes
-  });
-
-  it("does not append a duplicate history entry when a live snapshot repeats", () => {
-    const withValue = applyPriceUpdate(base, 40000, {
-      isLive: true,
-      now: "t1",
-      sourceTimestamp: 1000,
-    });
-    const samePoll = applyPriceUpdate(withValue, 40000, {
-      isLive: true,
-      now: "t2",
-      sourceTimestamp: 1000,
-    });
-    expect(samePoll.history).toHaveLength(1);
   });
 });

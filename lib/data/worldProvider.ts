@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { World, WorldDetail } from "@/types/world";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WarzoneSchedule, WarzoneHealthMark } from "@/types/warzone";
-import type { MarketValueSnapshot } from "@/types/marketValues";
+import type { MarketPriceId, PriceSnapshot } from "@/types/market";
 import {
   mapBoostedBoss,
   mapBoostedCreature,
@@ -15,11 +15,15 @@ import {
   type RawWorldDetailResponse,
   type RawWorldsResponse,
 } from "./tibiaDataMapping";
-import { MARKET_ITEM_IDS } from "./marketItemIds";
+import {
+  mapMarketHistoryEntries,
+  type RawMarketHistoryEntry,
+  type RawMarketHistoryFile,
+} from "./marketHistoryMapping";
 
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
-const WARZONE_SCHEDULE_URL = "https://nesleykent.github.io/tibia-warzones-schedule/data/worlds.json";
-const TIBIAMARKET_BASE = "https://api.tibiamarket.top";
+const WARZONES_SCHEDULE_ORIGIN = "https://nesleykent.github.io/tibia-warzones-schedule";
+const WARZONE_SCHEDULE_URL = `${WARZONES_SCHEDULE_ORIGIN}/data/worlds.json`;
 
 /**
  * Fetches straight from TibiaData and nesleykent/tibia-warzones-schedule in the browser —
@@ -108,29 +112,43 @@ async function fetchWarzoneScheduleDirect(
   };
 }
 
-interface RawMarketValue {
-  id: number;
-  time: number;
-  buy_offer?: number;
-  sell_offer?: number;
+/** tibia-warzones-schedule's own item-slug convention (scripts/common.py's slugify:
+ * lowercase, spaces to underscores) for the 3 items Morning Tibia tracks. */
+const MARKET_ITEM_SLUGS = {
+  tibiaCoin: "tibia_coins",
+  goldToken: "gold_token",
+  silverToken: "silver_token",
+} as const;
+
+async function fetchItemHistory(worldName: string, itemSlug: string): Promise<RawMarketHistoryEntry[]> {
+  const url = `${WARZONES_SCHEDULE_ORIGIN}/data/market/world/${encodeURIComponent(worldName)}/${worldName.toLowerCase()}_${itemSlug}.json`;
+  const data = await fetchJson<RawMarketHistoryFile>(url);
+  return data.snapshots?.[0] ?? [];
 }
 
 /**
- * api.tibiamarket.top — real player market data (buy/sell offers) per server, with a
- * timestamp for each snapshot. CORS-open. Used for Tibia Coin, Gold Token, and Silver
- * Token prices, all three of which it actually has (unlike tibia-warzones-schedule, which
- * only ever populated Tibia Coin).
+ * Real day-by-day market history (`day_average_sell`/`day_average_buy`, one entry per
+ * calendar day, refreshed daily), mirrored as public static JSON by
+ * nesleykent/tibia-warzones-schedule — the exact dataset that site's own trend/average
+ * calculations are built on (its scripts/economic_ranking.py and assets/world.js), sourced
+ * upstream from api.tibiamarket.top's /item_history endpoint. Reusing this published
+ * mirror instead of calling that endpoint directly avoids needing its auth token, and
+ * gives years of real daily granularity immediately instead of the single current-tick
+ * snapshot a live "market_values"-style call would provide.
  */
-async function fetchMarketValuesDirect(worldName: string): Promise<MarketValueSnapshot[]> {
-  const ids = [MARKET_ITEM_IDS.tibiaCoin, MARKET_ITEM_IDS.silverToken, MARKET_ITEM_IDS.goldToken].join(",");
-  const url = `${TIBIAMARKET_BASE}/market_values?server=${encodeURIComponent(worldName)}&item_ids=${ids}`;
-  const data = await fetchJson<RawMarketValue[]>(url);
-  return data.map((entry) => ({
-    itemId: entry.id,
-    buyOffer: typeof entry.buy_offer === "number" && entry.buy_offer >= 0 ? entry.buy_offer : null,
-    sellOffer: typeof entry.sell_offer === "number" && entry.sell_offer >= 0 ? entry.sell_offer : null,
-    time: Math.round(entry.time * 1000),
-  }));
+async function fetchMarketHistoryDirect(worldName: string): Promise<Record<MarketPriceId, PriceSnapshot[]>> {
+  const [tibiaCoin, goldToken, silverToken] = await Promise.all([
+    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.tibiaCoin),
+    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.goldToken),
+    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.silverToken),
+  ]);
+
+  return {
+    tibiaCoinSell: mapMarketHistoryEntries(tibiaCoin, "day_average_sell"),
+    tibiaCoinBuy: mapMarketHistoryEntries(tibiaCoin, "day_average_buy"),
+    goldTokenSell: mapMarketHistoryEntries(goldToken, "day_average_sell"),
+    silverTokenSell: mapMarketHistoryEntries(silverToken, "day_average_sell"),
+  };
 }
 
 interface ResourceState<T> {
@@ -227,9 +245,11 @@ function useAsyncResource<T>(
   return { ...state, refresh };
 }
 
-/** How often the market feed is re-sampled while the dashboard stays open, so a trend
- * has a realistic chance to see more than one distinct value within a single visit. */
-const MARKET_POLL_INTERVAL_MS = 10 * 60 * 1000;
+/** How often the market history is re-fetched while the dashboard stays open. The
+ * upstream dataset itself only gains a new day's entry once daily, and the response
+ * carries a 10-minute Cache-Control the browser already honors — this just catches a
+ * same-day correction or a session left open across a day boundary. */
+const MARKET_POLL_INTERVAL_MS = 15 * 60 * 1000;
 
 export function useWorldsQuery() {
   return useAsyncResource<World[]>("worlds", fetchWorldsDirect);
@@ -256,10 +276,10 @@ export function useWarzoneScheduleQuery(worldName: string | null) {
   );
 }
 
-export function useMarketValuesQuery(worldName: string | null) {
-  return useAsyncResource<MarketValueSnapshot[]>(
-    worldName ? `market:${worldName}` : null,
-    () => fetchMarketValuesDirect(worldName!),
+export function useMarketHistoryQuery(worldName: string | null) {
+  return useAsyncResource<Record<MarketPriceId, PriceSnapshot[]>>(
+    worldName ? `marketHistory:${worldName}` : null,
+    () => fetchMarketHistoryDirect(worldName!),
     MARKET_POLL_INTERVAL_MS,
   );
 }

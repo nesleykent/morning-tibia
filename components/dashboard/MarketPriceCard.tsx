@@ -46,14 +46,14 @@ export function MarketPriceCard({ prices, basis, onBasisChange }: MarketPriceCar
               <span aria-hidden="true">🪙</span> Market prices
             </CardTitle>
             <CardDescription>
-              Live from{" "}
+              Daily history via{" "}
               <a
-                href="https://tibiamarket.top"
+                href="https://github.com/nesleykent/tibia-warzones-schedule"
                 target="_blank"
                 rel="noreferrer"
                 className="underline decoration-dotted underline-offset-2 hover:text-foreground"
               >
-                tibiamarket.top
+                tibia-warzones-schedule
               </a>
             </CardDescription>
           </div>

@@ -10,15 +10,13 @@ import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import {
   useBoostedQuery,
-  useMarketValuesQuery,
+  useMarketHistoryQuery,
   useWarzoneScheduleQuery,
   useWorldDetailQuery,
   useWorldsQuery,
 } from "@/lib/data/worldProvider";
-import { MARKET_ITEM_IDS } from "@/lib/data/marketItemIds";
 import { briefingRepository, type BriefingFormat } from "@/lib/storage/briefingRepository";
 import { createDefaultOverrides, mergeOverridesWithDefaults } from "@/lib/defaults";
-import { applyPriceUpdate } from "@/lib/utils/priceTrend";
 import { toDateKey } from "@/lib/utils/date";
 import { generateBriefingMessage, generatePlainTextBriefing } from "@/lib/formatter/generateBriefing";
 import type { BriefingLanguage } from "@/lib/formatter/translations";
@@ -72,7 +70,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const worldDetailQuery = useWorldDetailQuery(world);
   const boostedQuery = useBoostedQuery();
   const warzoneQuery = useWarzoneScheduleQuery(world);
-  const marketValuesQuery = useMarketValuesQuery(world);
+  const marketHistoryQuery = useMarketHistoryQuery(world);
 
   // Takes an updater (prev => next), not a plain object, so calling several update*
   // functions synchronously in a loop (e.g. bulk-applying parsed signals) still sees
@@ -162,8 +160,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     worldDetailQuery.refresh();
     boostedQuery.refresh();
     warzoneQuery.refresh();
-    marketValuesQuery.refresh();
-  }, [worldsQuery, worldDetailQuery, boostedQuery, warzoneQuery, marketValuesQuery]);
+    marketHistoryQuery.refresh();
+  }, [worldsQuery, worldDetailQuery, boostedQuery, warzoneQuery, marketHistoryQuery]);
 
   const setPreferredFormat = useCallback((format: BriefingFormat) => {
     setPreferredFormatState(format);
@@ -185,53 +183,49 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     briefingRepository.setMarketTrendBasis(basis);
   }, []);
 
-  // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
-  // hand-edited (updatedAt === null) or was itself previously filled from this same feed
-  // (isLive === true), so a manual correction always sticks. Mapping is literal, straight
-  // from the API's own field names: our tibiaCoinSell/goldTokenSell/silverTokenSell hold
-  // that item's sellOffer, tibiaCoinBuy holds tibiaCoin's buyOffer — no reinterpretation
-  // into a "what the player receives/pays" framing, which only introduced an inversion bug.
+  // Merge the real day-by-day market history in (see fetchMarketHistoryDirect in
+  // lib/data/worldProvider.ts for where it comes from — the same dataset
+  // tibia-warzones-schedule's own trend/average calculations are built on). Prices are
+  // fully read-only here — see MarketPriceCard — so this always replaces each price's
+  // history wholesale with the authoritative dataset rather than diffing incrementally.
   useEffect(() => {
-    const snapshots = marketValuesQuery.data;
-    if (!snapshots || snapshots.length === 0) return;
+    const history = marketHistoryQuery.data;
+    if (!history) return;
     const timestamp = nowIso();
-    const byItemId = new Map(snapshots.map((s) => [s.itemId, s]));
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing an external feed in
     setOverrides((prev) => {
       let changed = false;
       const nextPrices = { ...prev.marketPrices };
 
-      const applyLive = (
-        priceId: keyof typeof prev.marketPrices,
-        newValue: number | null,
-        sourceTimestamp: number,
-      ) => {
-        const current = nextPrices[priceId];
-        if (!current || !(current.updatedAt === null || current.isLive)) return;
-        const updated = applyPriceUpdate(current, newValue, { isLive: true, now: timestamp, sourceTimestamp });
-        if (updated !== current) {
-          nextPrices[priceId] = updated;
-          changed = true;
-        }
-      };
+      for (const id of Object.keys(history) as (keyof typeof history)[]) {
+        const current = nextPrices[id];
+        const snapshots = history[id];
+        if (!current || snapshots.length === 0) continue;
+        const latest = snapshots[snapshots.length - 1]!;
+        const alreadyCurrent =
+          current.history.length === snapshots.length &&
+          current.history[current.history.length - 1]?.timestamp === latest.timestamp &&
+          current.value === latest.value;
+        if (alreadyCurrent) continue;
 
-      const tibiaCoin = byItemId.get(MARKET_ITEM_IDS.tibiaCoin);
-      if (tibiaCoin) {
-        applyLive("tibiaCoinSell", tibiaCoin.sellOffer, tibiaCoin.time);
-        applyLive("tibiaCoinBuy", tibiaCoin.buyOffer, tibiaCoin.time);
+        nextPrices[id] = {
+          ...current,
+          value: latest.value,
+          isLive: true,
+          sourceTimestamp: latest.timestamp,
+          updatedAt: timestamp,
+          history: snapshots,
+        };
+        changed = true;
       }
-      const goldToken = byItemId.get(MARKET_ITEM_IDS.goldToken);
-      if (goldToken) applyLive("goldTokenSell", goldToken.sellOffer, goldToken.time);
-      const silverToken = byItemId.get(MARKET_ITEM_IDS.silverToken);
-      if (silverToken) applyLive("silverTokenSell", silverToken.sellOffer, silverToken.time);
 
       if (!changed) return prev;
       const next = { ...prev, marketPrices: nextPrices };
       briefingRepository.setOverrides(next);
       return next;
     });
-  }, [marketValuesQuery.data]);
+  }, [marketHistoryQuery.data]);
 
   const briefingInput = useMemo(
     () => ({
@@ -278,7 +272,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     worldDetailQuery,
     boostedQuery,
     warzoneQuery,
-    marketValuesQuery,
+    marketHistoryQuery,
 
     activeEvents,
     upcomingEvents,

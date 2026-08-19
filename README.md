@@ -84,26 +84,25 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    and rolled over at the 10:00 CET/CEST server save rather than local midnight, DST-safe)
    and shown fully **read-only** — unlike Yasir, there's no known exception to correct, so
    it isn't even a picker, just plain text, and his `activityState` is always the fixed
-   "location-known". Live Tibia Coin Sell Offer, Tibia Coin Buy Offer, Gold Token Sell
-   Offer, and Silver Token Sell Offer prices — named literally after the underlying
-   market-order fields, not reinterpreted into a "what the player pays/receives" framing —
-   are **fully read-only**, the same reasoning as Rashid: nobody can know the current
-   market price better than the live feed itself, so a manual override could only ever be
-   wrong. The feed (`api.tibiamarket.top`) is re-polled every 10 minutes while the
-   dashboard stays open (`MARKET_POLL_INTERVAL_MS` in `lib/data/worldProvider.ts`), not
-   just once on page load, so there's a realistic chance of collecting more than one
-   distinct observed value within a single visit. Each price keeps a bounded rolling
-   history of those distinct values (a new entry is only recorded when the price actually
-   changes — the feed isn't polled fast enough, nor does the price move often enough, for a
-   time-windowed "N days" average to be meaningful) — a basis selector on the dashboard
-   (Last entry / Avg 3 / Avg 7 / Avg 14 entries, `lib/utils/priceTrend.ts`) controls both
-   the shown gp figure and the up/down/unchanged trend arrow: the trend compares that
-   basis's average including the latest entry against the same basis computed one entry
-   earlier, so "Avg 7" reflects whether the 7-entry average actually moved, not just
-   whether the single newest tick did. An "as of X ago" snapshot-freshness label (next to
-   an **auto** badge meaning "sourced from the live feed", not literally "this second")
-   also appears in the generated briefing text next to the price, which itself reflects
-   the same selected basis.
+   "location-known". Tibia Coin Sell Offer, Tibia Coin Buy Offer, Gold Token Sell Offer,
+   and Silver Token Sell Offer prices — named literally after the underlying market-order
+   fields, not reinterpreted into a "what the player pays/receives" framing — are **fully
+   read-only**, the same reasoning as Rashid: nobody can know the current market price
+   better than the data itself, so a manual override could only ever be wrong. Rather than
+   a live current-tick API (which only ever gives one snapshot per page load, leaving
+   almost nothing for a trend to compare against), Morning Tibia sources real day-by-day
+   history — the same published dataset [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule)'s
+   own trend/ranking calculations are built on (years of daily `day_average_sell`/
+   `day_average_buy` entries) — giving every price meaningful history from the very first
+   load. A basis selector on the dashboard (Last entry / Avg 3 / Avg 7 / Avg 14 entries,
+   `lib/utils/priceTrend.ts`) controls both the shown gp figure and the up/down/unchanged
+   trend arrow: the trend compares that basis's average including the latest entry against
+   the same basis computed one entry earlier, so "Avg 7" reflects whether the 7-entry (day)
+   average actually moved, not just whether the single newest tick did. An "as of X ago"
+   snapshot-freshness label (next to an **auto** badge meaning "sourced automatically", not
+   literally "this second" — the dataset itself refreshes about once a day) also appears in
+   the generated briefing text next to the price, which itself reflects the same selected
+   basis.
 5. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
@@ -136,7 +135,7 @@ defaults and stay manually editable.
 |---|---|---|
 | World list, PvP type, BattlEye, transfer type, online count, boosted creature/boss | [TibiaData API v4](https://docs.tibiadata.com/) | Public, no auth, CORS-open — fetched directly from the browser (`lib/data/worldProvider.ts`). |
 | Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
-| Tibia Coin, Gold Token, Silver Token sell/buy offers | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open, re-polled every 10 minutes while the dashboard is open. Fully read-only — no manual override. Returns a timestamp per snapshot, shown as an "as of Xm ago" freshness label. Mapping is literal, straight from the API's own `sellOffer`/`buyOffer` fields — our `*Sell`/`*Buy` price ids hold exactly that, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
+| Tibia Coin, Gold Token, Silver Token sell/buy offers | [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule) (published `data/market/world/{World}/{world}_{item}.json`, one file per item per world) | CORS-open, re-fetched every 15 minutes while the dashboard is open (`lib/data/marketHistoryMapping.ts` + `worldProvider.ts`). Fully read-only — no manual override. Real day-by-day history (years of `day_average_sell`/`day_average_buy` entries, refreshed upstream about once a day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
 | All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
@@ -178,11 +177,12 @@ lib/
                    (above the page) and useBriefingState (inside the page) — they don't
                    share a React tree position, so this avoids two independent copies of
                    the same localStorage value drifting apart
-  data/          — worldProvider.ts (client hooks fetching TibiaData, tibia-warzones-
-                   schedule, and tibiamarket.top directly — all CORS-open, so this works
-                   from a static, server-less deploy), tibiaDataMapping.ts (pure, unit
-                   tested), wikiContentClient.ts (build-time-only TibiaWiki fetcher, unit
-                   tested), marketItemIds.ts
+  data/          — worldProvider.ts (client hooks fetching TibiaData and
+                   tibia-warzones-schedule directly — both CORS-open, so this works from a
+                   static, server-less deploy), tibiaDataMapping.ts (pure, unit tested),
+                   marketHistoryMapping.ts (pure, unit tested — parses the market history
+                   JSON worldProvider.ts fetches), wikiContentClient.ts (build-time-only
+                   TibiaWiki fetcher, unit tested)
   parser/        — boardMessages.ts / guideMessages.ts (verbatim catalogs, one per
                    mechanic) + parseBoardLog.ts (also detects a "complete snapshot" via the
                    board's own fixed preamble, inferring inactivity for anything left
@@ -222,9 +222,9 @@ means implementing that interface once.
 
 The app ships as a fully static site (`next.config.ts` sets `output: "export"`) — there
 is no server at runtime. Everything that can be fetched from the browser (TibiaData,
-tibia-warzones-schedule, tibiamarket.top) is; everything that can only be fetched
-server-side due to CORS (TibiaWiki) is resolved once at build time and baked into the
-static HTML, refreshed by a scheduled CI rebuild.
+tibia-warzones-schedule) is; everything that can only be fetched server-side due to CORS
+(TibiaWiki) is resolved once at build time and baked into the static HTML, refreshed by a
+scheduled CI rebuild.
 
 ## Setup
 
@@ -301,9 +301,10 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   "complete" from a fragment and wrongly clearing an active change.
 - A market trend needs at least 2 *distinct* observed values in a price's history before
   it can show anything other than ➡️ (unchanged) — that's by design, not a bug: there's
-  nothing to compare with only one observation. The 10-minute poll while the dashboard is
-  open (see the Data sources table) gives that a real chance to happen within one visit,
-  but a genuinely flat real-world price will still — correctly — show ➡️ indefinitely.
+  nothing to compare with only one observation. The published day-by-day history (see the
+  Data sources table) means this is essentially never an issue in practice, except for a
+  world with no market activity/history recorded upstream yet, or a genuinely flat
+  real-world price, which will — correctly — still show ➡️.
 
 ## How to add a new Mini World Change or World Change
 

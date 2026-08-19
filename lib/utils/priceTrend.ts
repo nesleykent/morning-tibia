@@ -1,6 +1,4 @@
-import type { MarketPrice, MarketTrendBasis, PriceSnapshot, PriceTrend } from "@/types/market";
-
-const MAX_HISTORY_ENTRIES = 30;
+import type { MarketTrendBasis, PriceSnapshot, PriceTrend } from "@/types/market";
 
 /** How many history entries each basis averages over — an entry count, not a day count,
  * since the feed doesn't update daily (a "7-day window" could span 2 entries or 20). */
@@ -36,42 +34,4 @@ export function computeTrendForBasis(history: PriceSnapshot[], count: number): P
   if (current > previous) return "up";
   if (current < previous) return "down";
   return "unchanged";
-}
-
-function pushHistory(history: PriceSnapshot[], entry: PriceSnapshot): PriceSnapshot[] {
-  const next = [...history, entry];
-  return next.length > MAX_HISTORY_ENTRIES ? next.slice(next.length - MAX_HISTORY_ENTRIES) : next;
-}
-
-/**
- * Applies a new observed value to a MarketPrice — the same rule whether it came from live
- * data or a manual edit. Only appends a new history entry (and recomputes the trend) when
- * the value actually changed; a repeated observation just refreshes the freshness label.
- */
-export function applyPriceUpdate(
-  price: MarketPrice,
-  newValue: number | null,
-  options: { isLive: boolean; now: string; sourceTimestamp?: number | null },
-): MarketPrice {
-  const sourceTimestamp = options.sourceTimestamp ?? (options.isLive ? price.sourceTimestamp : null);
-  if (newValue === null) {
-    return { ...price, isLive: options.isLive, sourceTimestamp };
-  }
-
-  const lastEntry = price.history[price.history.length - 1] ?? null;
-  if (lastEntry !== null && lastEntry.value === newValue) {
-    return { ...price, isLive: options.isLive, sourceTimestamp, updatedAt: options.now };
-  }
-
-  const entryTimestamp = sourceTimestamp ?? Date.parse(options.now);
-  const history = pushHistory(price.history, { value: newValue, timestamp: entryTimestamp });
-
-  return {
-    ...price,
-    value: newValue,
-    isLive: options.isLive,
-    sourceTimestamp,
-    updatedAt: options.now,
-    history,
-  };
 }
