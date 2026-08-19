@@ -64,6 +64,8 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
           const price = prices[id];
           if (!price) return null;
           const average = averageOverDays(price.history, averageWindowDays, now);
+          const cutoff = now - averageWindowDays * 86400000;
+          const entryCount = price.history.filter((entry) => entry.timestamp >= cutoff).length;
           return (
             <div key={id} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
@@ -96,7 +98,8 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
               />
               {average !== null && (
                 <p className="text-[11px] text-muted-foreground">
-                  Avg ({averageWindowDays}d, {price.history.filter((e) => e.timestamp >= now - averageWindowDays * 86400000).length} entries): {Math.round(average).toLocaleString()} gp
+                  Avg ({averageWindowDays}d, {entryCount} {entryCount === 1 ? "entry" : "entries"}):{" "}
+                  {Math.round(average).toLocaleString()} gp
                 </p>
               )}
             </div>

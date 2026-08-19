@@ -1,6 +1,5 @@
 "use client";
 
-import { MessageSquareText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,8 +19,8 @@ export function WorldChangeCard({ definition, value, onChange }: WorldChangeCard
 
   return (
     <Card className="transition-colors hover:border-gold/40">
-      <CardContent className="flex flex-col gap-2.5 p-3">
-        <div className="flex items-start justify-between gap-2">
+      <CardContent className="flex flex-col gap-2 p-2.5">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-medium leading-tight">
             <span aria-hidden="true">{definition.emoji}</span>
             <span>{definition.label}</span>
@@ -31,13 +30,8 @@ export function WorldChangeCard({ definition, value, onChange }: WorldChangeCard
           </Badge>
         </div>
 
-        {definition.source === "guide-npc" && (value.state === "unknown" || value.detail) && (
-          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-            <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
-            {value.state === "unknown"
-              ? "Paste a Guide NPC chat log above to detect this automatically."
-              : value.detail}
-          </p>
+        {definition.source === "guide-npc" && value.state !== "unknown" && value.detail && (
+          <p className="text-[11px] text-muted-foreground">{value.detail}</p>
         )}
 
         {definition.source === "manual" && definition.controlType === "toggle" && (
