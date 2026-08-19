@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calendarDayDiff,
+  formatCountdownClock,
   formatDuration,
   formatShortDateInZone,
   formatShortDateUTC,
@@ -61,5 +62,19 @@ describe("formatDuration", () => {
 
   it("clamps negative input to zero", () => {
     expect(formatDuration(-5)).toBe("0min");
+  });
+});
+
+describe("formatCountdownClock", () => {
+  it("formats under a day as HH:MM:SS", () => {
+    expect(formatCountdownClock(3 * 3600_000 + 24 * 60_000 + 5_000)).toBe("03:24:05");
+  });
+
+  it("prefixes days once past 24h", () => {
+    expect(formatCountdownClock(2 * 86_400_000 + 3661_000)).toBe("2d 01:01:01");
+  });
+
+  it("clamps negative input to zero", () => {
+    expect(formatCountdownClock(-5000)).toBe("00:00:00");
   });
 });

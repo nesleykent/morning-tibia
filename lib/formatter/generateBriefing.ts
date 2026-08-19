@@ -35,7 +35,10 @@ export function renderRichBriefing(model: BriefingModel): string {
   const marketLines = [
     `💰 ${t.merchantYasir}: ${model.yasirLabel}`,
     `👳🏼‍♂️ ${t.merchantRashid}: ${model.rashidLabel}`,
-    ...model.marketPriceLines.map((price) => `🪙 ${price.label}: ${price.valueLabel} ${price.trendSymbol}`),
+    ...model.marketPriceLines.map(
+      (price) =>
+        `🪙 ${price.label}: ${price.valueLabel} ${price.trendSymbol}${price.ageLabel ? ` (${price.ageLabel})` : ""}`,
+    ),
   ];
   const marketSection = joinNonEmpty([`*💸 ${t.sectionMarket}*`, joinNonEmpty(marketLines)]);
 
@@ -87,7 +90,9 @@ export function renderPlainBriefing(model: BriefingModel): string {
   const marketLines = [
     `${t.merchantYasir}: ${model.yasirLabel}`,
     `${t.merchantRashid}: ${model.rashidLabel}`,
-    ...model.marketPriceLines.map((price) => `${price.label}: ${price.valueLabel}`),
+    ...model.marketPriceLines.map(
+      (price) => `${price.label}: ${price.valueLabel}${price.ageLabel ? ` (${price.ageLabel})` : ""}`,
+    ),
   ];
   const marketSection = joinNonEmpty([`${t.sectionMarket}:`, joinNonEmpty(marketLines)]);
 

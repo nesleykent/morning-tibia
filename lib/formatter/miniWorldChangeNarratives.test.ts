@@ -19,9 +19,17 @@ describe("getMiniWorldChangeNarrative", () => {
     expect(withLocation).toContain("Vengoth");
   });
 
-  it("names the specific stage number in a stage-type narrative", () => {
-    const stage2 = getMiniWorldChangeNarrative("goroma-volcano", "stage2", "", "en");
-    expect(stage2).toMatch(/stage 2/);
+  it("distinguishes each stage of a genuine stage-type change (Poacher Caves)", () => {
+    const stage1 = getMiniWorldChangeNarrative("poacher-caves", "stage1", "", "en");
+    const stage3 = getMiniWorldChangeNarrative("poacher-caves", "stage3", "", "en");
+    expect(stage1).toMatch(/wild animals dominate/i);
+    expect(stage3).toMatch(/vengeful spirits/i);
+    expect(stage1).not.toBe(stage3);
+  });
+
+  it("resolves a formerly-mismodeled toggle change to a single active narrative, not a stage", () => {
+    expect(getMiniWorldChangeNarrative("goroma-volcano", "active", "", "en")).toMatch(/erupting/i);
+    expect(getMiniWorldChangeNarrative("goroma-volcano", "stage1", "", "en")).toBeNull();
   });
 
   it("provides content in all 4 languages for every defined Mini World Change's known states", () => {

@@ -28,7 +28,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "A big iceberg has been washed up at the coast north of Port Hope. It seems to be inhabited by strange white furballs.",
     changeId: "big-iceberg",
-    note: "Board confirms Big Iceberg / Chakoya is active — set the exact stage below.",
+    state: "active",
   },
   {
     text: "The wild animals north of the Green Claw Swamp clearly dominate the area. But poachers come here to hunt them.",
@@ -96,7 +96,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "Judging by the unnerved mammoths in Svargrond, enough snow has melted away to reveal some very special flora.",
     changeId: "thawing",
-    note: "Board confirms Thawing is active — set the exact stage below.",
+    state: "active",
   },
   {
     text: "The river in Zao Steppe runs deep, there may be more fish than usual!",
@@ -120,7 +120,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "The volcano on Goroma sends its fiery message into the sky. A lot of creatures are flooding the lands together with its lava.",
     changeId: "goroma-volcano",
-    note: "Board confirms Goroma Volcano is active — set the exact stage below.",
+    state: "active",
   },
   {
     text: "Hail to the King! It's Kingsday in Thais, join the celebration!",
@@ -150,7 +150,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "In case you have some spare tentacle pieces, you can now use Devovorga's very essence to enter a boss lair!",
     changeId: "devovorga-essence",
-    note: "Board confirms Devovorga Essence is active — set the exact stage below.",
+    state: "active",
   },
   {
     text: "An ice bridge now connects Svargrond to a frosty island, where monsters and a strange frozen creature have been sighted.",

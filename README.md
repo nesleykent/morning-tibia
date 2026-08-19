@@ -12,18 +12,27 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 
 ## What it does
 
-1. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
+1. **A single top bar**, alongside the brand mark (not a card, not a second stacked bar
+   below it) — a live countdown to the next 10:00 CET/CEST server save, a live countdown
+   to the current Tibia Drome rotation's end, and the viewer-timezone selector,
+   right-aligned. The timezone dropdown mirrors [nesleykent's tibia-warzones-schedule
+   tool](https://nesleykent.github.io/tibia-warzones-schedule/) — same city list, same
+   "City (GMT±N)" labels (`lib/utils/timezoneList.ts`) — for a consistent experience
+   across both. The chosen timezone (auto-detected from the browser by default, manually
+   overridable) drives the generated briefing text and every time shown anywhere else in
+   the app, since it's written for whoever is about to read it, not for the world's own
+   server clock. Its state is shared through `ViewerSettingsContext` between this
+   layout-level bar and the dashboard beneath it — one source of truth, not two copies
+   that could drift apart.
+2. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
    status, boosted creature & boss (with official artwork), one or more boosted regions
    (multi-select, picked from a curated list of real Tibia locations — not free text),
    today's warzone schedule (each execution shown as `12:00 (1-2-3)`, already converted
-   to your timezone), a compact live Tibia Drome rotation card, and a unified **Events**
-   card mixing active and upcoming events (active ones flagged with a badge) with a
-   5/7/14-day window control for how far ahead it reaches. **A viewer-timezone selector
-   sits at the top of the dashboard**, next to the world selector — the generated
-   briefing text and every time shown elsewhere always use this timezone (auto-detected
-   from the browser by default, manually overridable), since it's written for whoever is
-   about to read it, not for the world's own server clock.
-2. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
+   to your timezone), and a unified **Events** card mixing active and upcoming events
+   (active ones flagged with a badge) with a 5/7/14-day window control for how far ahead
+   it reaches. The Tibia Drome rotation itself lives in the top status bar's countdown,
+   not as a separate card.
+3. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
    on the World Board at the Adventurer's Guild — 23 of the canonical 24, the 24th being
    Yasir's location, see below) and World Changes (checked in-game by asking a Guide NPC —
    14 with documented reply text) are different game systems with different in-game
@@ -42,15 +51,21 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    something only the game itself can tell you) and **Needs your input** (the text only
    confirms the change is active without the exact stage or spot, so that detail stays
    editable after import). See [lib/parser](lib/parser).
-3. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
+4. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
    Change), so his location is a closed pick list, not free text; the World Board's
    "Oriental ships sighted…" message auto-fills it via the import panel. Rashid's location
    is computed from Tibia's own clock (the fixed weekday rotation, rolled over at the
-   10:00 CET/CEST server save rather than local midnight, always editable). Live Tibia
-   Coin buy/sell, Gold Token, and Silver Token prices come with automatic
-   up/down/unchanged trend indicators and an "X minutes ago" freshness label.
-4. **Briefing generator** — turns all of the above into a formatted daily message (rich
+   10:00 CET/CEST server save rather than local midnight) and, like Yasir, is a closed
+   pick list of the 7 known cities — always correctable if today's happens to differ, but
+   never free text either. Live Tibia
+   Coins (Sell), Tibia Coins (Buy), Gold Token (Sell), and Silver Token (Sell) prices
+   keep a bounded rolling history of distinct observed values (not a daily series — the
+   feed doesn't update every day, so a new entry is only recorded when the price actually
+   changes), driving an up/down/unchanged trend from the last 3 entries (not a naive
+   two-point comparison), a 3/7/14-day average selector on the dashboard, and an "X ago"
+   freshness label that also appears in the generated briefing text next to the price.
+5. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
    (native share sheet with a clipboard fallback), Reset, and Refresh. Both World Changes
@@ -62,7 +77,7 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    fully localized across all 4 languages; a few World Changes (Demon War, Awash,
    Overhunting, Thornfire) even vary their wording by the parsed detail (which faction is
    winning, whether today's quota was met).
-5. **Editing workflow** — every editable field is inline-editable; manual corrections are
+6. **Editing workflow** — every editable field is inline-editable; manual corrections are
    saved per world/day in `localStorage` so a recurring user can update quickly without
    re-entering everything. Loading an older save after a data-model change (a renamed
    field, a new category) backfills whatever's missing from current defaults instead of
@@ -82,31 +97,43 @@ defaults and stay manually editable.
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe, always overridable. |
 | All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| 17 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. |
+| 21 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. |
 | Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Read-only pick list otherwise — no free text, since there's no 4th option. |
-| The other 6 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Devovorga Essence, Big Iceberg/Chakoya, Goroma Volcano, Noodles, Thawing/Ice Flower), boosted region | Manual, local | The board only confirms these are active without the exact stage or spot, so that detail stays user-editable after import. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
+| The other 2 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Noodles), boosted region | Manual, local | The board confirms these are active but never names a location (verified across every revision the board's wiki page has ever had), so that detail stays user-editable after import. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
 
 ## Architecture
 
 ```
 app/
-  layout.tsx           — root shell, theme tokens
+  layout.tsx           — root shell: single top bar (brand + TopStatusBar), wraps
+                          everything in ViewerSettingsProvider; also fetches Drome at
+                          build time for the status bar's countdown
   page.tsx             — async Server Component: fetches events/Drome at build time,
                           passes them into the client dashboard as props
   globals.css
 components/
   ui/            — hand-written shadcn-style primitives (Radix UI + CVA)
-  dashboard/     — WorldSelector, DailyHeader (world selector + viewer-timezone
-                   selector), ImportGameTextCard, BoostedCard (multi-select boosted
+  dashboard/     — TopStatusBar (server-save + Drome countdowns, timezone selector —
+                   lives inline in layout.tsx's bar, not a bar of its own), WorldSelector,
+                   DailyHeader, ImportGameTextCard, BoostedCard (multi-select boosted
                    region), MiniWorldChangeGrid, WorldChangeGrid (both split into
-                   Auto / Needs-your-input sections), MerchantCard, MarketPriceCard,
-                   WarzoneScheduleCard, DromeCard, EventCard (unified active + upcoming
-                   Events card), BriefingPreview, CopyButton, ToolbarActions, …
+                   Auto / Needs-your-input sections), MerchantCard (both Yasir and
+                   Rashid are closed pick lists, not free text), MarketPriceCard
+                   (3/7/14-day average selector), WarzoneScheduleCard, EventCard
+                   (unified active + upcoming Events card), BriefingPreview, CopyButton,
+                   ToolbarActions, …
 hooks/
   useBriefingState.ts   — the single orchestrating hook: live client queries + build-time
-                           event/Drome props + persisted overrides + derived briefing text
+                           event/Drome props + persisted overrides + derived briefing
+                           text; reads the viewer timezone from ViewerSettingsContext
+                           rather than keeping its own copy
   useCopyToClipboard.ts, useIsClient.ts
 lib/
+  context/       — ViewerSettingsContext.tsx: the one shared source of truth for the
+                   viewer-timezone override, read by both the layout-level TopStatusBar
+                   (above the page) and useBriefingState (inside the page) — they don't
+                   share a React tree position, so this avoids two independent copies of
+                   the same localStorage value drifting apart
   data/          — worldProvider.ts (client hooks fetching TibiaData, tibia-warzones-
                    schedule, and tibiamarket.top directly — all CORS-open, so this works
                    from a static, server-less deploy), tibiaDataMapping.ts (pure, unit
@@ -126,8 +153,10 @@ lib/
                    curated location list for boosted region / suggestions), plus
                    mergeOverridesWithDefaults for safely loading an older localStorage
                    save (including migrating the old single boostedRegion string into
-                   boostedRegions: string[])
-  utils/         — cn, date/timezone/time-ago helpers, timezoneList.ts (the viewer-
+                   boostedRegions: string[], and an old market price's previousValue
+                   into a history array)
+  utils/         — cn, date/timezone/time-ago helpers, serverSave.ts (next 10:00
+                   CET/CEST occurrence, DST-safe), timezoneList.ts (the viewer-
                    timezone override options), price-trend calculator
 types/           — one file per domain concept (World, MiniWorldChange, WorldChange,
                    Merchant, …) — miniWorldChange.ts and worldChange.ts are intentionally
@@ -184,11 +213,11 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 
 ## Current limitations
 
-- 6 Mini World Changes (Bibby's Bloodbath, Devovorga Essence, Big Iceberg/Chakoya, Goroma
-  Volcano, Noodles, Thawing/Ice Flower) and boosted region are manual by design — the
-  World Board only confirms these are active without the exact stage/spot, and there's no
-  API for boosted region at all ("Insectoid Invasion" isn't a Guide-NPC-checkable
-  mechanic either, so it isn't listed as one — see the data source table above).
+- 2 Mini World Changes (Bibby's Bloodbath, Noodles) and boosted region are manual by
+  design — the World Board confirms these are active but never names a location, and
+  there's no API for boosted region at all ("Insectoid Invasion" isn't a
+  Guide-NPC-checkable mechanic either, so it isn't listed as one — see the data source
+  table above).
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.

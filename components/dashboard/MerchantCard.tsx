@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -58,20 +57,23 @@ export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
               </Badge>
             )}
           </div>
-          <Input
-            id="rashid-location"
-            list="rashid-cities"
-            value={rashid?.location ?? ""}
-            placeholder="e.g. Svargrond"
-            onChange={(e) => onChange("rashid", { location: e.target.value })}
-          />
-          <datalist id="rashid-cities">
-            {RASHID_CITIES.map((city) => (
-              <option key={city} value={city} />
-            ))}
-          </datalist>
+          <Select
+            value={rashid?.location || undefined}
+            onValueChange={(value) => onChange("rashid", { location: value })}
+          >
+            <SelectTrigger id="rashid-location">
+              <SelectValue placeholder="Select city…" />
+            </SelectTrigger>
+            <SelectContent>
+              {RASHID_CITIES.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="text-[11px] text-muted-foreground">
-            Defaults to the known weekday rotation — always editable if today&apos;s is different.
+            Defaults to the known weekday rotation — always correctable if today&apos;s is different.
           </p>
         </div>
       </CardContent>

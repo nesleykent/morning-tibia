@@ -228,6 +228,30 @@ export function formatMarketPriceLabel(id: MarketPriceId, language: BriefingLang
   return `${MARKET_ITEM_NAME[id]} ${word}`;
 }
 
+/** Localized "how long ago" label for a market price's last observed change — minutes,
+ * hours, or days, matching lib/utils/timeAgo.ts's English-only thresholds but per language. */
+export function formatPriceAge(timestampMs: number, now: number, language: BriefingLanguage): string {
+  const diffMinutes = Math.max(0, Math.round((now - timestampMs) / 60000));
+  if (diffMinutes < 1) {
+    return pick({ pt: "agora mesmo", en: "just now", es: "justo ahora", pl: "przed chwilą" }, language);
+  }
+  if (diffMinutes < 60) {
+    return pick(
+      { pt: `há ${diffMinutes}min`, en: `${diffMinutes}m ago`, es: `hace ${diffMinutes}min`, pl: `${diffMinutes}min temu` },
+      language,
+    );
+  }
+  const hours = Math.round(diffMinutes / 60);
+  if (hours < 24) {
+    return pick({ pt: `há ${hours}h`, en: `${hours}h ago`, es: `hace ${hours}h`, pl: `${hours}h temu` }, language);
+  }
+  const days = Math.round(hours / 24);
+  return pick(
+    { pt: `há ${days}d`, en: `${days}d ago`, es: `hace ${days}d`, pl: `${days}d temu` },
+    language,
+  );
+}
+
 export function notAvailableText(language: BriefingLanguage): string {
   return pick(
     { pt: "não disponível", en: "not available", es: "no disponible", pl: "niedostępne" },

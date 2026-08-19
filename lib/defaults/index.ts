@@ -1,9 +1,45 @@
 import type { BriefingOverrides } from "@/types/briefing";
+import type { MarketPrice } from "@/types/market";
 import { toDateKey } from "@/lib/utils/date";
 import { createDefaultMiniWorldChangeValues } from "./miniWorldChanges";
 import { createDefaultWorldChangeValues } from "./worldChanges";
 import { createDefaultMerchants } from "./merchants";
 import { createDefaultMarketPrices } from "./marketPrices";
+
+/**
+ * Older saves had `previousValue` instead of a `history` array. Since the top-level merge
+ * below replaces a price entry wholesale when the save has one, a save from before that
+ * schema change would otherwise ship without `history` and crash the first time something
+ * reads it (averaging, trend). Backfill a single-entry history from the saved value.
+ *
+ * `label` is always taken from the current defaults rather than the save — it's a static
+ * catalog string, never user-edited, so an older save's stale wording (e.g. before a
+ * relabel) should never stick around instead of the current one.
+ */
+function migrateMarketPrices(
+  defaults: Record<string, MarketPrice>,
+  saved: Record<string, unknown> | undefined,
+): Record<string, MarketPrice> {
+  if (!saved) return defaults;
+  const merged: Record<string, MarketPrice> = { ...defaults };
+  for (const [id, value] of Object.entries(saved)) {
+    if (!value || typeof value !== "object") continue;
+    const defaultPrice = defaults[id];
+    if (!defaultPrice) continue; // a price id that no longer exists — drop it
+    const price = { ...defaultPrice, ...value, label: defaultPrice.label } as MarketPrice & {
+      previousValue?: unknown;
+    };
+    if (!Array.isArray(price.history)) {
+      price.history =
+        price.value !== null && price.value !== undefined && price.sourceTimestamp !== null
+          ? [{ value: price.value, timestamp: price.sourceTimestamp ?? Date.now() }]
+          : [];
+    }
+    delete price.previousValue;
+    merged[id] = price;
+  }
+  return merged;
+}
 
 export function createDefaultOverrides(world: string, referenceDate: Date): BriefingOverrides {
   return {
@@ -50,7 +86,7 @@ export function mergeOverridesWithDefaults(
     miniWorldChanges: { ...defaults.miniWorldChanges, ...(partial.miniWorldChanges ?? {}) },
     worldChanges: { ...defaults.worldChanges, ...(partial.worldChanges ?? {}) },
     merchants: { ...defaults.merchants, ...(partial.merchants ?? {}) },
-    marketPrices: { ...defaults.marketPrices, ...(partial.marketPrices ?? {}) },
+    marketPrices: migrateMarketPrices(defaults.marketPrices, partial.marketPrices as Record<string, unknown>),
   };
 }
 

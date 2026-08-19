@@ -133,20 +133,24 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("⚔️ WARZONES: 07:00 (1-2-3); 15:00 (1-3-2)");
   });
 
-  it("renders market prices with a trend symbol only when a value is set", () => {
+  it("renders market prices with a trend symbol and age only when a value is set", () => {
     const input = makeInput();
+    const sourceTimestamp = input.referenceDate.getTime() - 2 * 60 * 60 * 1000; // 2h before "now"
     input.overrides.marketPrices.tibiaCoinSell = {
       id: "tibiaCoinSell",
-      label: "Tibia Coin — sell",
+      label: "Tibia Coins (Sell)",
       value: 41000,
-      previousValue: 40000,
       trend: "up",
       isLive: true,
-      sourceTimestamp: null,
+      sourceTimestamp,
       updatedAt: "t",
+      history: [
+        { value: 40000, timestamp: sourceTimestamp - 86400000 },
+        { value: 41000, timestamp: sourceTimestamp },
+      ],
     };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("🪙 TIBIA COIN VENDENDO: 41.000 gp ⬆️");
+    expect(message).toContain("🪙 TIBIA COIN VENDENDO: 41.000 gp ⬆️ (há 2h)");
     expect(message).not.toContain("GOLD TOKEN");
   });
 });

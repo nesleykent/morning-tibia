@@ -8,7 +8,6 @@ import { DailyHeader } from "./DailyHeader";
 import { ImportGameTextCard } from "./ImportGameTextCard";
 import { BoostedCard } from "./BoostedCard";
 import { WarzoneScheduleCard } from "./WarzoneScheduleCard";
-import { DromeCard } from "./DromeCard";
 import { MerchantCard } from "./MerchantCard";
 import { MarketPriceCard } from "./MarketPriceCard";
 import { EventsCard } from "./EventCard";
@@ -23,7 +22,7 @@ function DashboardSkeleton() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
       <div className="skeleton h-24 w-full rounded-xl" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="skeleton h-40 w-full rounded-xl" />
         ))}
       </div>
@@ -66,9 +65,6 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         onRefresh={state.refreshLiveData}
         onReset={state.resetOverrides}
         isRefreshing={isRefreshing}
-        viewerTimeZoneOverride={state.viewerTimeZoneOverride}
-        autoViewerTimeZone={state.autoViewerTimeZone}
-        onViewerTimeZoneChange={state.setViewerTimeZoneOverride}
       />
 
       <ImportGameTextCard
@@ -92,7 +88,6 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
           error={state.warzoneQuery.error}
           viewerTimeZone={state.viewerTimeZone}
         />
-        <DromeCard drome={state.drome} viewerTimeZone={state.viewerTimeZone} />
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
         <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
         <EventsCard

@@ -29,6 +29,15 @@ import { TIBIA_LOCATIONS as COMMON_LOCATIONS } from "./tibiaLocations";
  * parsed as a merchant hint straight into Yasir's location instead (see
  * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), since that's
  * the field it actually feeds.
+ *
+ * Devovorga Essence, Chakoya Iceberg, "Fire from the Earth" (Goroma Volcano), and Thawing
+ * were previously modeled with `controlType: "stage"` / `coverage: "partial"`, assuming
+ * multi-stage escalation like Horestis or Awash. Re-verified against TibiaWiki (current
+ * pages + full revision history): none of the four actually has stages — each is a plain
+ * active/inactive toggle at a fixed location, and the single board message per event
+ * already gives the complete state. Only Bibby's Bloodbath and Noodles remain genuinely
+ * `"partial"` — their board text confirms activity but never names a location, confirmed
+ * across every revision the page has ever had.
  */
 export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
@@ -68,19 +77,20 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     shortLabel: "Devovorga",
     emoji: "🧪",
     category: "rotation",
-    controlType: "stage",
-    coverage: "partial",
-    description: "Current essence stage ahead of a Devovorga world event.",
+    controlType: "toggle",
+    coverage: "full",
+    description:
+      "Whether Devovorga's essence is available at Vengoth to enter its lair (a genuine Mini World Change, distinct from the seasonal Rise of Devovorga event) — a single active/inactive toggle, no stages.",
   },
   {
     id: "big-iceberg",
-    label: "Big Iceberg / Chakoya",
+    label: "Chakoya Iceberg",
     shortLabel: "Iceberg",
     emoji: "🧊",
     category: "rotation",
-    controlType: "stage",
-    coverage: "partial",
-    description: "Current phase of the Big Iceberg / Chakoya event.",
+    controlType: "toggle",
+    coverage: "full",
+    description: "Whether the big iceberg is washed up at the coast north of Port Hope — a single active/inactive toggle, no stages.",
   },
   {
     id: "spirit-gate",
@@ -110,13 +120,14 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   },
   {
     id: "goroma-volcano",
-    label: "Goroma Volcano",
-    shortLabel: "Goroma",
+    label: "Fire from the Earth (Goroma Volcano)",
+    shortLabel: "Fire from the Earth",
     emoji: "🌋",
     category: "rotation",
-    controlType: "stage",
-    coverage: "partial",
-    description: "Current eruption stage of the Goroma volcano.",
+    controlType: "toggle",
+    coverage: "full",
+    description:
+      "Whether the Hellgore volcano on Goroma is erupting (canonical TibiaWiki name: \"Fire from the Earth\") — a single active/inactive toggle, no stages.",
   },
   {
     id: "darama-nomads",
@@ -161,13 +172,14 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   },
   {
     id: "thawing",
-    label: "Thawing / Ice Flower",
+    label: "Thawing",
     shortLabel: "Thawing",
     emoji: "❄️",
     category: "seasonal",
-    controlType: "stage",
-    coverage: "partial",
-    description: "Current thaw stage of the Ice Flower event.",
+    controlType: "toggle",
+    coverage: "full",
+    description:
+      "Whether enough snow has melted near Svargrond to reveal Ice Flowers — a single active/inactive toggle (Ice Flowers are the reward, not a separate stage or mechanic).",
   },
   {
     id: "spiders-nest",

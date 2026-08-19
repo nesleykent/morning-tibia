@@ -14,6 +14,7 @@ import {
   formatActiveEventLine,
   formatDromeLine,
   formatMarketPriceLabel,
+  formatPriceAge,
   formatUpcomingEventLine,
   notAvailableText,
 } from "./phrases";
@@ -52,6 +53,8 @@ export interface MarketPriceLine {
   label: string;
   valueLabel: string;
   trendSymbol: string;
+  /** null when there's no timestamp to compute an age from (a manual entry with no history yet). */
+  ageLabel: string | null;
 }
 
 export interface EventLine {
@@ -169,11 +172,19 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
   const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
     .filter(([, price]) => price.value !== null)
-    .map(([id, price]) => ({
-      label: formatMarketPriceLabel(id as Parameters<typeof formatMarketPriceLabel>[0], input.language),
-      valueLabel: `${price.value!.toLocaleString(locale)} gp`,
-      trendSymbol: trendSymbol(price.trend),
-    }));
+    .map(([id, price]) => {
+      const latestEntry = price.history[price.history.length - 1];
+      const ageTimestamp = price.sourceTimestamp ?? latestEntry?.timestamp ?? null;
+      return {
+        label: formatMarketPriceLabel(id as Parameters<typeof formatMarketPriceLabel>[0], input.language),
+        valueLabel: `${price.value!.toLocaleString(locale)} gp`,
+        trendSymbol: trendSymbol(price.trend),
+        ageLabel:
+          ageTimestamp !== null
+            ? formatPriceAge(ageTimestamp, input.referenceDate.getTime(), input.language)
+            : null,
+      };
+    });
 
   const warzone = input.warzoneSchedule;
   const warzoneLine =

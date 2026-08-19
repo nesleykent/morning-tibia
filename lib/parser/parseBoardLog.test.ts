@@ -11,6 +11,7 @@ Adventurers have told of a Spirit Gate in Vengoth. Fight the restless undead!
 Oriental ships sighted! A trader for exotic creature products may currently be
   visiting Carlin, Ankrahmun or Liberty Bay.
 Hail to the King! It's Kingsday in Thais, join the celebration!
+Bibby Bloodbath and her crew are roaming the lands, destroying everything in their path.
 Some unrelated line that shouldn't match anything at all.
 `;
 
@@ -34,11 +35,17 @@ describe("parseBoardLog", () => {
     expect(spiritGate?.detail).toBe("Vengoth");
   });
 
-  it("surfaces a note instead of guessing a stage it can't determine", () => {
+  it("resolves a simple toggle change to a full state (Chakoya Iceberg has no stages)", () => {
     const result = parseBoardLog(SAMPLE_LOG);
     const iceberg = result.signals.find((s) => s.changeId === "big-iceberg");
-    expect(iceberg?.state).toBeNull();
-    expect(iceberg?.note).toMatch(/active/i);
+    expect(iceberg?.state).toBe("active");
+  });
+
+  it("surfaces a note instead of guessing a location it can't determine", () => {
+    const result = parseBoardLog(SAMPLE_LOG);
+    const bibbys = result.signals.find((s) => s.changeId === "bibbys-bloodbath");
+    expect(bibbys?.state).toBeNull();
+    expect(bibbys?.note).toMatch(/active/i);
   });
 
   it("tolerates a message that wraps across two lines", () => {
@@ -53,8 +60,8 @@ describe("parseBoardLog", () => {
   it("matches Kingsday and ignores unrelated text", () => {
     const result = parseBoardLog(SAMPLE_LOG);
     expect(result.signals.some((s) => s.changeId === "thais-kingsday")).toBe(true);
-    // fury-gate, hive-outpost, big-iceberg (note-only), spirit-gate, thais-kingsday
-    expect(result.signals).toHaveLength(5);
+    // fury-gate, hive-outpost, big-iceberg, spirit-gate, thais-kingsday, bibbys-bloodbath (note-only)
+    expect(result.signals).toHaveLength(6);
   });
 
   it("returns empty results for text with no known messages", () => {

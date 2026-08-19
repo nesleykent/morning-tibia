@@ -56,3 +56,14 @@ export function formatDuration(totalMinutes: number): string {
   if (minutes === 0) return `${hours}h`;
   return `${hours}h ${minutes}min`;
 }
+
+/** "HH:MM:SS", or "Dd HH:MM:SS" past 24h — a live ticking countdown clock. */
+export function formatCountdownClock(totalMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(totalMs / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const clock = [hours, minutes, seconds].map((n) => String(n).padStart(2, "0")).join(":");
+  return days > 0 ? `${days}d ${clock}` : clock;
+}

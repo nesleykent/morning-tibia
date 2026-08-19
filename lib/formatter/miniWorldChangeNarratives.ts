@@ -17,19 +17,6 @@ function withLocation(map: Lang<(location: string) => string>): Resolver {
   return (detail, language) => pick(map, language)(detail.trim());
 }
 
-function stageText(label: string, stage: 1 | 2 | 3): Resolver {
-  return (_detail, language) =>
-    pick(
-      {
-        pt: `${label} está no ${stage}º estágio.`,
-        en: `${label} is at stage ${stage}.`,
-        es: `${label} está en la etapa ${stage}.`,
-        pl: `${label} jest na etapie ${stage}.`,
-      },
-      language,
-    );
-}
-
 const NARRATIVES: Record<string, ChangeNarratives> = {
   "fury-gate": {
     active: simple({
@@ -56,14 +43,20 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
   "devovorga-essence": {
-    stage1: stageText("Devovorga Essence", 1),
-    stage2: stageText("Devovorga Essence", 2),
-    stage3: stageText("Devovorga Essence", 3),
+    active: simple({
+      pt: "Devovorga's essence está disponível em Vengoth para entrar em sua guarida.",
+      en: "Devovorga's essence is available at Vengoth to enter its lair.",
+      es: "La esencia de Devovorga está disponible en Vengoth para entrar a su guarida.",
+      pl: "Esencja Devovorgi jest dostępna w Vengoth, by wejść do jej legowiska.",
+    }),
   },
   "big-iceberg": {
-    stage1: stageText("Big Iceberg / Chakoya", 1),
-    stage2: stageText("Big Iceberg / Chakoya", 2),
-    stage3: stageText("Big Iceberg / Chakoya", 3),
+    active: simple({
+      pt: "Um grande iceberg encalhou na costa ao norte de Port Hope, habitado por estranhas criaturas peludas.",
+      en: "A big iceberg has washed up at the coast north of Port Hope, inhabited by strange white furballs.",
+      es: "Un gran iceberg encalló en la costa al norte de Port Hope, habitado por extrañas criaturas peludas.",
+      pl: "Wielka góra lodowa osiadła na wybrzeżu na północ od Port Hope, zamieszkana przez dziwne włochate stwory.",
+    }),
   },
   "spirit-gate": {
     location: withLocation({
@@ -82,9 +75,12 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
   "goroma-volcano": {
-    stage1: stageText("Goroma Volcano", 1),
-    stage2: stageText("Goroma Volcano", 2),
-    stage3: stageText("Goroma Volcano", 3),
+    active: simple({
+      pt: "O vulcão Hellgore em Goroma está em erupção, trazendo criaturas mais fortes junto com a lava.",
+      en: "The Hellgore volcano on Goroma is erupting, bringing stronger creatures along with the lava.",
+      es: "El volcán Hellgore en Goroma está en erupción, trayendo criaturas más fuertes junto con la lava.",
+      pl: "Wulkan Hellgore na Goroma wybucha, sprowadzając silniejsze stworzenia razem z lawą.",
+    }),
   },
   "darama-nomads": {
     active: simple({
@@ -119,9 +115,12 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
   thawing: {
-    stage1: stageText("Thawing / Ice Flower", 1),
-    stage2: stageText("Thawing / Ice Flower", 2),
-    stage3: stageText("Thawing / Ice Flower", 3),
+    active: simple({
+      pt: "Neve suficiente derreteu perto de Svargrond para revelar Ice Flowers.",
+      en: "Enough snow has melted near Svargrond to reveal Ice Flowers.",
+      es: "Suficiente nieve se ha derretido cerca de Svargrond para revelar Ice Flowers.",
+      pl: "W pobliżu Svargrond stopiło się wystarczająco dużo śniegu, by odsłonić Ice Flowers.",
+    }),
   },
   "spiders-nest": {
     active: simple({
