@@ -1,17 +1,5 @@
 import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
-
-const COMMON_LOCATIONS = [
-  "Ankrahmun",
-  "Carlin",
-  "Darashia",
-  "Edron",
-  "Liberty Bay",
-  "Port Hope",
-  "Svargrond",
-  "Thais",
-  "Venore",
-  "Yalahar",
-];
+import { TIBIA_LOCATIONS as COMMON_LOCATIONS } from "./tibiaLocations";
 
 /**
  * Mini World Changes — announced on the World Board at the Adventurer's Guild, floor +1,
@@ -19,6 +7,28 @@ const COMMON_LOCATIONS = [
  * TibiaWiki's "The World Board" article). Distinct from "World Changes"
  * (lib/defaults/worldChanges.ts), which are a different mechanic checked via Guide NPC —
  * do not merge the two lists.
+ *
+ * Every entry's board text is either `coverage: "full"` (the board always gives the
+ * complete state — which stage, or which of a known, finite set of locations — so the
+ * card is read-only, populated only via the import panel) or `coverage: "partial"` (the
+ * board only confirms the change is active, without the exact stage/location, so that
+ * detail stays user-editable after import).
+ *
+ * Three entries that were previously here are deliberately NOT Mini World Changes and
+ * have been removed after verifying against TibiaWiki:
+ * - "Roshamuul" is a permanent town unlocked by a quest, not a Board-announced or
+ *   Guide-NPC-checked mechanic at all.
+ * - "Overhunting Creature" is actually a *World Change* (Guide NPC keyword
+ *   "Overhunting") — already correctly modeled as "overhunting-deer" in
+ *   lib/defaults/worldChanges.ts.
+ * - "Dream Courts Arena Boss" is a distinct "Boss of the Day" system with no Board text
+ *   or Guide NPC keyword — not trackable by either mechanic.
+ *
+ * The 24th canonical Mini World Change, "Oriental Trader" (Yasir travels between Carlin,
+ * Liberty Bay, and Ankrahmun), isn't modeled as its own card here — its board message is
+ * parsed as a merchant hint straight into Yasir's location instead (see
+ * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), since that's
+ * the field it actually feeds.
  */
 export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
@@ -28,6 +38,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🔥",
     category: "gate",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the Fury Gate in Feyrist is currently open.",
   },
   {
@@ -37,25 +48,8 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "👾",
     category: "hive",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether a Hive infestation has been sighted south-west of Liberty Bay.",
-  },
-  {
-    id: "roshamuul",
-    label: "Roshamuul",
-    shortLabel: "Roshamuul",
-    emoji: "🦇",
-    category: "rotation",
-    controlType: "toggle",
-    description: "Whether the Roshamuul prison event is currently active.",
-  },
-  {
-    id: "dream-courts",
-    label: "Dream Courts Arena Boss",
-    shortLabel: "Dream Courts",
-    emoji: "👹",
-    category: "arena",
-    controlType: "boss",
-    description: "Which boss is currently up in the Dream Courts arena.",
   },
   {
     id: "bibbys-bloodbath",
@@ -64,6 +58,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏴‍☠️",
     category: "rotation",
     controlType: "location",
+    coverage: "partial",
     description: "Current location of the Bibby's Bloodbath ship event.",
     suggestions: COMMON_LOCATIONS,
   },
@@ -74,6 +69,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧪",
     category: "rotation",
     controlType: "stage",
+    coverage: "partial",
     description: "Current essence stage ahead of a Devovorga world event.",
   },
   {
@@ -83,6 +79,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧊",
     category: "rotation",
     controlType: "stage",
+    coverage: "partial",
     description: "Current phase of the Big Iceberg / Chakoya event.",
   },
   {
@@ -92,6 +89,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌀",
     category: "gate",
     controlType: "location",
+    coverage: "full",
     description: "Where the current Spirit Gate is open — Darama, Ghostlands, or Vengoth.",
     suggestions: ["Darama", "Ghostlands", "Vengoth"],
   },
@@ -102,6 +100,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌑",
     category: "rotation",
     controlType: "location",
+    coverage: "full",
     description: "Where the Nightmare Isles portal currently is, when accessible.",
     suggestions: [
       "Darama's northernmost coast",
@@ -110,21 +109,13 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     ],
   },
   {
-    id: "overhunting",
-    label: "Overhunting Creature",
-    shortLabel: "Overhunting",
-    emoji: "⚔️",
-    category: "hunt",
-    controlType: "creature",
-    description: "The creature currently flagged as overhunted on this world.",
-  },
-  {
     id: "goroma-volcano",
     label: "Goroma Volcano",
     shortLabel: "Goroma",
     emoji: "🌋",
     category: "rotation",
     controlType: "stage",
+    coverage: "partial",
     description: "Current eruption stage of the Goroma volcano.",
   },
   {
@@ -133,9 +124,9 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     shortLabel: "Darama",
     emoji: "🐫",
     category: "rotation",
-    controlType: "location",
-    description: "Current camp location of the Darama nomads.",
-    suggestions: COMMON_LOCATIONS,
+    controlType: "toggle",
+    coverage: "full",
+    description: "Whether the nomad camp is active in Kha'labal, north of Ankrahmun's desert — a fixed spot, not a rotating one.",
   },
   {
     id: "bored-witch",
@@ -144,6 +135,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🧙",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether Witch Wyda is currently bored (visitable) or not.",
   },
   {
@@ -153,6 +145,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🍜",
     category: "rotation",
     controlType: "location",
+    coverage: "partial",
     description: "Current location of the Noodles NPC.",
     suggestions: COMMON_LOCATIONS,
   },
@@ -163,6 +156,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "👑",
     category: "seasonal",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the Thais Kingsday festivities are currently active.",
   },
   {
@@ -172,6 +166,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "❄️",
     category: "seasonal",
     controlType: "stage",
+    coverage: "partial",
     description: "Current thaw stage of the Ice Flower event.",
   },
   {
@@ -181,6 +176,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🕷️",
     category: "hunt",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the Spider's Nest task area is currently active.",
   },
   {
@@ -190,6 +186,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏹",
     category: "hunt",
     controlType: "stage",
+    coverage: "full",
     description:
       "Dominance phase north of the Green Claw Swamp: Stage 1 game dominates, Stage 2 poachers dominate, Stage 3 vengeful ghost wolves dominate.",
   },
@@ -200,6 +197,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🏕️",
     category: "hunt",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether hunters and dworcs are fighting over Trapwood's holy grounds.",
   },
   {
@@ -209,6 +207,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌲",
     category: "seasonal",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the full moon effect is active on the island of Grimvale.",
   },
   {
@@ -218,6 +217,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🐘",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether Tiquanda's elephants have been stirred into a stampede.",
   },
   {
@@ -227,6 +227,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "💰",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether banks in major coastal towns are currently being robbed.",
   },
   {
@@ -236,6 +237,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🎣",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the Zao Steppe river currently has more fish than usual.",
   },
   {
@@ -245,6 +247,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🪓",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the Queen's royal trees are currently being cut down.",
   },
   {
@@ -254,6 +257,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🌊",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the river south of the outlaw camp is flooding a reachable island.",
   },
   {
@@ -263,6 +267,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     emoji: "🥶",
     category: "rotation",
     controlType: "toggle",
+    coverage: "full",
     description: "Whether the ice bridge from Svargrond to the frosty island is open.",
   },
 ];

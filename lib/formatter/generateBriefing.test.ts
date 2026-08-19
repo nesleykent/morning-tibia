@@ -24,7 +24,7 @@ function makeInput(
   };
   overrides.merchants.yasir = { id: "yasir", name: "Yasir", location: "Carlin", isComputed: false, updatedAt: null };
   overrides.merchants.rashid = { id: "rashid", name: "Rashid", location: "Svargrond", isComputed: true, updatedAt: null };
-  overrides.boostedRegion = "Venore";
+  overrides.boostedRegions = ["Venore"];
 
   return {
     world: "Ustebra",
@@ -53,7 +53,7 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("🗺️ Região boostada: Venore");
     expect(message).toContain("💰 YASIR: Carlin");
     expect(message).toContain("👳🏼‍♂️ RASHID: Svargrond");
-    expect(message).toContain("🔥 FURY GATE: ✅");
+    expect(message).toContain("🔥 FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
     expect(message).toContain("*🌍 WORLD CHANGES*");
     expect(message).toContain("👾 HIVE BORN");
     expect(message).toContain("Todas as estruturas da Hive estão abertas.");
@@ -102,12 +102,12 @@ describe("generateBriefingMessage", () => {
     };
 
     const message = generateBriefingMessage(input);
-    expect(message).not.toContain("ROSHAMUUL"); // still 'unknown', never shown
+    expect(message).not.toContain("GRIMVALE"); // still 'unknown', never shown
     expect(message).not.toContain("SPIDER'S NEST"); // 'inactive', hidden by default
 
     input.overrides.includeAllChanges = true;
     const fullMessage = generateBriefingMessage(input);
-    expect(fullMessage).not.toContain("ROSHAMUUL"); // 'unknown' stays hidden even with includeAll
+    expect(fullMessage).not.toContain("GRIMVALE"); // 'unknown' stays hidden even with includeAll
     expect(fullMessage).toContain("🕷️ SPIDER'S NEST: ❌");
   });
 
@@ -185,7 +185,7 @@ describe("generatePlainTextBriefing", () => {
       expect(plain).not.toContain(decorative);
     }
     expect(plain).toContain("CRIATURA BOOSTADA: Gore Horn");
-    expect(plain).toContain("FURY GATE: ✅");
+    expect(plain).toContain("FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
     expect(plain).toContain("HIVE BORN");
     expect(plain).toContain("Todas as estruturas da Hive estão abertas.");
   });

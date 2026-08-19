@@ -39,7 +39,15 @@ export interface MiniWorldChangeDefinition {
   controlType: MiniWorldChangeControlType;
   description: string;
   /** Suggested options for "location" / "creature" / "boss" control types, if any are known. */
-  suggestions?: string[];
+  suggestions?: readonly string[];
+  /**
+   * "full" — the World Board's own text always gives the complete state (which stage, or
+   * which of a known set of locations), so this is read-only, populated only by pasting
+   * the board log. "partial" — the board only confirms the change is active without the
+   * exact detail (a stage, or an unlisted location), so the detail stays user-editable
+   * after import.
+   */
+  coverage: "full" | "partial";
 }
 
 export interface MiniWorldChangeValue {

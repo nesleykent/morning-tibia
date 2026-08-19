@@ -1,9 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils/cn";
+import { TIBIA_LOCATIONS } from "@/lib/defaults/tibiaLocations";
 import type { BoostedEntity } from "@/types/boosted";
 
 interface BoostedCardProps {
@@ -11,8 +18,8 @@ interface BoostedCardProps {
   boss: BoostedEntity | null;
   isLoading: boolean;
   error: string | null;
-  boostedRegion: string;
-  onBoostedRegionChange: (value: string) => void;
+  boostedRegions: string[];
+  onBoostedRegionsChange: (regions: string[]) => void;
 }
 
 function BoostedEntry({
@@ -49,13 +56,76 @@ function BoostedEntry({
   );
 }
 
+function BoostedRegionPicker({
+  regions,
+  onChange,
+}: {
+  regions: string[];
+  onChange: (regions: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const toggle = (region: string) => {
+    onChange(regions.includes(region) ? regions.filter((r) => r !== region) : [...regions, region]);
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label>🗺️ Boosted region</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+            <span className="truncate text-left font-normal">
+              {regions.length > 0 ? regions.join(", ") : "Select region(s)…"}
+            </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search location…" />
+            <CommandList>
+              <CommandEmpty>No location found.</CommandEmpty>
+              <CommandGroup>
+                {TIBIA_LOCATIONS.map((location) => (
+                  <CommandItem key={location} value={location} onSelect={() => toggle(location)}>
+                    <Check className={cn("h-3.5 w-3.5", regions.includes(location) ? "opacity-100" : "opacity-0")} />
+                    {location}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {regions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {regions.map((region) => (
+            <Badge key={region} variant="gold" className="gap-1 pr-1">
+              {region}
+              <button
+                type="button"
+                onClick={() => toggle(region)}
+                aria-label={`Remove ${region}`}
+                className="rounded-full p-0.5 hover:bg-gold/20"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BoostedCard({
   creature,
   boss,
   isLoading,
   error,
-  boostedRegion,
-  onBoostedRegionChange,
+  boostedRegions,
+  onBoostedRegionsChange,
 }: BoostedCardProps) {
   return (
     <Card>
@@ -74,15 +144,7 @@ export function BoostedCard({
             Couldn&apos;t load boosted data live ({error}). Try refreshing.
           </p>
         )}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="boosted-region">🗺️ Boosted region</Label>
-          <Input
-            id="boosted-region"
-            placeholder="e.g. Venore"
-            value={boostedRegion}
-            onChange={(e) => onBoostedRegionChange(e.target.value)}
-          />
-        </div>
+        <BoostedRegionPicker regions={boostedRegions} onChange={onBoostedRegionsChange} />
       </CardContent>
     </Card>
   );

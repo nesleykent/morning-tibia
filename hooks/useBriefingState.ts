@@ -158,8 +158,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     [persist],
   );
 
-  const setBoostedRegion = useCallback(
-    (value: string) => persist((prev) => ({ ...prev, boostedRegion: value })),
+  const setBoostedRegions = useCallback(
+    (regions: string[]) => persist((prev) => ({ ...prev, boostedRegions: regions })),
     [persist],
   );
 
@@ -304,7 +304,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     updateWorldChange,
     updateMerchant,
     updateMarketPrice,
-    setBoostedRegion,
+    setBoostedRegions,
     setIncludeAllChanges,
 
     resetOverrides,

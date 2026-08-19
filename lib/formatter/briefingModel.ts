@@ -19,6 +19,7 @@ import {
 } from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
+import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
 
 export type { BriefingLanguage } from "./translations";
 
@@ -131,7 +132,8 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     const value = overrides.miniWorldChanges[def.id];
     if (!value) continue;
     if (value.state === "inactive" && !overrides.includeAllChanges) continue;
-    const valueLabel = formatAchievementValue(value.state, value.detail, t);
+    const narrative = getMiniWorldChangeNarrative(def.id, value.state, value.detail, input.language);
+    const valueLabel = narrative ?? formatAchievementValue(value.state, value.detail, t);
     if (valueLabel === null) continue;
     achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
   }
@@ -227,7 +229,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     greetingText: t.greeting(input.world),
     boostedCreatureLabel: input.boostedCreature?.name ?? notAvailableText(input.language),
     boostedBossLabel: input.boostedBoss?.name ?? notAvailableText(input.language),
-    boostedRegionValue: overrides.boostedRegion.trim() || null,
+    boostedRegionValue: overrides.boostedRegions.length > 0 ? overrides.boostedRegions.join(", ") : null,
     activeEventLines,
     dromeLine,
     warzoneLine,

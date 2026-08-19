@@ -11,7 +11,7 @@ import { WarzoneScheduleCard } from "./WarzoneScheduleCard";
 import { DromeCard } from "./DromeCard";
 import { MerchantCard } from "./MerchantCard";
 import { MarketPriceCard } from "./MarketPriceCard";
-import { ActiveEventsCard, UpcomingEventsCard } from "./EventCard";
+import { EventsCard } from "./EventCard";
 import { MiniWorldChangeGrid } from "./MiniWorldChangeGrid";
 import { WorldChangeGrid } from "./WorldChangeGrid";
 import { BriefingPreview } from "./BriefingPreview";
@@ -77,14 +77,14 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         onApplyMerchant={(id, location) => state.updateMerchant(id, { location })}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
         <BoostedCard
           creature={state.boostedQuery.data?.creature ?? null}
           boss={state.boostedQuery.data?.boss ?? null}
           isLoading={state.boostedQuery.isLoading}
           error={state.boostedQuery.error}
-          boostedRegion={state.overrides.boostedRegion}
-          onBoostedRegionChange={state.setBoostedRegion}
+          boostedRegions={state.overrides.boostedRegions}
+          onBoostedRegionsChange={state.setBoostedRegions}
         />
         <WarzoneScheduleCard
           schedule={state.warzoneQuery.data}
@@ -95,9 +95,9 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         <DromeCard drome={state.drome} viewerTimeZone={state.viewerTimeZone} />
         <MerchantCard merchants={state.overrides.merchants} onChange={state.updateMerchant} />
         <MarketPriceCard prices={state.overrides.marketPrices} onChange={state.updateMarketPrice} />
-        <ActiveEventsCard events={state.activeEvents} />
-        <UpcomingEventsCard
-          events={state.upcomingEvents}
+        <EventsCard
+          activeEvents={state.activeEvents}
+          upcomingEvents={state.upcomingEvents}
           windowDays={state.upcomingEventsWindowDays}
           onWindowDaysChange={state.setUpcomingEventsWindowDays}
         />

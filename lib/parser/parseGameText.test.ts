@@ -27,7 +27,7 @@ Guide: The demon war is in a stalemate once again.
 `;
     const result = parseGameText(combined);
     expect(result.merchantHints).toHaveLength(1);
-    expect(result.merchantHints[0]?.merchantId).toBe("rashid");
+    expect(result.merchantHints[0]?.merchantId).toBe("yasir");
     expect(result.worldChangeSignals.find((s) => s.changeId === "demon-war")?.state).toBe("inactive");
   });
 

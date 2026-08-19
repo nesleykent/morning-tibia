@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquareText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,17 +31,25 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
           </Badge>
         </div>
 
-        {definition.controlType === "toggle" && (
+        {definition.coverage === "full" && value.state === "unknown" && (
+          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
+            Paste a World Board log above to detect this automatically.
+          </p>
+        )}
+
+        {definition.coverage === "partial" && definition.controlType === "toggle" && (
           <StatusSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {definition.controlType === "stage" && (
+        {definition.coverage === "partial" && definition.controlType === "stage" && (
           <StageSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
-        {(definition.controlType === "location" ||
-          definition.controlType === "creature" ||
-          definition.controlType === "boss") && (
+        {definition.coverage === "partial" &&
+          (definition.controlType === "location" ||
+            definition.controlType === "creature" ||
+            definition.controlType === "boss") && (
           <>
             <Input
               value={value.detail}

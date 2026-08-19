@@ -13,46 +13,55 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 ## What it does
 
 1. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
-   status, boosted creature & boss (with official artwork), boosted region, today's
-   warzone schedule (shown per-execution as `12:00 (1-2-3)`, in both the world's own
-   timezone and yours), live Tibia Drome rotation, and live official Active/Upcoming
-   events. **A viewer-timezone selector sits at the top of the dashboard**, next to the
-   world selector — the generated briefing text always uses this timezone (auto-detected
+   status, boosted creature & boss (with official artwork), one or more boosted regions
+   (multi-select, picked from a curated list of real Tibia locations — not free text),
+   today's warzone schedule (each execution shown as `12:00 (1-2-3)`, already converted
+   to your timezone), a compact live Tibia Drome rotation card, and a unified **Events**
+   card mixing active and upcoming events (active ones flagged with a badge) with a
+   5/7/14-day window control for how far ahead it reaches. **A viewer-timezone selector
+   sits at the top of the dashboard**, next to the world selector — the generated
+   briefing text and every time shown elsewhere always use this timezone (auto-detected
    from the browser by default, manually overridable), since it's written for whoever is
    about to read it, not for the world's own server clock.
 2. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
-   on the World Board at the Adventurer's Guild) and World Changes (checked in-game by
-   asking a Guide NPC) are different game systems with different in-game sources, so they
-   get separate sections and separate data models — never merged. A dedicated **Import
-   from game text** panel — front and center on the dashboard, not hidden behind a
-   button — recreates Tibiopedia's paste-and-parse workflow with original code: a single
-   paste box accepts either or both logs at once (a World Board server log and/or a Guide
-   NPC chat log) and both catalogs are checked automatically, since the two mechanics'
-   source text never collides. Every one of the **14 World Changes with an exact,
-   documented Guide NPC reply for at least one state** (Hive Born, Horestis, Deeplings,
-   Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's
-   Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) is populated *only*
-   that way and shown read-only. "Insectoid Invasion" — which TibiaWiki still files under
-   the "World Changes" article for historical reasons — is deliberately left out of this
-   list entirely: it has no Guide NPC keyword at all (confirmed by Guide Elena's own
-   in-game keyword list) and behaves more like a Mini World Change (random, unannounced)
-   despite predating that category. See [lib/parser](lib/parser).
-3. **Merchants & market** — Yasir's location (manual) and Rashid's location (computed
-   from Tibia's own clock — the fixed weekday rotation, rolled over at the 10:00 CET/CEST
-   server save rather than local midnight, always editable), live Tibia Coin buy/sell,
-   Gold Token, and Silver Token prices with automatic up/down/unchanged trend indicators
-   and an "X minutes ago" freshness label for every live price.
+   on the World Board at the Adventurer's Guild — 23 of the canonical 24, the 24th being
+   Yasir's location, see below) and World Changes (checked in-game by asking a Guide NPC —
+   14 with documented reply text) are different game systems with different in-game
+   sources, so they get separate sections and separate data models — never merged. Three
+   entries that were previously miscategorized here have been removed after verifying
+   against TibiaWiki: "Roshamuul" (a quest-unlocked town, not Board or Guide-NPC checked
+   at all), "Overhunting Creature" (actually a World Change, already modeled correctly as
+   `overhunting-deer`), and "Dream Courts Arena Boss" (a separate "Boss of the Day"
+   system with no Board text or Guide NPC keyword). A dedicated **Import from game text**
+   panel — front and center on the dashboard, not hidden behind a button — recreates
+   Tibiopedia's paste-and-parse workflow with original code: a single paste box accepts
+   either or both logs at once and both catalogs are checked automatically, since the two
+   mechanics' source text never collides. Within each mechanic, every entry is split into
+   **Auto** (the board/Guide NPC text always gives the complete state, so the card is
+   read-only, populated only by pasting a log — no pointless manual dropdown next to
+   something only the game itself can tell you) and **Needs your input** (the text only
+   confirms the change is active without the exact stage or spot, so that detail stays
+   editable after import). See [lib/parser](lib/parser).
+3. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
+   Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
+   Change), so his location is a closed pick list, not free text; the World Board's
+   "Oriental ships sighted…" message auto-fills it via the import panel. Rashid's location
+   is computed from Tibia's own clock (the fixed weekday rotation, rolled over at the
+   10:00 CET/CEST server save rather than local midnight, always editable). Live Tibia
+   Coin buy/sell, Gold Token, and Silver Token prices come with automatic
+   up/down/unchanged trend indicators and an "X minutes ago" freshness label.
 4. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
-   (native share sheet with a clipboard fallback), Reset, and Refresh. World Changes get
-   their own dedicated section with a short, human-written narrative per state (what
-   changed, what it unlocks) instead of a bare status symbol — e.g. "Os Shaburak
-   convocaram seus líderes e dominam o complexo," not "✅ Stage 2" — sourced from
+   (native share sheet with a clipboard fallback), Reset, and Refresh. Both World Changes
+   and Mini World Changes read as short, human-written sentences instead of a bare status
+   symbol — e.g. "Os Shaburak convocaram seus líderes e dominam o complexo," not "✅ Stage
+   2" — sourced from
    [`lib/formatter/worldChangeNarratives.ts`](lib/formatter/worldChangeNarratives.ts) and
-   fully localized across all 4 languages; a few (Demon War, Awash, Overhunting,
-   Thornfire) even vary their wording by the parsed detail (which faction is winning,
-   whether today's quota was met).
+   [`lib/formatter/miniWorldChangeNarratives.ts`](lib/formatter/miniWorldChangeNarratives.ts),
+   fully localized across all 4 languages; a few World Changes (Demon War, Awash,
+   Overhunting, Thornfire) even vary their wording by the parsed detail (which faction is
+   winning, whether today's quota was met).
 5. **Editing workflow** — every editable field is inline-editable; manual corrections are
    saved per world/day in `localStorage` so a recurring user can update quickly without
    re-entering everything. Loading an older save after a data-model change (a renamed
@@ -68,12 +77,14 @@ defaults and stay manually editable.
 | Data | Source | Notes |
 |---|---|---|
 | World list, PvP type, BattlEye, transfer type, online count, boosted creature/boss | [TibiaData API v4](https://docs.tibiadata.com/) | Public, no auth, CORS-open — fetched directly from the browser (`lib/data/worldProvider.ts`). |
-| Warzone schedule, warzone health | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); the dashboard card shows both the world's time and the viewer's, but the generated briefing text always converts to the viewer's own timezone, since that's who's reading it. |
+| Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
 | Tibia Coin, Gold Token, Silver Token buy/sell prices | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as a freshness label ("Xm ago"). "Sell price" (what you receive) maps to the current highest buy offer; "buy price" (what you pay) maps to the current lowest sell offer. |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe, always overridable. |
 | All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| All Mini World Changes, Yasir's location, boosted region | Manual, local | No reliable public API or consistently-worded source covers these. The import panel can still auto-fill many Mini World Changes from pasted board text; the grid stays directly editable regardless. |
+| 17 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. |
+| Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Read-only pick list otherwise — no free text, since there's no 4th option. |
+| The other 6 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Devovorga Essence, Big Iceberg/Chakoya, Goroma Volcano, Noodles, Thawing/Ice Flower), boosted region | Manual, local | The board only confirms these are active without the exact stage or spot, so that detail stays user-editable after import. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
 
 ## Architecture
 
@@ -85,10 +96,12 @@ app/
   globals.css
 components/
   ui/            — hand-written shadcn-style primitives (Radix UI + CVA)
-  dashboard/     — WorldSelector, DailyHeader, ImportGameTextCard, BoostedCard,
-                   MiniWorldChangeGrid, WorldChangeGrid, MerchantCard, MarketPriceCard,
-                   WarzoneScheduleCard, DromeCard, EventCard, BriefingPreview,
-                   CopyButton, ToolbarActions, …
+  dashboard/     — WorldSelector, DailyHeader (world selector + viewer-timezone
+                   selector), ImportGameTextCard, BoostedCard (multi-select boosted
+                   region), MiniWorldChangeGrid, WorldChangeGrid (both split into
+                   Auto / Needs-your-input sections), MerchantCard, MarketPriceCard,
+                   WarzoneScheduleCard, DromeCard, EventCard (unified active + upcoming
+                   Events card), BriefingPreview, CopyButton, ToolbarActions, …
 hooks/
   useBriefingState.ts   — the single orchestrating hook: live client queries + build-time
                            event/Drome props + persisted overrides + derived briefing text
@@ -104,12 +117,16 @@ lib/
                    parseGameText.ts so the import panel can check one paste against both
                    catalogs at once — all unit tested
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
-                   (PT/EN/ES/PL section labels) + worldChangeNarratives.ts (the per-state
-                   narrative text catalog for the World Changes section), unit tested
+                   (PT/EN/ES/PL section labels) + worldChangeNarratives.ts /
+                   miniWorldChangeNarratives.ts (the per-state narrative text catalogs),
+                   unit tested
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
   rashid/        — the weekday rotation calculator, unit tested
-  defaults/      — seed data for every manual field, plus mergeOverridesWithDefaults
-                   for safely loading an older localStorage save
+  defaults/      — seed data for every manual field, tibiaLocations.ts (the shared
+                   curated location list for boosted region / suggestions), plus
+                   mergeOverridesWithDefaults for safely loading an older localStorage
+                   save (including migrating the old single boostedRegion string into
+                   boostedRegions: string[])
   utils/         — cn, date/timezone/time-ago helpers, timezoneList.ts (the viewer-
                    timezone override options), price-trend calculator
 types/           — one file per domain concept (World, MiniWorldChange, WorldChange,
@@ -167,11 +184,11 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 
 ## Current limitations
 
-- Mini World Changes, Yasir's location, and boosted region are manual by design — there
-  is no reliable public API for them (every World Change with publicly documented Guide
-  NPC reply text is covered by the parser instead, see the data source table above;
-  "Insectoid Invasion" isn't a Guide-NPC-checkable mechanic at all, so it isn't listed as
-  one).
+- 6 Mini World Changes (Bibby's Bloodbath, Devovorga Essence, Big Iceberg/Chakoya, Goroma
+  Volcano, Noodles, Thawing/Ice Flower) and boosted region are manual by design — the
+  World Board only confirms these are active without the exact stage/spot, and there's no
+  API for boosted region at all ("Insectoid Invasion" isn't a Guide-NPC-checkable
+  mechanic either, so it isn't listed as one — see the data source table above).
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
@@ -198,7 +215,10 @@ Mini World Changes (World Board) and World Changes (Guide NPC) are separate list
 to the one that matches the in-game mechanic:
 
 - Mini World Change → add to `MINI_WORLD_CHANGE_DEFINITIONS` in
-  [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts).
+  [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts) (needs a
+  `coverage` of `"full"` or `"partial"` — only set `"full"` if
+  [`lib/parser/boardMessages.ts`](lib/parser/boardMessages.ts) gives the complete state
+  for every case, not just an "it's active" confirmation).
 - World Change → add to `WORLD_CHANGE_DEFINITIONS` in
   [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) (needs a `source` of
   `"manual"` or `"guide-npc"` — only set `"guide-npc"` if
@@ -240,6 +260,10 @@ The formatter is intentionally isolated from React:
   `detail`-driven variant for states whose wording depends on parsed context (which
   faction is winning, whether a daily quota was met). A state with no entry here falls
   back to the compact ✅/stage line instead of disappearing.
+- [`lib/formatter/miniWorldChangeNarratives.ts`](lib/formatter/miniWorldChangeNarratives.ts)
+  is the same idea for Mini World Changes — `getMiniWorldChangeNarrative(changeId, state,
+  detail, language)` — one sentence per state, with the parsed location interpolated for
+  location-type changes.
 
 To add a new language, add an entry to `translations.ts`'s `TRANSLATIONS` map and to
 `BRIEFING_LANGUAGES`. To change wording, section order, or add a new section, edit the

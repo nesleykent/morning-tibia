@@ -91,7 +91,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "Nomads travel the eternal sands of Ankrahmun's desert. There must be a camp somewhere.",
     changeId: "darama-nomads",
-    note: "Board confirms the Darama Nomads are active — the camp's exact spot isn't in the board text.",
+    state: "active",
   },
   {
     text: "Judging by the unnerved mammoths in Svargrond, enough snow has melted away to reveal some very special flora.",
@@ -110,7 +110,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   },
   {
     text: "Oriental ships sighted! A trader for exotic creature products may currently be visiting Carlin, Ankrahmun or Liberty Bay.",
-    merchantHint: { merchantId: "rashid", candidates: ["Carlin", "Ankrahmun", "Liberty Bay"] },
+    merchantHint: { merchantId: "yasir", candidates: ["Carlin", "Ankrahmun", "Liberty Bay"] },
   },
   {
     text: "Looks like the Queen's own royal trees are being cut down! The lumberjacks responsible shall be put to justice.",

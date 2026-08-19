@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import type { WarzoneSchedule } from "@/types/warzone";
 
@@ -13,17 +12,8 @@ interface WarzoneScheduleCardProps {
   viewerTimeZone: string;
 }
 
-const MARK_VARIANT: Record<string, "active" | "stage2" | "inactive" | "unknown"> = {
-  healthy: "active",
-  inconclusive: "stage2",
-  degraded: "inactive",
-  unknown: "unknown",
-};
-
 export function WarzoneScheduleCard({ schedule, isLoading, error, viewerTimeZone }: WarzoneScheduleCardProps) {
   const [referenceDate] = useState(() => new Date());
-
-  const showViewerTime = Boolean(schedule?.timezone) && schedule?.timezone !== viewerTimeZone;
 
   return (
     <Card>
@@ -56,35 +46,24 @@ export function WarzoneScheduleCard({ schedule, isLoading, error, viewerTimeZone
             No tracked warzone schedule for this world yet.
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={MARK_VARIANT[schedule.mark] ?? "unknown"}>{schedule.mark}</Badge>
-              {schedule.timezone && (
-                <span className="text-xs text-muted-foreground">World time: {schedule.timezone}</span>
-              )}
-              {showViewerTime && (
-                <span className="text-xs text-muted-foreground">· Your time: {viewerTimeZone}</span>
-              )}
-            </div>
-            <ul className="flex flex-col gap-1">
-              {schedule.executions.map((execution) => (
+          <ul className="flex flex-wrap gap-1.5">
+            {schedule.executions.map((execution) => {
+              const time = schedule.timezone
+                ? convertTimeBetweenZones(execution.scheduleTime, schedule.timezone, viewerTimeZone, referenceDate)
+                : execution.scheduleTime;
+              return (
                 <li
                   key={execution.executionId}
-                  className="flex flex-wrap items-baseline gap-1.5 rounded-md border border-border/70 bg-muted/40 px-2 py-1 text-xs"
+                  className="rounded-md border border-border/70 bg-muted/40 px-2 py-1 text-xs font-medium"
                 >
-                  <span className="font-medium">{execution.scheduleTime}</span>
-                  {showViewerTime && schedule.timezone && (
-                    <span className="text-muted-foreground">
-                      ({convertTimeBetweenZones(execution.scheduleTime, schedule.timezone, viewerTimeZone, referenceDate)} your time)
-                    </span>
-                  )}
+                  {time}
                   {execution.warzoneSequence && (
-                    <span className="text-muted-foreground">({execution.warzoneSequence})</span>
+                    <span className="ml-1 font-normal text-muted-foreground">({execution.warzoneSequence})</span>
                   )}
                 </li>
-              ))}
-            </ul>
-          </div>
+              );
+            })}
+          </ul>
         )}
       </CardContent>
     </Card>

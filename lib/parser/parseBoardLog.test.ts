@@ -45,7 +45,7 @@ describe("parseBoardLog", () => {
     const result = parseBoardLog(SAMPLE_LOG);
     expect(result.merchantHints).toHaveLength(1);
     expect(result.merchantHints[0]).toMatchObject({
-      merchantId: "rashid",
+      merchantId: "yasir",
       candidates: ["Carlin", "Ankrahmun", "Liberty Bay"],
     });
   });

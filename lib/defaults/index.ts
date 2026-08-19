@@ -13,7 +13,7 @@ export function createDefaultOverrides(world: string, referenceDate: Date): Brie
     worldChanges: createDefaultWorldChangeValues(),
     merchants: createDefaultMerchants(referenceDate),
     marketPrices: createDefaultMarketPrices(),
-    boostedRegion: "",
+    boostedRegions: [],
     includeAllChanges: false,
   };
 }
@@ -34,9 +34,17 @@ export function mergeOverridesWithDefaults(
   if (!saved || typeof saved !== "object") return defaults;
   const partial = saved as Partial<BriefingOverrides>;
 
+  // Older saves had a single `boostedRegion: string` field — migrate it into the new array.
+  const legacyRegion = (partial as { boostedRegion?: unknown }).boostedRegion;
+  const boostedRegions = Array.isArray(partial.boostedRegions)
+    ? partial.boostedRegions.filter((region): region is string => typeof region === "string")
+    : typeof legacyRegion === "string" && legacyRegion.trim().length > 0
+      ? [legacyRegion]
+      : defaults.boostedRegions;
+
   return {
     ...defaults,
-    boostedRegion: typeof partial.boostedRegion === "string" ? partial.boostedRegion : defaults.boostedRegion,
+    boostedRegions,
     includeAllChanges:
       typeof partial.includeAllChanges === "boolean" ? partial.includeAllChanges : defaults.includeAllChanges,
     miniWorldChanges: { ...defaults.miniWorldChanges, ...(partial.miniWorldChanges ?? {}) },

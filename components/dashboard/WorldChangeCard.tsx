@@ -31,12 +31,12 @@ export function WorldChangeCard({ definition, value, onChange }: WorldChangeCard
           </Badge>
         </div>
 
-        {definition.source === "guide-npc" && (
+        {definition.source === "guide-npc" && (value.state === "unknown" || value.detail) && (
           <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
             <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" />
-            {value.detail
-              ? value.detail
-              : "Paste a Guide NPC chat log above to detect this automatically."}
+            {value.state === "unknown"
+              ? "Paste a Guide NPC chat log above to detect this automatically."
+              : value.detail}
           </p>
         )}
 

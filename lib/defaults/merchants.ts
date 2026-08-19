@@ -1,6 +1,14 @@
 import type { Merchant } from "@/types/merchant";
 import { getRashidLocation } from "@/lib/rashid/rashidRotation";
 
+/**
+ * Yasir's location is the "Oriental Trader" Mini World Change: when active, he's docked
+ * at exactly one of these 3 cities — no others (confirmed against TibiaWiki's Yasir
+ * article). Unlike Rashid's fixed weekday rotation, there's no way to compute which one
+ * without reading the World Board, so this stays a closed pick list rather than free text.
+ */
+export const YASIR_CITIES = ["Carlin", "Liberty Bay", "Ankrahmun"] as const;
+
 export function createDefaultMerchants(referenceDate: Date): Record<string, Merchant> {
   return {
     yasir: {

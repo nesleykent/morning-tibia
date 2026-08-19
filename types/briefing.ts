@@ -16,6 +16,6 @@ export interface BriefingOverrides {
   worldChanges: Record<string, WorldChangeValue>;
   merchants: Record<string, Merchant>;
   marketPrices: Record<string, MarketPrice>;
-  boostedRegion: string;
+  boostedRegions: string[];
   includeAllChanges: boolean;
 }
