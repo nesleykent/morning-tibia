@@ -55,10 +55,10 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
    Change), so his location is a closed pick list, not free text; the World Board's
    "Oriental ships sighted…" message auto-fills it via the import panel. Rashid's location
-   is computed from Tibia's own clock (the fixed weekday rotation, rolled over at the
-   10:00 CET/CEST server save rather than local midnight) and, like Yasir, is a closed
-   pick list of the 7 known cities — always correctable if today's happens to differ, but
-   never free text either. Live Tibia
+   is computed from Tibia's own clock (the fixed weekday rotation, resolved against
+   Europe/Berlin time and rolled over at the 10:00 CET/CEST server save rather than local
+   midnight, DST-safe) and shown fully **read-only** — unlike Yasir, there's no known
+   exception to correct, so it isn't even a picker, just plain text. Live Tibia
    Coins (Sell), Tibia Coins (Buy), Gold Token (Sell), and Silver Token (Sell) prices
    keep a bounded rolling history of distinct observed values (not a daily series — the
    feed doesn't update every day, so a new entry is only recorded when the price actually
@@ -95,7 +95,7 @@ defaults and stay manually editable.
 | Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
 | Tibia Coin, Gold Token, Silver Token buy/sell prices | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as a freshness label ("Xm ago"). "Sell price" (what you receive) maps to the current highest buy offer; "buy price" (what you pay) maps to the current lowest sell offer. |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
-| Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe, always overridable. |
+| Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
 | All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
 | 21 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. |
 | Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Read-only pick list otherwise — no free text, since there's no 4th option. |
@@ -117,8 +117,9 @@ components/
                    lives inline in layout.tsx's bar, not a bar of its own), WorldSelector,
                    DailyHeader, ImportGameTextCard, BoostedCard (multi-select boosted
                    region), MiniWorldChangeGrid, WorldChangeGrid (both split into
-                   Auto / Needs-your-input sections), MerchantCard (both Yasir and
-                   Rashid are closed pick lists, not free text), MarketPriceCard
+                   Auto / Needs-your-input sections), MerchantCard (Yasir is a closed
+                   3-city pick list, not free text; Rashid is read-only plain text — no
+                   known exception ever needs correcting), MarketPriceCard
                    (3/7/14-day average selector), WarzoneScheduleCard, EventCard
                    (unified active + upcoming Events card), BriefingPreview, CopyButton,
                    ToolbarActions, …
@@ -235,6 +236,11 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   canonical English Tibia names regardless of briefing language (translating ~40 in-game
   proper names into 4 languages was out of scope) — only section headers, labels, and the
   greeting are localized.
+- No `backdrop-filter`/`backdrop-blur` anywhere in the app on purpose — Safari has a
+  known bug where it corrupts paint/hit-testing for portalled popover content (our
+  Select/Popover dropdowns) when applied to a `position: sticky` or `fixed` ancestor.
+  Fixed surfaces (the top bar, the mobile action bar) use a plain solid background
+  instead; it's simpler and avoids the whole bug class.
 - Persistence is `localStorage`-only — overrides are per browser/device, not synced
   across devices or shared with a guild.
 

@@ -117,7 +117,9 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         worldName={state.world}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-border bg-card/95 p-3 backdrop-blur sm:hidden">
+      {/* Solid, not backdrop-blur — a fixed element with backdrop-filter has known Safari
+          paint/hit-testing bugs; a solid surface is simpler and just as legible. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-border bg-card p-3 sm:hidden">
         <CopyButton text={state.richBriefing} label="Copy briefing" className="flex-1" />
         <Button variant="outline" size="default" onClick={handleMobileShare} className="flex-1">
           <Share2 /> Share

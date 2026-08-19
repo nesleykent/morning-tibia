@@ -70,7 +70,7 @@ export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
           value={viewerTimeZoneOverride ?? "auto"}
           onValueChange={(value) => setViewerTimeZoneOverride(value === "auto" ? null : value)}
         >
-          <SelectTrigger className="h-7 w-[190px] text-xs" aria-label="Show times in">
+          <SelectTrigger className="h-8 w-[190px] text-xs" aria-label="Show times in">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

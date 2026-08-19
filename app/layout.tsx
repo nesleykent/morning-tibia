@@ -27,7 +27,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ViewerSettingsProvider>
           <div className="flex min-h-dvh flex-col">
-            <div className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
+            {/* No backdrop-blur here: Safari has a well-known bug where backdrop-filter on a
+                position:sticky ancestor corrupts hit-testing/paint order for portalled
+                popover content (our Select/Popover dropdowns render via a body-level
+                Portal) — a solid background avoids it entirely. */}
+            <div className="sticky top-0 z-50 border-b border-border bg-card">
               <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 py-2.5">
                 <span className="flex items-center gap-2">
                   <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gold/15 text-gold">
