@@ -1,5 +1,31 @@
 import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
-import { TIBIA_LOCATIONS as COMMON_LOCATIONS } from "./tibiaLocations";
+
+/**
+ * Bibby's Bloodbath ship event only ever anchors at one of these 3 spots (TibiaWiki,
+ * "Bibby Bloodbath"). A closed list, not the general-purpose COMMON_LOCATIONS catalog —
+ * anywhere else is not a valid reading of the board text.
+ */
+export const BIBBY_BLOODBATH_LOCATIONS = ["Carlin", "Femor Hills", "Jakundaf Desert"] as const;
+
+/**
+ * Every spot Noodles the pig has ever been documented fleeing to (TibiaWiki, "Noodles").
+ * Closed for the same reason as Bibby's list above.
+ */
+export const NOODLES_LOCATIONS = [
+  "West of Greenshore",
+  "Northwest of Thais",
+  "Around Royal Castle",
+  "Royal Castle Kitchen",
+  "West of Royal Castle",
+  "East of Thais, near Hoggle's house",
+  "East of Thais",
+  "Northeast of Snake Tower",
+  "South Thais exit",
+  "South of Thais, near Wolf Dungeon",
+  "White Flower Temple",
+  "South of Thais, near Minotaur Camp",
+  "Cyclops Camp",
+] as const;
 
 /**
  * Mini World Changes — announced on the World Board at the Adventurer's Guild, floor +1,
@@ -27,8 +53,12 @@ import { TIBIA_LOCATIONS as COMMON_LOCATIONS } from "./tibiaLocations";
  * The 24th canonical Mini World Change, "Oriental Trader" (Yasir travels between Carlin,
  * Liberty Bay, and Ankrahmun), isn't modeled as its own card here — its board message is
  * parsed as a merchant hint straight into Yasir's location instead (see
- * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), since that's
- * the field it actually feeds.
+ * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), since that's the
+ * field it actually feeds. It still follows the same evidence rules as every other entry
+ * here: the board message means "active, city pending" until a candidate is picked, and a
+ * complete board reading that omits the message means Yasir is confirmed not currently
+ * trading (see Merchant.activityState in types/merchant.ts and parseBoardLog's
+ * inactiveMerchantIds) — never rendered as merely "unknown" in either case.
  *
  * Devovorga Essence, Chakoya Iceberg, "Fire from the Earth" (Goroma Volcano), and Thawing
  * were previously modeled with `controlType: "stage"` / `coverage: "partial"`, assuming
@@ -69,7 +99,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     controlType: "location",
     coverage: "partial",
     description: "Current location of the Bibby's Bloodbath ship event.",
-    suggestions: COMMON_LOCATIONS,
+    suggestions: BIBBY_BLOODBATH_LOCATIONS,
   },
   {
     id: "devovorga-essence",
@@ -158,7 +188,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     controlType: "location",
     coverage: "partial",
     description: "Current location of the Noodles NPC.",
-    suggestions: COMMON_LOCATIONS,
+    suggestions: NOODLES_LOCATIONS,
   },
   {
     id: "thais-kingsday",

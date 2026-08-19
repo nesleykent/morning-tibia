@@ -12,6 +12,20 @@ interface MerchantCardProps {
   onChange: (id: MerchantId, patch: Partial<Merchant>) => void;
 }
 
+const YASIR_ACTIVITY_LABEL: Record<Merchant["activityState"], string> = {
+  "not-verified": "Not verified",
+  inactive: "Inactive",
+  "pending-location": "Active — pending city",
+  "location-known": "Active",
+};
+
+const YASIR_ACTIVITY_BADGE_VARIANT: Record<Merchant["activityState"], "unknown" | "inactive" | "active"> = {
+  "not-verified": "unknown",
+  inactive: "inactive",
+  "pending-location": "active",
+  "location-known": "active",
+};
+
 export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
   const yasir = merchants.yasir;
   const rashid = merchants.rashid;
@@ -25,10 +39,17 @@ export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="yasir-location">💰 Yasir</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="yasir-location">💰 Yasir</Label>
+            {yasir && (
+              <Badge variant={YASIR_ACTIVITY_BADGE_VARIANT[yasir.activityState]} className="text-[10px]">
+                {YASIR_ACTIVITY_LABEL[yasir.activityState]}
+              </Badge>
+            )}
+          </div>
           <Select
             value={yasir?.location || undefined}
-            onValueChange={(value) => onChange("yasir", { location: value })}
+            onValueChange={(value) => onChange("yasir", { location: value, activityState: "location-known" })}
           >
             <SelectTrigger id="yasir-location">
               <SelectValue placeholder="Select city…" />
@@ -42,7 +63,8 @@ export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
             </SelectContent>
           </Select>
           <p className="text-[11px] text-muted-foreground">
-            Only ever one of these 3 cities — paste the board log above or pick directly.
+            Only ever one of these 3 cities, and only while the Oriental Trader is active on
+            the World Board — paste the board log above or pick directly once you know which.
           </p>
         </div>
         <div className="flex flex-col gap-1.5">

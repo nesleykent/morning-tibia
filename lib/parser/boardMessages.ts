@@ -1,22 +1,26 @@
 import type { MiniWorldChangeState } from "@/types/miniWorldChange";
+import type { MerchantId } from "@/types/merchant";
 
 /**
  * The World Board (Adventurer's Guild, floor +1, near Charos) prints one line per
- * currently active Mini World Change. Message text is verbatim from TibiaWiki's
- * documentation of the board ("The World Board", community-documented under CC-BY-SA —
- * https://tibia.fandom.com/wiki/The_World_Board), not derived from any fansite's tool.
+ * currently active Mini World Change, plus one line for the "Oriental Trader" (Yasir).
+ * Message text is verbatim from TibiaWiki's documentation of the board ("The World Board",
+ * community-documented under CC-BY-SA — https://tibia.fandom.com/wiki/The_World_Board),
+ * not derived from any fansite's tool.
  *
- * Where the board confirms a change is active but doesn't carry enough detail to set an
- * exact stage/location, `note` is set instead of `state` — the parser surfaces it as a
- * hint rather than guessing a value.
+ * The board confirms Bibby's Bloodbath and Noodles are active without naming their exact
+ * spot — those two entries carry `state: "active"` with no `detail`, and the closed
+ * location list they can settle into lives on their MiniWorldChangeDefinition
+ * (lib/defaults/miniWorldChanges.ts). This is a genuine, applicable signal — not a hint to
+ * discard — the location simply stays pending until the World Board or the player
+ * pinpoints it.
  */
 export interface BoardMessageEntry {
   text: string;
   changeId?: string;
   state?: MiniWorldChangeState;
   detail?: string;
-  note?: string;
-  merchantHint?: { merchantId: "rashid" | "yasir"; candidates: string[] };
+  merchantHint?: { merchantId: MerchantId; candidates: string[] };
 }
 
 export const BOARD_MESSAGES: BoardMessageEntry[] = [
@@ -106,7 +110,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "Not again! Noodles has taken some royal freedom and left the castle, after him in the name of the king!",
     changeId: "noodles",
-    note: "Board confirms Noodles has left the castle — his exact spot isn't in the board text.",
+    state: "active",
   },
   {
     text: "Oriental ships sighted! A trader for exotic creature products may currently be visiting Carlin, Ankrahmun or Liberty Bay.",
@@ -140,7 +144,7 @@ export const BOARD_MESSAGES: BoardMessageEntry[] = [
   {
     text: "Bibby Bloodbath and her crew are roaming the lands, destroying everything in their path.",
     changeId: "bibbys-bloodbath",
-    note: "Board confirms Bibby's Bloodbath is active — her exact spot isn't in the board text.",
+    state: "active",
   },
   {
     text: "A whole nest of spiders needs to be exterminated as Mamma Longlegs is on the loose.",

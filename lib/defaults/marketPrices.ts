@@ -1,10 +1,14 @@
 import type { MarketPrice, MarketPriceId } from "@/types/market";
 
+// Literal market-order terminology, matching api.tibiamarket.top's own sellOffer/buyOffer
+// fields exactly — a "sell offer" is gold offered in exchange for the item (what you pay
+// to buy it), a "buy offer" is gold offered to acquire the item (what you receive selling
+// it). No "player perspective" renaming — see hooks/useBriefingState.ts's live-merge effect.
 const LABELS: Record<MarketPriceId, string> = {
-  tibiaCoinSell: "Tibia Coins (Sell)",
-  tibiaCoinBuy: "Tibia Coins (Buy)",
-  goldTokenSell: "Gold Token (Sell)",
-  silverTokenSell: "Silver Token (Sell)",
+  tibiaCoinSell: "Tibia Coin Sell Offer",
+  tibiaCoinBuy: "Tibia Coin Buy Offer",
+  goldTokenSell: "Gold Token Sell Offer",
+  silverTokenSell: "Silver Token Sell Offer",
 };
 
 export function createDefaultMarketPrices(): Record<string, MarketPrice> {

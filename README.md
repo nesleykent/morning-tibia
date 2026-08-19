@@ -50,28 +50,60 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    read-only, populated only by pasting a log — no pointless manual dropdown next to
    something only the game itself can tell you) and **Needs your input** (the text only
    confirms the change is active without the exact stage or spot, so that detail stays
-   editable after import). See [lib/parser](lib/parser).
+   editable after import, from a closed pick list for Bibby's Bloodbath and Noodles rather
+   than free text — see below). See [lib/parser](lib/parser).
+
+   **World Board "complete snapshot" detection.** The board's own fixed opening line ("You
+   see the world board. This board will notify you...") is the one safe signal that a paste
+   is a genuine, full board reading rather than a fragment — [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts)
+   only infers "inactive" for an unmentioned Mini World Change (or "inactive" for Yasir,
+   see below) when that exact preamble is present. A partial paste, or any Guide NPC chat
+   log, never triggers this — absence there stays exactly what it is: no evidence, i.e.
+   `unknown`, never silently downgraded to "inactive". Every state distinguishes four
+   things, not three: no evidence yet (`unknown`), confirmed not happening (`inactive`),
+   confirmed happening with the exact detail still unknown (`active`, shown as "Active —
+   pending location/creature/boss"), and confirmed happening with the detail known
+   (`location`/`creature`/`boss`/a stage). Bibby's Bloodbath and Noodles are the clearest
+   example: the board can confirm they're active without saying where, so they land in
+   `active` (pending) until a later, more specific board line — or the player — supplies
+   one of their closed set of possible spots (3 for Bibby, 13 for Noodles — see
+   `BIBBY_BLOODBATH_LOCATIONS` / `NOODLES_LOCATIONS` in
+   [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)); free text isn't
+   offered for either, since anywhere else isn't a valid reading of the board.
 4. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
    Change), so his location is a closed pick list, not free text; the World Board's
-   "Oriental ships sighted…" message auto-fills it via the import panel. Rashid's location
-   is computed from Tibia's own clock (the fixed weekday rotation, resolved against
-   Europe/Berlin time and rolled over at the 10:00 CET/CEST server save rather than local
-   midnight, DST-safe) and shown fully **read-only** — unlike Yasir, there's no known
-   exception to correct, so it isn't even a picker, just plain text. Live Tibia
-   Coins (Sell), Tibia Coins (Buy), Gold Token (Sell), and Silver Token (Sell) prices
+   "Oriental ships sighted…" message auto-fills it via the import panel. His card carries
+   an explicit `activityState` badge — **Not verified** (nothing checked this session yet),
+   **Active — pending city** (the board confirms he's trading but a city hasn't been picked
+   yet), **Active** (city known), or **Inactive** (a complete board reading didn't mention
+   him at all) — so "we haven't checked" and "we checked and he's not around" never look
+   the same (`types/merchant.ts`'s `MerchantActivityState`). Rashid's location is computed
+   from Tibia's own clock (the fixed weekday rotation, resolved against Europe/Berlin time
+   and rolled over at the 10:00 CET/CEST server save rather than local midnight, DST-safe)
+   and shown fully **read-only** — unlike Yasir, there's no known exception to correct, so
+   it isn't even a picker, just plain text, and his `activityState` is always the fixed
+   "location-known". Live Tibia Coin Sell Offer, Tibia Coin Buy Offer, Gold Token Sell
+   Offer, and Silver Token Sell Offer prices — named literally after the underlying
+   market-order fields, not reinterpreted into a "what the player pays/receives" framing —
    keep a bounded rolling history of distinct observed values (not a daily series — the
    feed doesn't update every day, so a new entry is only recorded when the price actually
    changes), driving an up/down/unchanged trend from the last 3 entries (not a naive
-   two-point comparison), a 3/7/14-day average selector on the dashboard, and an "X ago"
-   freshness label that also appears in the generated briefing text next to the price.
+   two-point comparison), a 3/7/14-day average selector on the dashboard, and an "as of X
+   ago" snapshot-freshness label (next to an **auto** badge meaning "sourced from the live
+   feed", not literally "this second") that also appears in the generated briefing text
+   next to the price.
 5. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
-   (native share sheet with a clipboard fallback), Reset, and Refresh. Both World Changes
-   and Mini World Changes read as short, human-written sentences instead of a bare status
-   symbol — e.g. "Os Shaburak convocaram seus líderes e dominam o complexo," not "✅ Stage
-   2" — sourced from
+   (native share sheet with a clipboard fallback), Reset, and Refresh. **Mini World
+   Changes** and **World Changes** get their own separate sections in the generated text
+   (they used to share one "Achievements & Bosses" section, which conflated two different
+   mechanics) — and each section's "nothing to show" state distinguishes *nothing has been
+   checked yet this session* from *it was checked and genuinely nothing is active*, instead
+   of a single generic "no active changes" line for both cases. Both sections read as
+   short, human-written sentences instead of a bare status symbol — e.g. "Os Shaburak
+   convocaram seus líderes e dominam o complexo," not "✅ Stage 2" — sourced from
    [`lib/formatter/worldChangeNarratives.ts`](lib/formatter/worldChangeNarratives.ts) and
    [`lib/formatter/miniWorldChangeNarratives.ts`](lib/formatter/miniWorldChangeNarratives.ts),
    fully localized across all 4 languages; a few World Changes (Demon War, Awash,
@@ -93,13 +125,13 @@ defaults and stay manually editable.
 |---|---|---|
 | World list, PvP type, BattlEye, transfer type, online count, boosted creature/boss | [TibiaData API v4](https://docs.tibiadata.com/) | Public, no auth, CORS-open — fetched directly from the browser (`lib/data/worldProvider.ts`). |
 | Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
-| Tibia Coin, Gold Token, Silver Token buy/sell prices | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as a freshness label ("Xm ago"). "Sell price" (what you receive) maps to the current highest buy offer; "buy price" (what you pay) maps to the current lowest sell offer. |
+| Tibia Coin, Gold Token, Silver Token sell/buy offers | [api.tibiamarket.top](https://api.tibiamarket.top/docs) | CORS-open. Returns a timestamp per snapshot, shown as an "as of Xm ago" freshness label. Mapping is literal, straight from the API's own `sellOffer`/`buyOffer` fields — our `*Sell`/`*Buy` price ids hold exactly that, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
 | All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| 21 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. |
-| Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Read-only pick list otherwise — no free text, since there's no 4th option. |
-| The other 2 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Noodles), boosted region | Manual, local | The board confirms these are active but never names a location (verified across every revision the board's wiki page has ever had), so that detail stays user-editable after import. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
+| 21 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. A *complete* board reading (the board's own fixed preamble is present — see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts)) also infers "inactive" for any of these left unmentioned; a fragmentary paste never does. |
+| Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Active, city pending until a candidate is picked (or the board itself names one) — closed pick list, no free text, since there's no 4th option. A complete board reading that omits this message marks him confirmed inactive instead of merely unverified. |
+| The other 2 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Noodles), boosted region | Manual, local | The board confirms these are active but never names a location in that same line (verified across every revision the board's wiki page has ever had), so the entry lands in `active` (pending) — closed pick list of 3/13 known spots respectively, not free text — until a location is supplied, or a complete board reading that omits them entirely marks them inactive. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
 
 ## Architecture
 
@@ -141,9 +173,12 @@ lib/
                    tested), wikiContentClient.ts (build-time-only TibiaWiki fetcher, unit
                    tested), marketItemIds.ts
   parser/        — boardMessages.ts / guideMessages.ts (verbatim catalogs, one per
-                   mechanic) + parseBoardLog.ts / parseGuideLog.ts, combined into a single
-                   parseGameText.ts so the import panel can check one paste against both
-                   catalogs at once — all unit tested
+                   mechanic) + parseBoardLog.ts (also detects a "complete snapshot" via the
+                   board's own fixed preamble, inferring inactivity for anything left
+                   unmentioned — never done for a fragment, and never for Guide NPC text)
+                   / parseGuideLog.ts, combined into a single parseGameText.ts so the
+                   import panel can check one paste against both catalogs at once — all
+                   unit tested
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
                    (PT/EN/ES/PL section labels) + worldChangeNarratives.ts /
                    miniWorldChangeNarratives.ts (the per-state narrative text catalogs),
@@ -151,11 +186,13 @@ lib/
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
   rashid/        — the weekday rotation calculator, unit tested
   defaults/      — seed data for every manual field, tibiaLocations.ts (the shared
-                   curated location list for boosted region / suggestions), plus
+                   curated location list for boosted region / suggestions), the closed
+                   BIBBY_BLOODBATH_LOCATIONS / NOODLES_LOCATIONS lists, plus
                    mergeOverridesWithDefaults for safely loading an older localStorage
-                   save (including migrating the old single boostedRegion string into
-                   boostedRegions: string[], and an old market price's previousValue
-                   into a history array)
+                   save (migrating the old single boostedRegion string into
+                   boostedRegions: string[], an old market price's previousValue into a
+                   history array, a pre-activityState merchant save, and a Bibby/Noodles
+                   detail that's no longer in the closed list back to "active, pending")
   utils/         — cn, date/timezone/time-ago helpers, serverSave.ts (next 10:00
                    CET/CEST occurrence, DST-safe), timezoneList.ts (the viewer-
                    timezone override options), price-trend calculator
@@ -243,6 +280,12 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   instead; it's simpler and avoids the whole bug class.
 - Persistence is `localStorage`-only — overrides are per browser/device, not synced
   across devices or shared with a guild.
+- "Complete snapshot" inference (an unmentioned Mini World Change, or Yasir, treated as
+  inactive) only fires when the World Board's own fixed preamble text is present in the
+  paste — a genuinely complete board reading that's missing that first line (trimmed
+  before copying, for instance) is treated as a fragment instead, and nothing gets
+  auto-marked inactive. This is intentional: it's a much safer failure mode than guessing
+  "complete" from a fragment and wrongly clearing an active change.
 
 ## How to add a new Mini World Change or World Change
 
@@ -253,7 +296,10 @@ to the one that matches the in-game mechanic:
   [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts) (needs a
   `coverage` of `"full"` or `"partial"` — only set `"full"` if
   [`lib/parser/boardMessages.ts`](lib/parser/boardMessages.ts) gives the complete state
-  for every case, not just an "it's active" confirmation).
+  for every case, not just an "it's active" confirmation). If it's `"partial"` and
+  `controlType: "location"`, give it a closed `suggestions` list of every spot TibiaWiki
+  documents (like Bibby's Bloodbath / Noodles) rather than leaving it free text — the
+  card then renders a strict picker instead of an open input.
 - World Change → add to `WORLD_CHANGE_DEFINITIONS` in
   [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) (needs a `source` of
   `"manual"` or `"guide-npc"` — only set `"guide-npc"` if

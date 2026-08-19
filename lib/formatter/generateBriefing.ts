@@ -45,8 +45,8 @@ export function renderRichBriefing(model: BriefingModel): string {
   const achievementBody =
     model.achievementLines.length > 0
       ? joinNonEmpty(model.achievementLines.map((line) => `${line.emoji} ${line.label}: ${line.valueLabel}`))
-      : `_${t.noAchievements}_`;
-  const achievementSection = joinNonEmpty([`*🎎 ${t.sectionAchievements}*`, achievementBody]);
+      : `_${model.miniWorldChangesVerified ? t.miniWorldChangesNoneActive : t.miniWorldChangesNotVerified}_`;
+  const achievementSection = joinNonEmpty([`*🎎 ${t.sectionMiniWorldChanges}*`, achievementBody]);
 
   const worldChangeBody =
     model.worldChangeLines.length > 0
@@ -58,7 +58,7 @@ export function renderRichBriefing(model: BriefingModel): string {
             return parts.join("\n");
           })
           .join("\n\n")
-      : `_${t.noWorldChanges}_`;
+      : `_${model.worldChangesVerified ? t.noWorldChanges : t.worldChangesNotVerified}_`;
   const worldChangeSection = joinNonEmpty([`*🌍 ${t.sectionWorldChanges}*`, worldChangeBody]);
 
   const upcomingBody =
@@ -99,8 +99,10 @@ export function renderPlainBriefing(model: BriefingModel): string {
   const achievementBody =
     model.achievementLines.length > 0
       ? joinNonEmpty(model.achievementLines.map((line) => `${line.label}: ${line.valueLabel}`))
-      : t.noAchievements;
-  const achievementSection = joinNonEmpty([`${t.sectionAchievements}:`, achievementBody]);
+      : model.miniWorldChangesVerified
+        ? t.miniWorldChangesNoneActive
+        : t.miniWorldChangesNotVerified;
+  const achievementSection = joinNonEmpty([`${t.sectionMiniWorldChanges}:`, achievementBody]);
 
   const worldChangeBody =
     model.worldChangeLines.length > 0
@@ -112,7 +114,9 @@ export function renderPlainBriefing(model: BriefingModel): string {
             return parts.join("\n");
           })
           .join("\n\n")
-      : t.noWorldChanges;
+      : model.worldChangesVerified
+        ? t.noWorldChanges
+        : t.worldChangesNotVerified;
   const worldChangeSection = joinNonEmpty([`${t.sectionWorldChanges}:`, worldChangeBody]);
 
   const upcomingBody =

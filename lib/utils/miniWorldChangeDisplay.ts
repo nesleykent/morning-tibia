@@ -29,7 +29,15 @@ export function stateBadgeLabel(
   detail: string,
 ): string {
   if (state === "unknown") return "Unknown";
-  if (state === "active") return "Active";
+  if (state === "active") {
+    // "active" on a location/creature/boss entry means confirmed active but the exact
+    // detail isn't known yet — distinct from a plain toggle's "active", and never the
+    // same badge as "unknown" (no evidence at all).
+    if (controlType === "location") return "Active — pending location";
+    if (controlType === "creature") return "Active — pending creature";
+    if (controlType === "boss") return "Active — pending boss";
+    return "Active";
+  }
   if (state === "inactive") return "Inactive";
   if (state === "stage1" || state === "stage2" || state === "stage3") return STAGE_ORDINAL[state]!;
   if (controlType === "location") return detail.trim() || "Location set";

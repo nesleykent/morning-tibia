@@ -1,10 +1,66 @@
 import type { BriefingOverrides } from "@/types/briefing";
 import type { MarketPrice } from "@/types/market";
+import type { Merchant, MerchantActivityState } from "@/types/merchant";
+import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
 import { toDateKey } from "@/lib/utils/date";
-import { createDefaultMiniWorldChangeValues } from "./miniWorldChanges";
+import { createDefaultMiniWorldChangeValues, MINI_WORLD_CHANGE_DEFINITIONS } from "./miniWorldChanges";
 import { createDefaultWorldChangeValues } from "./worldChanges";
 import { createDefaultMerchants } from "./merchants";
 import { createDefaultMarketPrices } from "./marketPrices";
+
+const VALID_ACTIVITY_STATES: MerchantActivityState[] = [
+  "not-verified",
+  "inactive",
+  "pending-location",
+  "location-known",
+];
+
+/** Older saves predate Merchant.activityState entirely. Backfill it from the current
+ * default (Rashid's is always "location-known"; Yasir's is "not-verified" unless the
+ * save already has one of the four valid values). */
+function migrateMerchants(
+  defaults: Record<string, Merchant>,
+  saved: Record<string, unknown> | undefined,
+): Record<string, Merchant> {
+  if (!saved) return defaults;
+  const merged: Record<string, Merchant> = { ...defaults };
+  for (const [id, value] of Object.entries(saved)) {
+    if (!value || typeof value !== "object") continue;
+    const defaultMerchant = defaults[id];
+    if (!defaultMerchant) continue;
+    const merchant = { ...defaultMerchant, ...value } as Merchant;
+    if (!VALID_ACTIVITY_STATES.includes(merchant.activityState)) {
+      merchant.activityState = defaultMerchant.activityState;
+    }
+    merged[id] = merchant;
+  }
+  return merged;
+}
+
+/** Bibby's Bloodbath and Noodles gained closed location lists — an older save's free-typed
+ * detail might not be one of the now-valid spots. Drop it back to "active, pending" rather
+ * than keep displaying a place the board could never actually report. */
+function migrateMiniWorldChanges(
+  defaults: Record<string, MiniWorldChangeValue>,
+  saved: Record<string, unknown> | undefined,
+): Record<string, MiniWorldChangeValue> {
+  if (!saved) return defaults;
+  const merged: Record<string, MiniWorldChangeValue> = { ...defaults };
+  const defByCid = new Map(MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def]));
+  for (const [id, value] of Object.entries(saved)) {
+    if (!value || typeof value !== "object") continue;
+    const defaultValue = defaults[id];
+    const def = defByCid.get(id);
+    if (!defaultValue || !def) continue;
+    const mwc = { ...defaultValue, ...value, id } as MiniWorldChangeValue;
+    if (def.suggestions && mwc.state === "location" && !def.suggestions.includes(mwc.detail)) {
+      mwc.state = "active";
+      mwc.detail = "";
+    }
+    merged[id] = mwc;
+  }
+  return merged;
+}
 
 /**
  * Older saves had `previousValue` instead of a `history` array. Since the top-level merge
@@ -83,9 +139,12 @@ export function mergeOverridesWithDefaults(
     boostedRegions,
     includeAllChanges:
       typeof partial.includeAllChanges === "boolean" ? partial.includeAllChanges : defaults.includeAllChanges,
-    miniWorldChanges: { ...defaults.miniWorldChanges, ...(partial.miniWorldChanges ?? {}) },
+    miniWorldChanges: migrateMiniWorldChanges(
+      defaults.miniWorldChanges,
+      partial.miniWorldChanges as Record<string, unknown>,
+    ),
     worldChanges: { ...defaults.worldChanges, ...(partial.worldChanges ?? {}) },
-    merchants: { ...defaults.merchants, ...(partial.merchants ?? {}) },
+    merchants: migrateMerchants(defaults.merchants, partial.merchants as Record<string, unknown>),
     marketPrices: migrateMarketPrices(defaults.marketPrices, partial.marketPrices as Record<string, unknown>),
   };
 }

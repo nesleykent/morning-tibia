@@ -36,4 +36,12 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
     const result = parseGuideLog("Guide: Hello there, adventurer!");
     expect(result.signals).toHaveLength(0);
   });
+
+  it("never reports a complete snapshot — a Guide NPC answers one keyword at a time", () => {
+    const result = parseGuideLog(
+      "Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to crush all intruders.",
+    );
+    expect(result.isCompleteSnapshot).toBe(false);
+    expect(result.inactiveMerchantIds).toEqual([]);
+  });
 });

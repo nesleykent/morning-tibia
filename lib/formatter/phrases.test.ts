@@ -4,6 +4,7 @@ import {
   formatDromeLine,
   formatMarketPriceLabel,
   formatUpcomingEventLine,
+  formatYasirLabel,
   notAvailableText,
 } from "./phrases";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
@@ -108,11 +109,24 @@ describe("formatDromeLine", () => {
 });
 
 describe("formatMarketPriceLabel", () => {
-  it("keeps item names untranslated and localizes only sell/buy", () => {
-    expect(formatMarketPriceLabel("tibiaCoinSell", "pt")).toBe("TIBIA COIN VENDENDO");
-    expect(formatMarketPriceLabel("tibiaCoinBuy", "pt")).toBe("TIBIA COIN COMPRANDO");
-    expect(formatMarketPriceLabel("goldTokenSell", "en")).toBe("GOLD TOKEN SELLING");
-    expect(formatMarketPriceLabel("silverTokenSell", "es")).toBe("SILVER TOKEN VENDIENDO");
+  it("keeps item names untranslated and localizes only the literal sell/buy offer wording", () => {
+    expect(formatMarketPriceLabel("tibiaCoinSell", "pt")).toBe("TIBIA COIN OFERTA DE VENDA");
+    expect(formatMarketPriceLabel("tibiaCoinBuy", "pt")).toBe("TIBIA COIN OFERTA DE COMPRA");
+    expect(formatMarketPriceLabel("goldTokenSell", "en")).toBe("GOLD TOKEN SELL OFFER");
+    expect(formatMarketPriceLabel("silverTokenSell", "es")).toBe("SILVER TOKEN OFERTA DE VENTA");
+  });
+});
+
+describe("formatYasirLabel", () => {
+  it("gives each activityState a distinct, never-overlapping phrase", () => {
+    const known = formatYasirLabel("location-known", "Carlin", "en");
+    const pending = formatYasirLabel("pending-location", "", "en");
+    const inactive = formatYasirLabel("inactive", "", "en");
+    const notVerified = formatYasirLabel("not-verified", "", "en");
+    expect(known).toBe("Carlin");
+    expect(new Set([known, pending, inactive, notVerified]).size).toBe(4);
+    // Specifically: "confirmed not around" must never read the same as "haven't checked".
+    expect(inactive).not.toBe(notVerified);
   });
 });
 

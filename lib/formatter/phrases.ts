@@ -212,8 +212,20 @@ export function formatDromeLine(
   );
 }
 
-const MARKET_SELL_WORD: Lang<string> = { pt: "VENDENDO", en: "SELLING", es: "VENDIENDO", pl: "SPRZEDAŻ" };
-const MARKET_BUY_WORD: Lang<string> = { pt: "COMPRANDO", en: "BUYING", es: "COMPRANDO", pl: "KUPNO" };
+// Literal market-order terminology (matches lib/defaults/marketPrices.ts's UI labels and
+// the underlying sellOffer/buyOffer API fields) — not a "player perspective" gloss.
+const MARKET_SELL_WORD: Lang<string> = {
+  pt: "OFERTA DE VENDA",
+  en: "SELL OFFER",
+  es: "OFERTA DE VENTA",
+  pl: "OFERTA SPRZEDAŻY",
+};
+const MARKET_BUY_WORD: Lang<string> = {
+  pt: "OFERTA DE COMPRA",
+  en: "BUY OFFER",
+  es: "OFERTA DE COMPRA",
+  pl: "OFERTA KUPNA",
+};
 
 const MARKET_ITEM_NAME: Record<MarketPriceId, string> = {
   tibiaCoinSell: "TIBIA COIN",
@@ -255,6 +267,29 @@ export function formatPriceAge(timestampMs: number, now: number, language: Brief
 export function notAvailableText(language: BriefingLanguage): string {
   return pick(
     { pt: "não disponível", en: "not available", es: "no disponible", pl: "niedostępne" },
+    language,
+  );
+}
+
+/** Yasir's briefing line needs to distinguish "we haven't checked" from "we checked and
+ * he's confirmed not around" — a generic notAvailableText() would read the same for both. */
+export function formatYasirLabel(
+  activityState: "not-verified" | "inactive" | "pending-location" | "location-known",
+  location: string,
+  language: BriefingLanguage,
+): string {
+  if (activityState === "location-known" && location.trim().length > 0) return location.trim();
+  if (activityState === "pending-location") {
+    return pick(
+      { pt: "ativo, localização pendente", en: "active, location pending", es: "activo, ubicación pendiente", pl: "aktywny, lokalizacja nieznana" },
+      language,
+    );
+  }
+  if (activityState === "inactive") {
+    return pick({ pt: "inativo hoje", en: "inactive today", es: "inactivo hoy", pl: "dziś nieaktywny" }, language);
+  }
+  return pick(
+    { pt: "ainda não verificado", en: "not yet checked", es: "aún no verificado", pl: "jeszcze nie sprawdzono" },
     language,
   );
 }

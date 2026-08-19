@@ -70,7 +70,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
       <ImportGameTextCard
         onApplyMiniWorldChange={state.updateMiniWorldChange}
         onApplyWorldChange={state.updateWorldChange}
-        onApplyMerchant={(id, location) => state.updateMerchant(id, { location })}
+        onApplyMerchant={state.updateMerchant}
       />
 
       <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">

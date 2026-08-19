@@ -17,6 +17,7 @@ export function createDefaultMerchants(referenceDate: Date): Record<string, Merc
       location: "",
       isComputed: false,
       updatedAt: null,
+      activityState: "not-verified",
     },
     rashid: {
       id: "rashid",
@@ -24,6 +25,9 @@ export function createDefaultMerchants(referenceDate: Date): Record<string, Merc
       location: getRashidLocation(referenceDate),
       isComputed: true,
       updatedAt: null,
+      // Rashid's location is always fully and deterministically known — see
+      // lib/rashid/rashidRotation.ts — so he's never "not-verified"/"pending"/"inactive".
+      activityState: "location-known",
     },
   };
 }

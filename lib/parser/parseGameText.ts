@@ -14,6 +14,9 @@ export interface CombinedParseResult {
   worldChangeSignals: ParsedSignal[];
   merchantHints: ParsedMerchantHint[];
   unmatchedLineCount: number;
+  /** Only the board half of the paste can ever be a complete snapshot — see parseBoardLog. */
+  isCompleteSnapshot: boolean;
+  inactiveMerchantIds: ParsedMerchantHint["merchantId"][];
 }
 
 export function parseGameText(rawText: string): CombinedParseResult {
@@ -28,5 +31,7 @@ export function parseGameText(rawText: string): CombinedParseResult {
     worldChangeSignals: guide.signals,
     merchantHints: board.merchantHints,
     unmatchedLineCount: Math.max(0, totalLines - matchedCount),
+    isCompleteSnapshot: board.isCompleteSnapshot,
+    inactiveMerchantIds: board.inactiveMerchantIds,
   };
 }

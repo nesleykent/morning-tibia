@@ -32,6 +32,18 @@ describe("getMiniWorldChangeNarrative", () => {
     expect(getMiniWorldChangeNarrative("goroma-volcano", "stage1", "", "en")).toBeNull();
   });
 
+  it("gives Bibby's Bloodbath and Noodles a distinct 'active, location pending' narrative", () => {
+    for (const changeId of ["bibbys-bloodbath", "noodles"]) {
+      for (const language of LANGUAGES) {
+        const pending = getMiniWorldChangeNarrative(changeId, "active", "", language);
+        const known = getMiniWorldChangeNarrative(changeId, "location", "Carlin", language);
+        expect(pending, `${changeId}/${language} active narrative`).not.toBeNull();
+        expect(known, `${changeId}/${language} location narrative`).not.toBeNull();
+        expect(pending).not.toBe(known);
+      }
+    }
+  });
+
   it("provides content in all 4 languages for every defined Mini World Change's known states", () => {
     const STATES_BY_CONTROL_TYPE = {
       toggle: ["active"],

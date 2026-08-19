@@ -22,8 +22,22 @@ function makeInput(
     detail: "",
     updatedAt: null,
   };
-  overrides.merchants.yasir = { id: "yasir", name: "Yasir", location: "Carlin", isComputed: false, updatedAt: null };
-  overrides.merchants.rashid = { id: "rashid", name: "Rashid", location: "Svargrond", isComputed: true, updatedAt: null };
+  overrides.merchants.yasir = {
+    id: "yasir",
+    name: "Yasir",
+    location: "Carlin",
+    isComputed: false,
+    updatedAt: null,
+    activityState: "location-known",
+  };
+  overrides.merchants.rashid = {
+    id: "rashid",
+    name: "Rashid",
+    location: "Svargrond",
+    isComputed: true,
+    updatedAt: null,
+    activityState: "location-known",
+  };
   overrides.boostedRegions = ["Venore"];
 
   return {
@@ -150,8 +164,54 @@ describe("generateBriefingMessage", () => {
       ],
     };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("🪙 TIBIA COIN VENDENDO: 41.000 gp ⬆️ (há 2h)");
+    expect(message).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 41.000 gp ⬆️ (há 2h)");
     expect(message).not.toContain("GOLD TOKEN");
+  });
+});
+
+describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
+  function cleanInput(): BriefingInput {
+    const input = makeInput();
+    // makeInput() always seeds fury-gate/hive-born as a baseline — undo that here so these
+    // tests can exercise the true "nothing checked yet" starting point.
+    input.overrides.miniWorldChanges["fury-gate"] = {
+      id: "fury-gate",
+      state: "unknown",
+      detail: "",
+      updatedAt: null,
+    };
+    input.overrides.worldChanges["hive-born"] = {
+      id: "hive-born",
+      state: "unknown",
+      detail: "",
+      updatedAt: null,
+    };
+    return input;
+  }
+
+  it("shows a distinct 'not yet verified' message when nothing has been checked at all", () => {
+    const message = generateBriefingMessage(cleanInput());
+    expect(message).toContain("Nenhuma Mini World Change foi verificada ainda hoje");
+    expect(message).toContain("Nenhuma World Change foi consultada ainda hoje");
+  });
+
+  it("shows a distinct 'checked, none active' message once at least one entry was verified inactive", () => {
+    const input = cleanInput();
+    input.overrides.miniWorldChanges["fury-gate"] = {
+      id: "fury-gate",
+      state: "inactive",
+      detail: "",
+      updatedAt: null,
+    };
+    input.overrides.worldChanges["hive-born"] = {
+      id: "hive-born",
+      state: "inactive",
+      detail: "",
+      updatedAt: null,
+    };
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("World Board conferido — nenhuma Mini World Change ativa no momento.");
+    expect(message).toContain("Nenhuma World Change ativa identificada hoje.");
   });
 });
 

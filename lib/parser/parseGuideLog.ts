@@ -34,7 +34,6 @@ export function parseGuideLog(rawText: string): ParseResult {
       matchedText: entry.text,
       state: entry.state,
       detail: entry.detail ?? "",
-      note: null,
     });
   }
 
@@ -44,5 +43,9 @@ export function parseGuideLog(rawText: string): ParseResult {
     signals: Array.from(bestById.values()),
     merchantHints: [],
     unmatchedLineCount: Math.max(0, totalLines - matchedCount),
+    // A Guide NPC reply answers one keyword at a time — never a full-board listing — so
+    // absence here can never imply inactivity, unlike a complete World Board reading.
+    isCompleteSnapshot: false,
+    inactiveMerchantIds: [],
   };
 }

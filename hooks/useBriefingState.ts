@@ -198,9 +198,10 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
   // Merge the live api.tibiamarket.top feed in — but only while a field hasn't been
   // hand-edited (updatedAt === null) or was itself previously filled from this same feed
-  // (isLive === true), so a manual correction always sticks. Mapping: "sell price" (what
-  // you receive selling into the market) is the current highest buy_offer (bid); "buy
-  // price" (what you pay) is the current lowest sell_offer (ask).
+  // (isLive === true), so a manual correction always sticks. Mapping is literal, straight
+  // from the API's own field names: our tibiaCoinSell/goldTokenSell/silverTokenSell hold
+  // that item's sellOffer, tibiaCoinBuy holds tibiaCoin's buyOffer — no reinterpretation
+  // into a "what the player receives/pays" framing, which only introduced an inversion bug.
   useEffect(() => {
     const snapshots = marketValuesQuery.data;
     if (!snapshots || snapshots.length === 0) return;
@@ -228,13 +229,13 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
       const tibiaCoin = byItemId.get(MARKET_ITEM_IDS.tibiaCoin);
       if (tibiaCoin) {
-        applyLive("tibiaCoinSell", tibiaCoin.buyOffer, tibiaCoin.time);
-        applyLive("tibiaCoinBuy", tibiaCoin.sellOffer, tibiaCoin.time);
+        applyLive("tibiaCoinSell", tibiaCoin.sellOffer, tibiaCoin.time);
+        applyLive("tibiaCoinBuy", tibiaCoin.buyOffer, tibiaCoin.time);
       }
       const goldToken = byItemId.get(MARKET_ITEM_IDS.goldToken);
-      if (goldToken) applyLive("goldTokenSell", goldToken.buyOffer, goldToken.time);
+      if (goldToken) applyLive("goldTokenSell", goldToken.sellOffer, goldToken.time);
       const silverToken = byItemId.get(MARKET_ITEM_IDS.silverToken);
-      if (silverToken) applyLive("silverTokenSell", silverToken.buyOffer, silverToken.time);
+      if (silverToken) applyLive("silverTokenSell", silverToken.sellOffer, silverToken.time);
 
       if (!changed) return prev;
       const next = { ...prev, marketPrices: nextPrices };

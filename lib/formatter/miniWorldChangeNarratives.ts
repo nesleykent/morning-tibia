@@ -35,6 +35,12 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
   "bibbys-bloodbath": {
+    active: simple({
+      pt: "Bibby Bloodbath e sua tripulação estão ativas, mas o World Board ainda não revelou o local exato.",
+      en: "Bibby Bloodbath and her crew are active, but the World Board hasn't pinpointed their exact spot yet.",
+      es: "Bibby Bloodbath y su tripulación están activas, pero el World Board aún no reveló su ubicación exacta.",
+      pl: "Bibby Bloodbath i jej załoga są aktywne, ale World Board nie wskazał jeszcze dokładnego miejsca.",
+    }),
     location: withLocation({
       pt: (location) => `Bibby Bloodbath e sua tripulação estão espalhando destruição${location ? ` perto de ${location}` : ""}.`,
       en: (location) => `Bibby Bloodbath and her crew are roaming the lands${location ? ` near ${location}` : ""}.`,
@@ -99,6 +105,12 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
   noodles: {
+    active: simple({
+      pt: "Noodles fugiu do castelo, mas o World Board ainda não revelou onde ele está.",
+      en: "Noodles has left the castle, but the World Board hasn't pinpointed where he is yet.",
+      es: "Noodles se escapó del castillo, pero el World Board aún no reveló dónde está.",
+      pl: "Noodles uciekł z zamku, ale World Board nie wskazał jeszcze, gdzie się znajduje.",
+    }),
     location: withLocation({
       pt: (location) => `Noodles fugiu do castelo${location ? ` e está em ${location}` : ""}.`,
       en: (location) => `Noodles has left the castle${location ? ` and is in ${location}` : ""}.`,

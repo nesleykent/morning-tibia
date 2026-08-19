@@ -16,6 +16,7 @@ import {
   formatMarketPriceLabel,
   formatPriceAge,
   formatUpcomingEventLine,
+  formatYasirLabel,
   notAvailableText,
 } from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
@@ -88,7 +89,13 @@ export interface BriefingModel {
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
   achievementLines: AchievementLine[];
+  /** True once at least one Mini World Change has left "unknown" this session (a World
+   * Board paste was actually applied) — distinguishes "checked, none active" from "nothing
+   * has been checked yet" when achievementLines is empty. */
+  miniWorldChangesVerified: boolean;
   worldChangeLines: WorldChangeLine[];
+  /** Same idea as miniWorldChangesVerified, but for a Guide NPC chat log. */
+  worldChangesVerified: boolean;
   upcomingEventLines: EventLine[];
   upcomingEventsHiddenCount: number;
 }
@@ -131,9 +138,11 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const locale = NUMBER_LOCALE[input.language];
 
   const achievementLines: AchievementLine[] = [];
+  let miniWorldChangesVerified = false;
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
     if (!value) continue;
+    if (value.state !== "unknown") miniWorldChangesVerified = true;
     if (value.state === "inactive" && !overrides.includeAllChanges) continue;
     const narrative = getMiniWorldChangeNarrative(def.id, value.state, value.detail, input.language);
     const valueLabel = narrative ?? formatAchievementValue(value.state, value.detail, t);
@@ -142,7 +151,9 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   }
 
   const worldChangeLines: WorldChangeLine[] = [];
+  let worldChangesVerified = false;
   for (const def of WORLD_CHANGE_DEFINITIONS) {
+    if (overrides.worldChanges[def.id]?.state !== "unknown") worldChangesVerified = true;
     const value = overrides.worldChanges[def.id];
     if (!value || value.state === "unknown") continue;
     if (value.state === "inactive" && !overrides.includeAllChanges) continue;
@@ -229,7 +240,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     detail: formatUpcomingEventLine(event, input.language),
   }));
 
-  const yasirLocation = overrides.merchants.yasir?.location.trim();
+  const yasirMerchant = overrides.merchants.yasir;
   const rashidLocation = overrides.merchants.rashid?.location.trim();
 
   return {
@@ -244,11 +255,15 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     activeEventLines,
     dromeLine,
     warzoneLine,
-    yasirLabel: yasirLocation || notAvailableText(input.language),
+    yasirLabel: yasirMerchant
+      ? formatYasirLabel(yasirMerchant.activityState, yasirMerchant.location, input.language)
+      : notAvailableText(input.language),
     rashidLabel: rashidLocation || notAvailableText(input.language),
     marketPriceLines,
     achievementLines,
+    miniWorldChangesVerified,
     worldChangeLines,
+    worldChangesVerified,
     upcomingEventLines,
     upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
   };

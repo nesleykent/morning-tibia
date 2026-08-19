@@ -73,12 +73,12 @@ export function MarketPriceCard({ prices, onChange }: MarketPriceCardProps) {
                 <div className="flex items-center gap-1.5">
                   {price.isLive && price.sourceTimestamp && (
                     <span className="text-[10px] text-muted-foreground">
-                      {formatTimeAgo(price.sourceTimestamp, now)}
+                      as of {formatTimeAgo(price.sourceTimestamp, now)}
                     </span>
                   )}
                   {price.isLive && (
                     <Badge variant="gold" className="text-[10px]">
-                      live
+                      auto
                     </Badge>
                   )}
                   <span aria-hidden="true">{trendSymbol(price.trend)}</span>

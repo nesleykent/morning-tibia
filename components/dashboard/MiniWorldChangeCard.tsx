@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusSelector } from "./StatusSelector";
 import { StageSelector } from "./StageSelector";
 import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
@@ -16,6 +17,10 @@ interface MiniWorldChangeCardProps {
 
 export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldChangeCardProps) {
   const listId = `${definition.id}-suggestions`;
+  // A closed-list location (Bibby's Bloodbath, Noodles) can only ever settle on one of a
+  // known, finite set of spots — free text would let the user record a place the board
+  // could never actually report, so it gets a strict picker instead of an open Input.
+  const isClosedLocationList = definition.controlType === "location" && Boolean(definition.suggestions);
 
   return (
     <Card className="transition-colors hover:border-gold/40">
@@ -47,7 +52,26 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
           <StageSelector value={value.state} onChange={(state) => onChange({ state })} />
         )}
 
+        {definition.coverage === "partial" && isClosedLocationList && (
+          <Select
+            value={value.detail || undefined}
+            onValueChange={(detail) => onChange({ detail, state: "location" })}
+          >
+            <SelectTrigger aria-label={`${definition.label} location`}>
+              <SelectValue placeholder="Active — pending location…" />
+            </SelectTrigger>
+            <SelectContent>
+              {definition.suggestions!.map((suggestion) => (
+                <SelectItem key={suggestion} value={suggestion}>
+                  {suggestion}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {definition.coverage === "partial" &&
+          !isClosedLocationList &&
           (definition.controlType === "location" ||
             definition.controlType === "creature" ||
             definition.controlType === "boss") && (
