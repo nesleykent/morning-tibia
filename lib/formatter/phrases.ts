@@ -286,7 +286,7 @@ export function formatYasirLabel(
     );
   }
   if (activityState === "inactive") {
-    return pick({ pt: "inativo hoje", en: "inactive today", es: "inactivo hoy", pl: "dziś nieaktywny" }, language);
+    return "No Sir!";
   }
   return pick(
     { pt: "ainda não verificado", en: "not yet checked", es: "aún no verificado", pl: "jeszcze nie sprawdzono" },

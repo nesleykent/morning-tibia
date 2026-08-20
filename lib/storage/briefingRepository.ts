@@ -37,6 +37,7 @@ export interface BriefingRepository {
   getOverrides(world: string, dateKey: string): BriefingOverrides | null;
   setOverrides(overrides: BriefingOverrides): void;
   clearOverrides(world: string, dateKey: string): void;
+  clearAll(): void;
 }
 
 function isBrowser(): boolean {
@@ -147,6 +148,22 @@ export class LocalStorageBriefingRepository implements BriefingRepository {
 
   clearOverrides(world: string, dateKey: string): void {
     safeRemove(storageKeys.overrides(world, dateKey));
+  }
+
+  clearAll(): void {
+    if (!isBrowser()) return;
+
+    const keys: string[] = [];
+    try {
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (key?.startsWith("morning-tibia:v1")) keys.push(key);
+      }
+    } catch {
+      return;
+    }
+
+    for (const key of keys) safeRemove(key);
   }
 }
 

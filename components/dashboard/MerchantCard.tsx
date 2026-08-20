@@ -29,6 +29,9 @@ const YASIR_ACTIVITY_BADGE_VARIANT: Record<Merchant["activityState"], "unknown" 
 export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
   const yasir = merchants.yasir;
   const rashid = merchants.rashid;
+  const yasirLocationEnabled =
+    yasir?.activityState === "pending-location" ||
+    yasir?.activityState === "location-known";
 
   return (
     <Card>
@@ -49,7 +52,13 @@ export function MerchantCard({ merchants, onChange }: MerchantCardProps) {
           </div>
           <Select
             value={yasir?.location || undefined}
-            onValueChange={(value) => onChange("yasir", { location: value, activityState: "location-known" })}
+            disabled={!yasirLocationEnabled}
+            onValueChange={(value) =>
+              onChange("yasir", {
+                location: value,
+                activityState: "location-known",
+              })
+            }
           >
             <SelectTrigger id="yasir-location">
               <SelectValue placeholder="Select city…" />

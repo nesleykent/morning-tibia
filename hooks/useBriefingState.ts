@@ -21,8 +21,10 @@ import { toDateKey } from "@/lib/utils/date";
 import { generateBriefingMessage, generatePlainTextBriefing } from "@/lib/formatter/generateBriefing";
 import type { BriefingLanguage } from "@/lib/formatter/translations";
 import { useViewerSettings } from "@/lib/context/ViewerSettingsContext";
+import { DEFAULT_VIEWER_TIME_ZONE } from "@/lib/utils/timezoneList";
 
 const FALLBACK_WORLD = "Ustebra";
+const LOCATION_GATED_MINI_WORLD_CHANGES = new Set(["bibbys-bloodbath", "noodles"]);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -97,13 +99,48 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
   const updateMiniWorldChange = useCallback(
     (id: string, patch: Partial<MiniWorldChangeValue>) => {
-      persist((prev) => ({
-        ...prev,
-        miniWorldChanges: {
-          ...prev.miniWorldChanges,
-          [id]: { ...prev.miniWorldChanges[id]!, ...patch, id, updatedAt: nowIso() },
-        },
-      }));
+      persist((prev) => {
+        const current = prev.miniWorldChanges[id];
+        if (!current) return prev;
+
+        const nextPatch: Partial<MiniWorldChangeValue> = { ...patch };
+
+        if (LOCATION_GATED_MINI_WORLD_CHANGES.has(id)) {
+          const proposedDetail =
+            typeof nextPatch.detail === "string" ? nextPatch.detail.trim() : "";
+
+          // A location can only be recorded after the board has already established
+          // that Bibby/Noodles is active. A location picker cannot activate the MWC.
+          if (proposedDetail.length > 0) {
+            const locationAllowed =
+              current.state === "active" || current.state === "location";
+            if (!locationAllowed) return prev;
+          }
+
+          // Any new activity observation starts with location pending, and inactive/
+          // unknown states can never retain a stale location from an earlier session.
+          if (
+            nextPatch.state === "active" ||
+            nextPatch.state === "inactive" ||
+            nextPatch.state === "unknown"
+          ) {
+            nextPatch.detail = "";
+          }
+        }
+
+        return {
+          ...prev,
+          miniWorldChanges: {
+            ...prev.miniWorldChanges,
+            [id]: {
+              ...current,
+              ...nextPatch,
+              id,
+              updatedAt: nowIso(),
+            },
+          },
+        };
+      });
     },
     [persist],
   );
@@ -123,19 +160,48 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
   const updateMerchant = useCallback(
     (id: MerchantId, patch: Partial<Merchant>) => {
-      persist((prev) => ({
-        ...prev,
-        merchants: {
-          ...prev.merchants,
-          [id]: {
-            ...prev.merchants[id]!,
-            ...patch,
-            id,
-            isComputed: false,
-            updatedAt: nowIso(),
+      persist((prev) => {
+        const current = prev.merchants[id];
+        if (!current) return prev;
+
+        const nextPatch: Partial<Merchant> = { ...patch };
+
+        if (id === "yasir") {
+          const proposedLocation =
+            typeof nextPatch.location === "string" ? nextPatch.location.trim() : "";
+
+          if (proposedLocation.length > 0) {
+            const locationAllowed =
+              current.activityState === "pending-location" ||
+              current.activityState === "location-known";
+
+            // A city picker cannot manufacture an active Oriental Trader MWC.
+            if (!locationAllowed) return prev;
+          }
+
+          if (
+            nextPatch.activityState === "inactive" ||
+            nextPatch.activityState === "not-verified" ||
+            nextPatch.activityState === "pending-location"
+          ) {
+            nextPatch.location = "";
+          }
+        }
+
+        return {
+          ...prev,
+          merchants: {
+            ...prev.merchants,
+            [id]: {
+              ...current,
+              ...nextPatch,
+              id,
+              isComputed: false,
+              updatedAt: nowIso(),
+            },
           },
-        },
-      }));
+        };
+      });
     },
     [persist],
   );
@@ -151,9 +217,20 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   );
 
   const resetOverrides = useCallback(() => {
-    briefingRepository.clearOverrides(world, dateKey);
-    persist(() => createDefaultOverrides(world, referenceDate));
-  }, [world, dateKey, referenceDate, persist]);
+    briefingRepository.clearAll();
+
+    setWorldState(FALLBACK_WORLD);
+    setOverrides(createDefaultOverrides(FALLBACK_WORLD, referenceDate));
+
+    setPreferredFormatState("rich");
+    setBriefingLanguageState("pt");
+    setUpcomingEventsWindowDaysState(7);
+    setMarketTrendBasisState("last");
+
+    // ViewerSettingsContext owns a separate React state, so reset it explicitly
+    // in addition to clearing its persisted localStorage value.
+    setViewerTimeZone(DEFAULT_VIEWER_TIME_ZONE);
+  }, [referenceDate, setViewerTimeZone]);
 
   const refreshLiveData = useCallback(() => {
     worldsQuery.refresh();

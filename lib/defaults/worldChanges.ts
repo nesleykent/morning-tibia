@@ -45,7 +45,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     controlType: "toggle",
     source: "guide-npc",
     description:
-      "Whether the Mad Mage Dungeon in Edron is accessible. Only the \"unavailable\" reply is documented, so only that state auto-detects.",
+      "Whether the Mad Mage Dungeon in Edron is accessible. Guide NPC slime-dialogue variants are parsed into their documented active/inactive states.",
   },
   {
     id: "swamp-fever",

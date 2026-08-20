@@ -166,6 +166,12 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     detail: "Askarak advantage",
   },
   {
+    text: "The Askarak are in advantage right now.",
+    changeId: "demon-war",
+    state: "stage1",
+    detail: "Askarak advantage",
+  },
+  {
     text: "The Askarak have summoned their leaders and dominate the complex.",
     changeId: "demon-war",
     state: "stage2",
@@ -231,8 +237,13 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     changeId: "mage-tower",
     state: "inactive",
   },
-  // Master's Voice — source: the Mad Mage creature page's "History" section on
-  // TibiaWiki. Only this one state is documented anywhere publicly.
+  // Master's Voice — Guide NPC variants observed/documented for the Edron tower.
+  {
+    text: "The strange tower with the servants on Edron is covered in slime.",
+    changeId: "masters-voice",
+    state: "active",
+    detail: "Slime outbreak",
+  },
   {
     text: "The strange tower with the servants on Edron currently seems to be completely impassable because of a severe slime outbreak.",
     changeId: "masters-voice",

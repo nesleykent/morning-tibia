@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,7 +64,7 @@ function SignalGroup({
           </div>
           {signal.state && (
             <Badge variant="gold" className="shrink-0">
-              will apply
+              applied
             </Badge>
           )}
         </div>
@@ -91,29 +90,44 @@ export function ImportGameTextCard({
 }: ImportGameTextCardProps) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<CombinedParseResult | null>(null);
-  const [applied, setApplied] = useState(false);
-
-  const applicableMiniWorldChanges = result?.miniWorldChangeSignals.filter((s) => s.state !== null) ?? [];
-  const applicableWorldChanges = result?.worldChangeSignals.filter((s) => s.state !== null) ?? [];
-  const applicableCount = applicableMiniWorldChanges.length + applicableWorldChanges.length;
   const summary = result ? boardSummary(result) : null;
 
   const handleParse = () => {
-    setResult(parseGameText(text));
-    setApplied(false);
-  };
+    const parsed = parseGameText(text);
+    setResult(parsed);
 
-  const handleApply = () => {
-    for (const signal of applicableMiniWorldChanges) {
-      onApplyMiniWorldChange(signal.changeId, { state: signal.state!, detail: signal.detail });
+    for (const signal of parsed.miniWorldChangeSignals) {
+      if (signal.state === null) continue;
+      onApplyMiniWorldChange(signal.changeId, {
+        state: signal.state,
+        detail: signal.detail,
+      });
     }
-    for (const signal of applicableWorldChanges) {
-      onApplyWorldChange(signal.changeId, { state: signal.state!, detail: signal.detail });
+
+    for (const signal of parsed.worldChangeSignals) {
+      if (signal.state === null) continue;
+      onApplyWorldChange(signal.changeId, {
+        state: signal.state,
+        detail: signal.detail,
+      });
     }
-    if (result?.inactiveMerchantIds.includes("yasir")) {
-      onApplyMerchant("yasir", { location: "", activityState: "inactive" });
+
+    // Oriental Trader is the Mini World Change that authorizes Yasir location.
+    // Recognition establishes activity first; choosing a city happens afterwards.
+    for (const hint of parsed.merchantHints) {
+      if (hint.merchantId !== "yasir") continue;
+      onApplyMerchant("yasir", {
+        location: "",
+        activityState: "pending-location",
+      });
     }
-    setApplied(true);
+
+    if (parsed.inactiveMerchantIds.includes("yasir")) {
+      onApplyMerchant("yasir", {
+        location: "",
+        activityState: "inactive",
+      });
+    }
   };
 
   return (
@@ -141,25 +155,13 @@ export function ImportGameTextCard({
             value={text}
             onChange={(e) => {
               setText(e.target.value);
-              setApplied(false);
             }}
             placeholder="Paste your server log and/or Guide NPC chat log here…"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" onClick={handleParse} disabled={!text.trim()}>
-              Parse
+              Parse & apply
             </Button>
-            {result && applicableCount > 0 && (
-              <Button type="button" size="sm" variant="secondary" onClick={handleApply} disabled={applied}>
-                {applied ? (
-                  <>
-                    <Check /> Applied
-                  </>
-                ) : (
-                  `Apply ${applicableCount} change${applicableCount === 1 ? "" : "s"}`
-                )}
-              </Button>
-            )}
           </div>
 
           {result && (

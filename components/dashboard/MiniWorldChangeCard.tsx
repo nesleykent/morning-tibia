@@ -21,6 +21,8 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
   // known, finite set of spots — free text would let the user record a place the board
   // could never actually report, so it gets a strict picker instead of an open Input.
   const isClosedLocationList = definition.controlType === "location" && Boolean(definition.suggestions);
+  const closedLocationEnabled =
+    value.state === "active" || value.state === "location";
 
   return (
     <Card className="transition-colors hover:border-gold/40">
@@ -55,6 +57,7 @@ export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldCh
         {definition.coverage === "partial" && isClosedLocationList && (
           <Select
             value={value.detail || undefined}
+            disabled={!closedLocationEnabled}
             onValueChange={(detail) => onChange({ detail, state: "location" })}
           >
             <SelectTrigger aria-label={`${definition.label} location`}>
