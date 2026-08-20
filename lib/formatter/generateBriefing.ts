@@ -19,6 +19,12 @@ function joinNonEmpty(lines: (string | null | undefined)[]): string {
     .join("\n");
 }
 
+function joinBlocks(lines: (string | null | undefined)[]): string {
+  return lines
+    .filter((line): line is string => Boolean(line && line.length > 0))
+    .join("\n\n");
+}
+
 function eventLineText(line: EventLine): string {
   return `${line.emoji} ${line.title}: ${line.detail}`;
 }
@@ -137,7 +143,7 @@ export function renderRichBriefing(
     `🌞 ${model.greetingText}`,
   ]);
 
-  const statusSection = joinNonEmpty([
+  const statusSection = joinBlocks([
     `👾 ${t.boostedCreature}\n${model.boostedCreatureLabel}`,
 
     `👹 ${t.boostedBoss}\n${model.boostedBossLabel}`,
@@ -178,7 +184,7 @@ export function renderRichBriefing(
         }*`
       : null;
 
-  const marketSection = joinNonEmpty([
+  const marketSection = joinBlocks([
     `*💸 ${merchantSectionTitle(model.language)}*`,
 
     `💰 ${t.merchantYasir}\n${model.yasirLabel}`,
@@ -276,7 +282,7 @@ export function renderPlainBriefing(
     model.greetingText,
   ]);
 
-  const statusSection = joinNonEmpty([
+  const statusSection = joinBlocks([
     `${t.boostedCreature}\n${model.boostedCreatureLabel}`,
 
     `${t.boostedBoss}\n${model.boostedBossLabel}`,
@@ -317,7 +323,7 @@ export function renderPlainBriefing(
         }`
       : null;
 
-  const marketSection = joinNonEmpty([
+  const marketSection = joinBlocks([
     merchantSectionTitle(model.language),
 
     `${t.merchantYasir}\n${model.yasirLabel}`,
