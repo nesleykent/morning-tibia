@@ -212,6 +212,75 @@ export function formatDromeLine(
   );
 }
 
+
+/**
+ * Compact Drome text for the daily briefing.
+ *
+ * The clock time is omitted because the rotation boundary is the Tibia
+ * server save. The briefing keeps the end date and remaining calendar days.
+ */
+export function formatDromeBriefingLine(
+  rotationNumber: string,
+  endsAtIso: string,
+  language: BriefingLanguage,
+  now: Date,
+  viewerTimeZone: string,
+): string {
+  const endsAt = new Date(endsAtIso);
+  const shortDate = formatShortDateInZone(
+    endsAt,
+    viewerTimeZone,
+  );
+
+  const dayDiff = Math.max(
+    0,
+    calendarDayDiff(
+      now,
+      endsAt,
+      viewerTimeZone,
+    ),
+  );
+
+  const label = rotationLabel(
+    rotationNumber,
+    language,
+  );
+
+  if (dayDiff <= 0) {
+    return pick(
+      {
+        pt: `${label} até ${shortDate} (hoje)`,
+        en: `${label} until ${shortDate} (today)`,
+        es: `${label} hasta ${shortDate} (hoy)`,
+        pl: `${label} do ${shortDate} (dzisiaj)`,
+      },
+      language,
+    );
+  }
+
+  if (dayDiff === 1) {
+    return pick(
+      {
+        pt: `${label} até ${shortDate} (falta 1 dia)`,
+        en: `${label} until ${shortDate} (1 day left)`,
+        es: `${label} hasta ${shortDate} (queda 1 día)`,
+        pl: `${label} do ${shortDate} (został 1 dzień)`,
+      },
+      language,
+    );
+  }
+
+  return pick(
+    {
+      pt: `${label} até ${shortDate} (faltam ${dayDiff} dias)`,
+      en: `${label} until ${shortDate} (${dayDiff} days left)`,
+      es: `${label} hasta ${shortDate} (quedan ${dayDiff} días)`,
+      pl: `${label} do ${shortDate} (zostało ${dayDiff} dni)`,
+    },
+    language,
+  );
+}
+
 // Literal market-order terminology (matches lib/defaults/marketPrices.ts's UI labels and
 // the underlying sellOffer/buyOffer API fields) — not a "player perspective" gloss.
 const MARKET_SELL_WORD: Lang<string> = {

@@ -4,7 +4,7 @@ import type { WarzoneSchedule } from "@/types/warzone";
 import type { MiniWorldChangeState } from "@/types/miniWorldChange";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
-import type { MarketTrendBasis } from "@/types/market";
+import type { MarketPriceId, MarketTrendBasis } from "@/types/market";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
@@ -14,7 +14,7 @@ import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
 import {
   formatActiveEventLine,
-  formatDromeLine,
+  formatDromeBriefingLine,
   formatMarketPriceLabel,
   formatPriceAge,
   formatUpcomingEventLine,
@@ -56,6 +56,7 @@ export interface AchievementLine {
 }
 
 export interface MarketPriceLine {
+  id: MarketPriceId;
   label: string;
   valueLabel: string;
   trendSymbol: string;
@@ -194,6 +195,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       const ageTimestamp = price.sourceTimestamp ?? latestEntry?.timestamp ?? null;
       const basisValue = averageOfLastEntries(price.history, marketEntryCount) ?? price.value!;
       return {
+        id: id as MarketPriceId,
         label: formatMarketPriceLabel(id as Parameters<typeof formatMarketPriceLabel>[0], input.language),
         valueLabel: `${Math.round(basisValue).toLocaleString(locale)} gp`,
         trendSymbol: trendSymbol(computeTrendForBasis(price.history, marketEntryCount)),
@@ -224,7 +226,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
   const dromeLine =
     input.drome?.rotationNumber && input.drome.endsAt
-      ? formatDromeLine(
+      ? formatDromeBriefingLine(
           input.drome.rotationNumber,
           input.drome.endsAt,
           input.language,

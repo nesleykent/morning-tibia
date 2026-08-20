@@ -61,13 +61,13 @@ describe("generateBriefingMessage", () => {
   it("matches the reference structure and content", () => {
     const message = generateBriefingMessage(makeInput());
 
-    expect(message).toContain("📌17/08/2026");
+    expect(message).toContain("📌 17/08/2026");
     expect(message).toContain("🌞 Bom dia, Ustebra!");
-    expect(message).toContain("👾 CRIATURA BOOSTADA: Gore Horn");
-    expect(message).toContain("👹 BOSS BOOSTADO: Ratmiral");
-    expect(message).toContain("🗺️ Região boostada: Venore");
-    expect(message).toContain("💰 YASIR: Carlin");
-    expect(message).toContain("👳🏼‍♂️ RASHID: Svargrond");
+    expect(message).toContain("👾 CRIATURA BOOSTADA\nGore Horn");
+    expect(message).toContain("👹 BOSS BOOSTADO\nRatmiral");
+    expect(message).toContain("🗺️ REGIÃO BOOSTADA\nVenore");
+    expect(message).toContain("💰 YASIR\nCarlin");
+    expect(message).toContain("👳🏼‍♂️ RASHID\nSvargrond");
     expect(message).toContain("🔥 FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
     expect(message).toContain("*🌍 WORLD CHANGES*");
     expect(message).toContain("👾 HIVE BORN");
@@ -145,7 +145,7 @@ describe("generateBriefingMessage", () => {
     };
     // viewerTimeZone is America/Sao_Paulo (UTC-3, no DST) — 5h behind Berlin in August.
     const message = generateBriefingMessage(input);
-    expect(message).toContain("⚔️ WARZONES: 07:00 (1-2-3); 15:00 (1-3-2)");
+    expect(message).toContain("⚔️ WARZONES\n07:00 (1-2-3)\n15:00 (1-3-2)");
   });
 
   it("renders market prices with a trend symbol and age only when a value is set", () => {
@@ -164,7 +164,8 @@ describe("generateBriefingMessage", () => {
       ],
     };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 41.000 gp ⬆️ (há 2h)");
+    expect(message).toContain("*TIBIAMARKET.TOP (2h)*");
+    expect(message).toContain("🪙 TIBIA COIN\nVenda: 41.000 ⬆️");
     expect(message).not.toContain("GOLD TOKEN");
   });
 
@@ -186,12 +187,12 @@ describe("generateBriefingMessage", () => {
     };
 
     const lastMessage = generateBriefingMessage(input);
-    expect(lastMessage).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 300 gp ⬆️");
+    expect(lastMessage).toContain("🪙 TIBIA COIN\nVenda: 300 ⬆️");
 
     input.marketTrendBasis = "avg3";
     const avg3Message = generateBriefingMessage(input);
     // avg(100,200,300) = 200 — a different headline number than the raw last entry.
-    expect(avg3Message).toContain("🪙 TIBIA COIN OFERTA DE VENDA: 200 gp");
+    expect(avg3Message).toContain("🪙 TIBIA COIN\nVenda: 200");
   });
 });
 
@@ -245,8 +246,8 @@ describe("language support", () => {
   it("renders section headers, greeting, and stage wording in English", () => {
     const message = generateBriefingMessage(makeInput({}, "en"));
     expect(message).toContain("🌞 Good morning, Ustebra!");
-    expect(message).toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
-    expect(message).toContain("👾 BOOSTED CREATURE: Gore Horn");
+    expect(message).not.toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
+    expect(message).toContain("👾 BOOSTED CREATURE\nGore Horn");
     expect(message).toContain("Every Hive structure is open.");
     expect(message).toContain("*📅 NEXT EVENTS*");
   });
@@ -259,8 +260,8 @@ describe("language support", () => {
   it("keeps merchant names (Yasir/Rashid) untranslated across languages", () => {
     for (const language of ["pt", "en", "es", "pl"] as const) {
       const message = generateBriefingMessage(makeInput({}, language));
-      expect(message).toContain("YASIR:");
-      expect(message).toContain("RASHID:");
+      expect(message).toContain("YASIR\n");
+      expect(message).toContain("RASHID\n");
     }
   });
 });
@@ -274,9 +275,239 @@ describe("generatePlainTextBriefing", () => {
     for (const decorative of ["📌", "🌞", "👾", "👹", "🗺️", "💰", "👳🏼‍♂️", "🎎", "🌍", "📅", "🪙"]) {
       expect(plain).not.toContain(decorative);
     }
-    expect(plain).toContain("CRIATURA BOOSTADA: Gore Horn");
+    expect(plain).toContain("CRIATURA BOOSTADA\nGore Horn");
     expect(plain).toContain("FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
     expect(plain).toContain("HIVE BORN");
     expect(plain).toContain("Todas as estruturas da Hive estão abertas.");
+  });
+});
+
+describe("approved briefing hierarchy in rich and plain formats", () => {
+  it("renders the approved grouped layout in both outputs", () => {
+    const input = makeInput();
+
+    input.warzoneSchedule = {
+      world: "Ustebra",
+      timezone: null,
+      tracksWarzoneService: true,
+      mark: "healthy",
+      executions: [
+        {
+          executionId: 1,
+          scheduleTime: "12:00",
+          warzoneSequence: "1-2-3",
+        },
+        {
+          executionId: 2,
+          scheduleTime: "20:00",
+          warzoneSequence: "1-3-2",
+        },
+        {
+          executionId: 3,
+          scheduleTime: "21:30",
+          warzoneSequence: "1-2-3",
+        },
+        {
+          executionId: 4,
+          scheduleTime: "23:00",
+          warzoneSequence: "1-2-3",
+        },
+      ],
+    };
+
+    input.drome = {
+      rotationNumber: "#134",
+      endsAt: "2026-09-02T08:00:00.000Z",
+    };
+
+    const marketTimestamp =
+      input.referenceDate.getTime() -
+      2 * 86400000;
+
+    input.overrides.marketPrices.tibiaCoinSell = {
+      id: "tibiaCoinSell",
+      label: "Tibia Coin Sell Offer",
+      value: 41340,
+      isLive: true,
+      sourceTimestamp: marketTimestamp,
+      updatedAt: "t",
+      history: [
+        {
+          value: 40000,
+          timestamp: marketTimestamp - 86400000,
+        },
+        {
+          value: 41340,
+          timestamp: marketTimestamp,
+        },
+      ],
+    };
+
+    input.overrides.marketPrices.tibiaCoinBuy = {
+      id: "tibiaCoinBuy",
+      label: "Tibia Coin Buy Offer",
+      value: 40163,
+      isLive: true,
+      sourceTimestamp: marketTimestamp,
+      updatedAt: "t",
+      history: [
+        {
+          value: 39000,
+          timestamp: marketTimestamp - 86400000,
+        },
+        {
+          value: 40163,
+          timestamp: marketTimestamp,
+        },
+      ],
+    };
+
+    input.overrides.marketPrices.goldTokenSell = {
+      id: "goldTokenSell",
+      label: "Gold Token Sell Offer",
+      value: 57071,
+      isLive: true,
+      sourceTimestamp: marketTimestamp,
+      updatedAt: "t",
+      history: [
+        {
+          value: 58000,
+          timestamp: marketTimestamp - 86400000,
+        },
+        {
+          value: 57071,
+          timestamp: marketTimestamp,
+        },
+      ],
+    };
+
+    input.overrides.marketPrices.silverTokenSell = {
+      id: "silverTokenSell",
+      label: "Silver Token Sell Offer",
+      value: 59083,
+      isLive: true,
+      sourceTimestamp: marketTimestamp,
+      updatedAt: "t",
+      history: [
+        {
+          value: 60000,
+          timestamp: marketTimestamp - 86400000,
+        },
+        {
+          value: 59083,
+          timestamp: marketTimestamp,
+        },
+      ],
+    };
+
+    const rich =
+      generateBriefingMessage(input);
+
+    const plain =
+      generatePlainTextBriefing(input);
+
+    expect(rich).toContain(
+      "📌 17/08/2026",
+    );
+
+    expect(rich).not.toContain(
+      "EVENTOS ATIVOS E STATUS DO DIA",
+    );
+
+    expect(rich).toContain(
+      "👾 CRIATURA BOOSTADA\nGore Horn",
+    );
+
+    expect(rich).toContain(
+      "👹 BOSS BOOSTADO\nRatmiral",
+    );
+
+    expect(rich).toContain(
+      "🏛️ TIBIA DROME\nRotação #134 até 02/09",
+    );
+
+    expect(rich).not.toContain(
+      "Rotação #134 ativa.",
+    );
+
+    expect(rich).toContain(
+      "⚔️ WARZONES\n12:00 (1-2-3)\n20:00 (1-3-2)\n21:30 (1-2-3)\n23:00 (1-2-3)",
+    );
+
+    expect(rich).toContain(
+      "*💸 COMERCIANTES*",
+    );
+
+    expect(rich).toContain(
+      "💰 YASIR\nCarlin",
+    );
+
+    expect(rich).toContain(
+      "👳🏼‍♂️ RASHID\nSvargrond",
+    );
+
+    expect(rich).toContain(
+      "*TIBIAMARKET.TOP (2d)*",
+    );
+
+    expect(rich).toContain(
+      "🪙 TIBIA COIN\nVenda: 41.340 ⬆️\nCompra: 40.163 ⬆️",
+    );
+
+    expect(rich).toContain(
+      "🪙 GOLD TOKEN\nVenda: 57.071 ⬇️",
+    );
+
+    expect(rich).toContain(
+      "🪙 SILVER TOKEN\nVenda: 59.083 ⬇️",
+    );
+
+    expect(rich).not.toContain(
+      "41.340 gp",
+    );
+
+    expect(rich).not.toContain(
+      "(há 2d)",
+    );
+
+    expect(plain).toContain(
+      "CRIATURA BOOSTADA\nGore Horn",
+    );
+
+    expect(plain).toContain(
+      "BOSS BOOSTADO\nRatmiral",
+    );
+
+    expect(plain).toContain(
+      "TIBIA DROME\nRotação #134 até 02/09",
+    );
+
+    expect(plain).toContain(
+      "WARZONES\n12:00 (1-2-3)\n20:00 (1-3-2)\n21:30 (1-2-3)\n23:00 (1-2-3)",
+    );
+
+    expect(plain).toContain(
+      "COMERCIANTES",
+    );
+
+    expect(plain).toContain(
+      "YASIR\nCarlin",
+    );
+
+    expect(plain).toContain(
+      "RASHID\nSvargrond",
+    );
+
+    expect(plain).toContain(
+      "TIBIAMARKET.TOP (2d)",
+    );
+
+    expect(plain).toContain(
+      "TIBIA COIN\nVenda: 41.340 ⬆️\nCompra: 40.163 ⬆️",
+    );
+
+    expect(plain).not.toContain(
+      "41.340 gp",
+    );
   });
 });
