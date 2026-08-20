@@ -40,7 +40,8 @@ describe("2026-08-19 live Tibia regression", () => {
 
     expect(world.get("masters-voice")?.state).toBe("active");
 
-    // The six 19:21:22 World Board lines form one complete server-log snapshot.
+    // Recognized World Board messages are the current board reading,
+    // independently of whether client timestamps are enabled.
     expect(result.isCompleteSnapshot).toBe(true);
 
     // Every absent MWC becomes inactive instead of remaining Unknown.

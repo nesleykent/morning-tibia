@@ -16,41 +16,60 @@ Bibby Bloodbath and her crew are roaming the lands, destroying everything in the
 Some unrelated line that shouldn't match anything at all.
 `;
 
+const LIVE_BOARD_WITHOUT_TIMESTAMPS = `
+A fiery fury gate has opened near one of the major cities somewhere in Tibia.
+Poachers have slaughtered nearly all wild animals north of the Green Claw Swamp. But vengeful spirits show up there now!
+A sandstorm travels through Darama, leading to isles full of deadly creatures inside a nightmare. Avoid the river near Drefia!
+Nomads travel the eternal sands of Ankrahmun's desert. There must be a camp somewhere.
+The volcano on Goroma sends its fiery message into the sky. A lot of creatures are flooding the lands together with its lava.
+Adventurers have told of a Spirit Gate in the Ghostlands. Fight the restless undead!
+`;
+
 describe("parseBoardLog", () => {
-  it("extracts a direct signal for an unambiguous toggle message", () => {
+  it("extracts a direct toggle signal", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    const furyGate = result.signals.find((s) => s.changeId === "fury-gate");
-    expect(furyGate?.state).toBe("active");
+    expect(
+      result.signals.find((s) => s.changeId === "fury-gate")?.state,
+    ).toBe("active");
   });
 
-  it("extracts a direct signal for the Hive Outpost mini world change", () => {
+  it("extracts Hive Outpost", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    const hiveOutpost = result.signals.find((s) => s.changeId === "hive-outpost");
-    expect(hiveOutpost?.state).toBe("active");
+    expect(
+      result.signals.find((s) => s.changeId === "hive-outpost")?.state,
+    ).toBe("active");
   });
 
-  it("extracts a location signal with detail when the board pinpoints it", () => {
+  it("extracts location detail", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    const spiritGate = result.signals.find((s) => s.changeId === "spirit-gate");
+    const spiritGate = result.signals.find(
+      (s) => s.changeId === "spirit-gate",
+    );
+
     expect(spiritGate?.state).toBe("location");
     expect(spiritGate?.detail).toBe("Vengoth");
   });
 
-  it("resolves a simple toggle change to a full state (Chakoya Iceberg has no stages)", () => {
+  it("extracts Chakoya Iceberg as active", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    const iceberg = result.signals.find((s) => s.changeId === "big-iceberg");
-    expect(iceberg?.state).toBe("active");
+    expect(
+      result.signals.find((s) => s.changeId === "big-iceberg")?.state,
+    ).toBe("active");
   });
 
-  it("marks Bibby's Bloodbath active without guessing a location it can't determine", () => {
+  it("keeps Bibby active with location pending", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    const bibbys = result.signals.find((s) => s.changeId === "bibbys-bloodbath");
-    expect(bibbys?.state).toBe("active");
-    expect(bibbys?.detail).toBe("");
+    const bibby = result.signals.find(
+      (s) => s.changeId === "bibbys-bloodbath",
+    );
+
+    expect(bibby?.state).toBe("active");
+    expect(bibby?.detail).toBe("");
   });
 
-  it("tolerates a message that wraps across two lines", () => {
+  it("parses a wrapped Oriental Trader message", () => {
     const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
+
     expect(result.merchantHints).toHaveLength(1);
     expect(result.merchantHints[0]).toMatchObject({
       merchantId: "yasir",
@@ -58,73 +77,80 @@ describe("parseBoardLog", () => {
     });
   });
 
-  it("matches Kingsday and ignores unrelated text", () => {
-    const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-    expect(result.signals.some((s) => s.changeId === "thais-kingsday")).toBe(true);
-  });
+  it("returns no snapshot for text with no board evidence", () => {
+    const result = parseBoardLog(
+      "Nothing to see here, just chatting with a friend.",
+    );
 
-  it("returns empty results for text with no known messages", () => {
-    const result = parseBoardLog("Nothing to see here, just chatting with a friend.");
     expect(result.signals).toHaveLength(0);
     expect(result.merchantHints).toHaveLength(0);
     expect(result.isCompleteSnapshot).toBe(false);
+    expect(result.inactiveMerchantIds).toEqual([]);
   });
 
-  describe("complete snapshot detection", () => {
-    it("recognizes the board's own fixed preamble as a genuine, complete reading", () => {
+  describe("complete snapshot semantics", () => {
+    it("accepts the official board preamble", () => {
       const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
       expect(result.isCompleteSnapshot).toBe(true);
     });
 
-    it("never treats a fragmentary paste (no preamble) as a complete reading", () => {
-      const fragment = "A fiery fury gate has opened near one of the major cities somewhere in Tibia.";
-      const result = parseBoardLog(fragment);
-      expect(result.isCompleteSnapshot).toBe(false);
-      // Without the preamble, an unmentioned change must stay absent — never synthesized inactive.
-      expect(result.signals.some((s) => s.changeId === "hive-outpost")).toBe(false);
-    });
-
-    it("keeps one timestamped board line fragmentary", () => {
+    it("treats any recognized board entry as the current board reading", () => {
       const result = parseBoardLog(
-        "19:21:22 A fiery fury gate has opened near one of the major cities somewhere in Tibia.",
+        "A fiery fury gate has opened near one of the major cities somewhere in Tibia.",
       );
-
-      expect(result.isCompleteSnapshot).toBe(false);
-      expect(
-        result.signals.find((s) => s.changeId === "fury-gate")?.state,
-      ).toBe("active");
-
-      expect(
-        result.signals.some((s) => s.changeId === "noodles"),
-      ).toBe(false);
-
-      expect(result.inactiveMerchantIds).toEqual([]);
-    });
-
-    it("recognizes a same-timestamp World Board burst as a complete snapshot", () => {
-      const result = parseBoardLog(`
-19:21:22 A fiery fury gate has opened near one of the major cities somewhere in Tibia.
-19:21:22 Adventurers have told of a Spirit Gate in the Ghostlands. Fight the restless undead!
-`);
 
       expect(result.isCompleteSnapshot).toBe(true);
 
       expect(
         result.signals.find((s) => s.changeId === "fury-gate")?.state,
       ).toBe("active");
-
-      const spiritGate =
-        result.signals.find((s) => s.changeId === "spirit-gate");
-
-      expect(spiritGate?.state).toBe("location");
-      expect(spiritGate?.detail).toBe("Ghostlands");
 
       expect(
         result.signals.find((s) => s.changeId === "hive-outpost")?.state,
       ).toBe("inactive");
 
       expect(
+        result.signals.find((s) => s.changeId === "noodles")?.state,
+      ).toBe("inactive");
+
+      expect(
         result.signals.find((s) => s.changeId === "bibbys-bloodbath")?.state,
+      ).toBe("inactive");
+
+      expect(result.inactiveMerchantIds).toEqual(["yasir"]);
+    });
+
+    it("works with client timestamps disabled", () => {
+      const result = parseBoardLog(LIVE_BOARD_WITHOUT_TIMESTAMPS);
+
+      expect(result.isCompleteSnapshot).toBe(true);
+
+      expect(
+        result.signals.find((s) => s.changeId === "fury-gate")?.state,
+      ).toBe("active");
+
+      expect(
+        result.signals.find((s) => s.changeId === "poacher-caves")?.state,
+      ).toBe("stage3");
+
+      expect(
+        result.signals.find((s) => s.changeId === "nightmare-isles")?.detail,
+      ).toBe("River near Drefia");
+
+      expect(
+        result.signals.find((s) => s.changeId === "darama-nomads")?.state,
+      ).toBe("active");
+
+      expect(
+        result.signals.find((s) => s.changeId === "goroma-volcano")?.state,
+      ).toBe("active");
+
+      expect(
+        result.signals.find((s) => s.changeId === "spirit-gate")?.detail,
+      ).toBe("Ghostlands");
+
+      expect(
+        result.signals.find((s) => s.changeId === "hive-outpost")?.state,
       ).toBe("inactive");
 
       expect(
@@ -134,34 +160,86 @@ describe("parseBoardLog", () => {
       expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
 
-    it("infers every unmentioned Mini World Change as inactive once the reading is complete", () => {
-      const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
-      // One signal per catalog definition: the ones the board text mentions, plus a
-      // synthesized "inactive" for every one it doesn't.
-      expect(result.signals).toHaveLength(MINI_WORLD_CHANGE_DEFINITIONS.length);
-      const hiveOutpostOnly = result.signals.filter((s) => s.changeId === "hive-outpost");
-      expect(hiveOutpostOnly).toHaveLength(1);
-      const goroma = result.signals.find((s) => s.changeId === "goroma-volcano");
-      expect(goroma?.state).toBe("inactive");
-      const noodles = result.signals.find((s) => s.changeId === "noodles");
-      expect(noodles?.state).toBe("inactive");
+    it("works with client timestamps enabled", () => {
+      const timestamped = LIVE_BOARD_WITHOUT_TIMESTAMPS
+        .trim()
+        .split("\n")
+        .map((line) => `19:21:22 ${line}`)
+        .join("\n");
+
+      const result = parseBoardLog(timestamped);
+
+      expect(result.isCompleteSnapshot).toBe(true);
+
+      expect(
+        result.signals.find((s) => s.changeId === "fury-gate")?.state,
+      ).toBe("active");
+
+      expect(
+        result.signals.find((s) => s.changeId === "noodles")?.state,
+      ).toBe("inactive");
+
+      expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
 
-    it("marks Yasir inactive when the Oriental Trader message is absent from a complete reading", () => {
-      const withoutYasir = COMPLETE_SAMPLE_LOG.replace(
-        /Oriental ships sighted![\s\S]*?visiting Carlin, Ankrahmun or Liberty Bay\.\n/,
-        "",
+    it("synthesizes exactly one state for every Mini World Change", () => {
+      const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
+
+      expect(result.signals).toHaveLength(
+        MINI_WORLD_CHANGE_DEFINITIONS.length,
       );
-      const result = parseBoardLog(withoutYasir);
+
+      for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
+        expect(
+          result.signals.filter((s) => s.changeId === def.id),
+        ).toHaveLength(1);
+      }
+    });
+
+    it("marks every unmentioned Mini World Change inactive", () => {
+      const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
+
+      expect(
+        result.signals.find((s) => s.changeId === "goroma-volcano")?.state,
+      ).toBe("inactive");
+
+      expect(
+        result.signals.find((s) => s.changeId === "noodles")?.state,
+      ).toBe("inactive");
+    });
+
+    it("keeps Yasir active when Oriental Trader is present", () => {
+      const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
+
+      expect(result.merchantHints.some(
+        (hint) => hint.merchantId === "yasir",
+      )).toBe(true);
+
+      expect(result.inactiveMerchantIds).toEqual([]);
+    });
+
+    it("marks Yasir inactive when Oriental Trader is absent", () => {
+      const result = parseBoardLog(
+        "Hail to the King! It's Kingsday in Thais, join the celebration!",
+      );
+
       expect(result.isCompleteSnapshot).toBe(true);
       expect(result.merchantHints).toHaveLength(0);
       expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
 
-    it("never marks Yasir inactive from a fragmentary reading", () => {
-      const result = parseBoardLog("Hail to the King! It's Kingsday in Thais, join the celebration!");
-      expect(result.isCompleteSnapshot).toBe(false);
+    it("recognizes Oriental Trader alone as a complete board reading", () => {
+      const result = parseBoardLog(
+        "Oriental ships sighted! A trader for exotic creature products may currently be visiting Carlin, Ankrahmun or Liberty Bay.",
+      );
+
+      expect(result.isCompleteSnapshot).toBe(true);
+      expect(result.merchantHints).toHaveLength(1);
       expect(result.inactiveMerchantIds).toEqual([]);
+
+      expect(
+        result.signals.every((signal) => signal.state === "inactive"),
+      ).toBe(true);
     });
   });
 });
