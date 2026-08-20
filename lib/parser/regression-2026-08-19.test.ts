@@ -12,6 +12,7 @@ describe("2026-08-19 live Tibia regression", () => {
 19:21:22 Adventurers have told of a Spirit Gate in the Ghostlands. Fight the restless undead!
 
 19:20:56 Guide Luke: The Askarak are in advantage right now.
+19:20:58 Guide Luke: The horse services near Thais and Venore are working normally.
 19:21:01 Guide Luke: The strange tower with the servants on Edron is covered in slime.
 `;
 
@@ -39,6 +40,7 @@ describe("2026-08-19 live Tibia regression", () => {
     expect(world.get("demon-war")?.detail).toBe("Askarak advantage");
 
     expect(world.get("masters-voice")?.state).toBe("active");
+    expect(world.get("horse-station")?.state).toBe("inactive");
 
     // Recognized World Board messages are the current board reading,
     // independently of whether client timestamps are enabled.

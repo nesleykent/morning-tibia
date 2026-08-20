@@ -283,9 +283,13 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     changeId: "swamp-fever",
     state: "inactive",
   },
-  // Horse Station (keyword "Horses") — source: Guide Elena transcript, corroborated by
-  // the Appaloosa/Palomino horse-rental NPCs' own dialogue. Only the "escaped" state is
-  // documented; the normal "horses confined, rentable" reply has never been transcribed.
+  // Horse Station (keyword "Horses") — live Guide NPC dialogue covers both the
+  // normal service state and the escaped-horses state.
+  {
+    text: "The horse services near Thais and Venore are working normally.",
+    changeId: "horse-station",
+    state: "inactive",
+  },
   {
     text: "Horses are on the loose near Thais! As long as there haven't been enough horses chased back into the pen, the service is on hold.",
     changeId: "horse-station",
