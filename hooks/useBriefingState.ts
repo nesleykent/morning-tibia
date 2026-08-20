@@ -22,12 +22,79 @@ import { generateBriefingMessage, generatePlainTextBriefing } from "@/lib/format
 import type { BriefingLanguage } from "@/lib/formatter/translations";
 import { useViewerSettings } from "@/lib/context/ViewerSettingsContext";
 import { DEFAULT_VIEWER_TIME_ZONE } from "@/lib/utils/timezoneList";
+import { getNextServerSave } from "@/lib/utils/serverSave";
+import { calendarDayDiff } from "@/lib/formatter/dateFormat";
 
 const FALLBACK_WORLD = "Ustebra";
 const LOCATION_GATED_MINI_WORLD_CHANGES = new Set(["bibbys-bloodbath", "noodles"]);
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function lastCreepStartForYear(year: number): Date {
+  // Last Creep Standing begins at the 20 August server save.
+  // Midnight UTC is before the Berlin server save, so the existing DST-safe
+  // server-save helper resolves the correct 10:00 Europe/Berlin instant.
+  return getNextServerSave(new Date(Date.UTC(year, 7, 20, 0, 0, 0)));
+}
+
+function reconcileLastCreepStanding(
+  activeEvents: ActiveEvent[],
+  upcomingEvents: UpcomingEvent[],
+  now: Date,
+  viewerTimeZone: string,
+): { activeEvents: ActiveEvent[]; upcomingEvents: UpcomingEvent[] } {
+  const startsAt = lastCreepStartForYear(now.getUTCFullYear());
+
+  if (now.getTime() >= startsAt.getTime()) {
+    return { activeEvents, upcomingEvents };
+  }
+
+  const prematureActive = activeEvents.find(
+    (event) => event.title === "Last Creep Standing",
+  );
+
+  if (!prematureActive) {
+    return { activeEvents, upcomingEvents };
+  }
+
+  const correctedActive = activeEvents.filter(
+    (event) => event.title !== "Last Creep Standing",
+  );
+
+  const alreadyUpcoming = upcomingEvents.some(
+    (event) => event.title === "Last Creep Standing",
+  );
+
+  const correctedUpcoming = alreadyUpcoming
+    ? [...upcomingEvents]
+    : [
+        ...upcomingEvents,
+        {
+          id: `server-save-last-creep-${now.getUTCFullYear()}`,
+          title: "Last Creep Standing",
+          url: prematureActive.url,
+          startAt: startsAt.toISOString(),
+          daysUntil: Math.max(
+            0,
+            calendarDayDiff(now, startsAt, viewerTimeZone),
+          ),
+          certainty: "confirmed" as const,
+          occurrenceIndex: 0,
+          occurrenceCount: 1,
+        },
+      ];
+
+  correctedUpcoming.sort(
+    (a, b) =>
+      new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+  );
+
+  return {
+    activeEvents: correctedActive,
+    upcomingEvents: correctedUpcoming,
+  };
 }
 
 export interface UseBriefingStateProps {
@@ -51,6 +118,17 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
   const [marketTrendBasis, setMarketTrendBasisState] = useState<MarketTrendBasis>("last");
   const { viewerTimeZone, setViewerTimeZone } = useViewerSettings();
   const hasHydrated = useRef(false);
+
+  const reconciledEvents = useMemo(
+    () =>
+      reconcileLastCreepStanding(
+        activeEvents,
+        upcomingEvents,
+        referenceDate,
+        viewerTimeZone,
+      ),
+    [activeEvents, upcomingEvents, referenceDate, viewerTimeZone],
+  );
 
   // Hydrate from localStorage once on mount (client-only to avoid SSR/CSR mismatches; the
   // dashboard shell also withholds rendering until this has happened, via useIsClient).
@@ -312,8 +390,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       boostedCreature: boostedQuery.data?.creature ?? null,
       boostedBoss: boostedQuery.data?.boss ?? null,
       warzoneSchedule: warzoneQuery.data,
-      activeEvents,
-      upcomingEvents,
+      activeEvents: reconciledEvents.activeEvents,
+      upcomingEvents: reconciledEvents.upcomingEvents,
       drome,
       language: briefingLanguage,
       viewerTimeZone,
@@ -326,8 +404,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       overrides,
       boostedQuery.data,
       warzoneQuery.data,
-      activeEvents,
-      upcomingEvents,
+      reconciledEvents,
       drome,
       briefingLanguage,
       viewerTimeZone,
@@ -351,8 +428,8 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     warzoneQuery,
     marketHistoryQuery,
 
-    activeEvents,
-    upcomingEvents,
+    activeEvents: reconciledEvents.activeEvents,
+    upcomingEvents: reconciledEvents.upcomingEvents,
     drome,
 
     overrides,
