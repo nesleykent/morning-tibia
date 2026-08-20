@@ -15,6 +15,53 @@ const WORLD_BOARD_PREAMBLE =
   "You see the world board. This board will notify you of currently active mini world changes all over Tibia.";
 const NORMALIZED_PREAMBLE = normalizeForMatch(WORLD_BOARD_PREAMBLE);
 
+const SERVER_LOG_TIMESTAMP_RE = /^(\d{1,2}:\d{2}:\d{2})\s+/;
+
+/**
+ * Tibia's server log may contain a complete World Board reading without copying the
+ * board preamble. In that form, active Mini World Changes are emitted as a burst of
+ * canonical board messages sharing the same HH:MM:SS timestamp.
+ *
+ * Two or more distinct canonical World Board entries at one timestamp identify a
+ * complete snapshot. A single timestamped entry remains fragmentary.
+ */
+function hasCompleteTimestampBatch(rawText: string): boolean {
+  const entriesByTimestamp = new Map<string, Set<string>>();
+
+  for (const rawLine of rawText.split("\n")) {
+    const line = rawLine.trim();
+    const timestampMatch = line.match(SERVER_LOG_TIMESTAMP_RE);
+    if (!timestampMatch) continue;
+
+    const timestamp = timestampMatch[1]!;
+    const messageText = line.replace(SERVER_LOG_TIMESTAMP_RE, "");
+    const normalizedLine = normalizeForMatch(messageText);
+
+    if (!normalizedLine) continue;
+
+    for (const entry of BOARD_MESSAGES) {
+      const normalizedEntry = normalizeForMatch(entry.text);
+      if (!normalizedEntry || !normalizedLine.includes(normalizedEntry)) continue;
+
+      const canonicalKey = entry.changeId
+        ? `change:${entry.changeId}`
+        : entry.merchantHint
+          ? `merchant:${entry.merchantHint.merchantId}`
+          : normalizedEntry;
+
+      const entries =
+        entriesByTimestamp.get(timestamp) ?? new Set<string>();
+
+      entries.add(canonicalKey);
+      entriesByTimestamp.set(timestamp, entries);
+    }
+  }
+
+  return Array.from(entriesByTimestamp.values()).some(
+    (entries) => entries.size >= 2,
+  );
+}
+
 /**
  * Matches pasted World Board text (copied from the Adventurer's Island board, or a
  * server log containing it) against the known catalog of board messages. Uses plain
@@ -52,7 +99,9 @@ export function parseBoardLog(rawText: string): ParseResult {
     });
   }
 
-  const isCompleteSnapshot = normalizedInput.includes(NORMALIZED_PREAMBLE);
+  const isCompleteSnapshot =
+    normalizedInput.includes(NORMALIZED_PREAMBLE) ||
+    hasCompleteTimestampBatch(rawText);
   const inactiveMerchantIds: ParseResult["inactiveMerchantIds"] = [];
 
   if (isCompleteSnapshot) {

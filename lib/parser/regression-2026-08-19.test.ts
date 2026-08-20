@@ -39,5 +39,18 @@ describe("2026-08-19 live Tibia regression", () => {
     expect(world.get("demon-war")?.detail).toBe("Askarak advantage");
 
     expect(world.get("masters-voice")?.state).toBe("active");
+
+    // The six 19:21:22 World Board lines form one complete server-log snapshot.
+    expect(result.isCompleteSnapshot).toBe(true);
+
+    // Every absent MWC becomes inactive instead of remaining Unknown.
+    expect(mini.get("hive-outpost")?.state).toBe("inactive");
+    expect(mini.get("big-iceberg")?.state).toBe("inactive");
+    expect(mini.get("bibbys-bloodbath")?.state).toBe("inactive");
+    expect(mini.get("noodles")?.state).toBe("inactive");
+    expect(mini.get("thais-kingsday")?.state).toBe("inactive");
+
+    // Oriental Trader is absent from the complete board snapshot.
+    expect(result.inactiveMerchantIds).toEqual(["yasir"]);
   });
 });

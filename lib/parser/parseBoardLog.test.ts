@@ -84,6 +84,56 @@ describe("parseBoardLog", () => {
       expect(result.signals.some((s) => s.changeId === "hive-outpost")).toBe(false);
     });
 
+    it("keeps one timestamped board line fragmentary", () => {
+      const result = parseBoardLog(
+        "19:21:22 A fiery fury gate has opened near one of the major cities somewhere in Tibia.",
+      );
+
+      expect(result.isCompleteSnapshot).toBe(false);
+      expect(
+        result.signals.find((s) => s.changeId === "fury-gate")?.state,
+      ).toBe("active");
+
+      expect(
+        result.signals.some((s) => s.changeId === "noodles"),
+      ).toBe(false);
+
+      expect(result.inactiveMerchantIds).toEqual([]);
+    });
+
+    it("recognizes a same-timestamp World Board burst as a complete snapshot", () => {
+      const result = parseBoardLog(`
+19:21:22 A fiery fury gate has opened near one of the major cities somewhere in Tibia.
+19:21:22 Adventurers have told of a Spirit Gate in the Ghostlands. Fight the restless undead!
+`);
+
+      expect(result.isCompleteSnapshot).toBe(true);
+
+      expect(
+        result.signals.find((s) => s.changeId === "fury-gate")?.state,
+      ).toBe("active");
+
+      const spiritGate =
+        result.signals.find((s) => s.changeId === "spirit-gate");
+
+      expect(spiritGate?.state).toBe("location");
+      expect(spiritGate?.detail).toBe("Ghostlands");
+
+      expect(
+        result.signals.find((s) => s.changeId === "hive-outpost")?.state,
+      ).toBe("inactive");
+
+      expect(
+        result.signals.find((s) => s.changeId === "bibbys-bloodbath")?.state,
+      ).toBe("inactive");
+
+      expect(
+        result.signals.find((s) => s.changeId === "noodles")?.state,
+      ).toBe("inactive");
+
+      expect(result.inactiveMerchantIds).toEqual(["yasir"]);
+    });
+
     it("infers every unmentioned Mini World Change as inactive once the reading is complete", () => {
       const result = parseBoardLog(COMPLETE_SAMPLE_LOG);
       // One signal per catalog definition: the ones the board text mentions, plus a
