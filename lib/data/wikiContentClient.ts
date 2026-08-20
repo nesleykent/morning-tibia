@@ -1,6 +1,7 @@
 import "server-only";
 import type { ActiveEvent, EventCertainty, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
+import { getNextServerSave } from "@/lib/utils/serverSave";
 
 const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -69,45 +70,164 @@ function extractDaysNumber(strippedBlockText: string): number {
   return match ? Number(match[1]) : 0;
 }
 
+
+function extractIsoDateKeys(html: string): string[] {
+  return Array.from(
+    new Set(html.match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? []),
+  ).sort();
+}
+
+function dateKeyToUtcMs(dateKey: string): number {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return Date.UTC(year!, month! - 1, day!);
+}
+
+function serverSaveForDateKey(dateKey: string): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    throw new Error(`Invalid event date: ${dateKey}`);
+  }
+
+  // Midnight UTC is before Tibia's 10:00 Europe/Berlin server save.
+  // The existing helper performs the DST-aware Berlin conversion.
+  return getNextServerSave(
+    new Date(Date.UTC(year, month - 1, day, 0, 0, 0)),
+  );
+}
+
+async function fetchEventDateKeys(title: string): Promise<string[]> {
+  const html = await fetchWikiPageHtml(`${title}/Dates`);
+  return html ? extractIsoDateKeys(html) : [];
+}
+
+function latestDateKeyAtOrBefore(
+  dateKeys: string[],
+  targetDateKey: string,
+): string | null {
+  const candidates = dateKeys.filter((dateKey) => dateKey <= targetDateKey);
+  return candidates.length > 0 ? candidates[candidates.length - 1]! : null;
+}
+
+function nearestDateKey(
+  dateKeys: string[],
+  targetDateKey: string,
+): string | null {
+  if (dateKeys.length === 0) return null;
+
+  const targetMs = dateKeyToUtcMs(targetDateKey);
+
+  const ordered = [...dateKeys].sort(
+    (a, b) =>
+      Math.abs(dateKeyToUtcMs(a) - targetMs) -
+      Math.abs(dateKeyToUtcMs(b) - targetMs),
+  );
+
+  const nearest = ordered[0]!;
+  const distance = Math.abs(dateKeyToUtcMs(nearest) - targetMs);
+
+  // The wiki countdown and the build clock can sit on opposite sides of a
+  // timezone boundary. A two-day guard tolerates that while rejecting an
+  // unrelated occurrence months away.
+  return distance <= 2 * DAY_MS ? nearest : null;
+}
+
 export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEvent[]> {
   const html = await fetchWikiPageHtml("Active_Events");
   if (!html) return [];
-  return extractDivBlocks(html, "active").map((block, index) => {
-    const { title, href } = extractLinkTitleAndHref(block);
-    const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
-    const daysRemaining = extractDaysNumber(strippedBlock);
-    const endAt = new Date(referenceDate.getTime() + daysRemaining * DAY_MS).toISOString();
-    return { id: `active-${index}-${title}`, title, url: href, endAt, daysRemaining };
-  });
+
+  return Promise.all(
+    extractDivBlocks(html, "active").map(async (block, index) => {
+      const { title, href } = extractLinkTitleAndHref(block);
+      const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
+      const daysRemaining = extractDaysNumber(strippedBlock);
+      const endAt = new Date(
+        referenceDate.getTime() + daysRemaining * DAY_MS,
+      ).toISOString();
+
+      const dateKeys = await fetchEventDateKeys(title);
+      const scheduledDateKey = latestDateKeyAtOrBefore(
+        dateKeys,
+        endAt.slice(0, 10),
+      );
+
+      const scheduledStartAt = scheduledDateKey
+        ? serverSaveForDateKey(scheduledDateKey).toISOString()
+        : null;
+
+      return {
+        id: `active-${index}-${title}`,
+        title,
+        url: href,
+        endAt,
+        daysRemaining,
+        scheduledStartAt,
+      };
+    }),
+  );
 }
 
 export async function fetchUpcomingEvents(referenceDate: Date): Promise<UpcomingEvent[]> {
   const html = await fetchWikiPageHtml("Upcoming_Events");
   if (!html) return [];
 
-  const raw = extractDivBlocks(html, "upcoming").map((block, index) => {
-    const { title, href } = extractLinkTitleAndHref(block);
-    const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
-    const daysUntil = extractDaysNumber(strippedBlock);
-    const certainty: EventCertainty = /\bmight\b/i.test(strippedBlock) ? "estimated" : "confirmed";
-    const startAt = new Date(referenceDate.getTime() + daysUntil * DAY_MS).toISOString();
-    return { id: `upcoming-${index}-${title}`, title, url: href, startAt, daysUntil, certainty };
-  });
+  const raw = await Promise.all(
+    extractDivBlocks(html, "upcoming").map(async (block, index) => {
+      const { title, href } = extractLinkTitleAndHref(block);
+      const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
+      const daysUntil = extractDaysNumber(strippedBlock);
+      const certainty: EventCertainty =
+        /\bmight\b/i.test(strippedBlock) ? "estimated" : "confirmed";
 
-  // Sort chronologically — don't rely on the wiki's own DOM order.
-  raw.sort((a, b) => a.daysUntil - b.daysUntil);
+      const provisionalStartAt = new Date(
+        referenceDate.getTime() + daysUntil * DAY_MS,
+      );
 
-  // Some recurring events (e.g. a two-window seasonal sale) appear more than once with
-  // the identical title — tag each occurrence so the formatter can label them distinctly
-  // instead of presenting apparent duplicates with no context.
+      const dateKeys = await fetchEventDateKeys(title);
+      const scheduledDateKey = nearestDateKey(
+        dateKeys,
+        provisionalStartAt.toISOString().slice(0, 10),
+      );
+
+      const startAt = scheduledDateKey
+        ? serverSaveForDateKey(scheduledDateKey).toISOString()
+        : provisionalStartAt.toISOString();
+
+      return {
+        id: `upcoming-${index}-${title}`,
+        title,
+        url: href,
+        startAt,
+        daysUntil,
+        certainty,
+      };
+    }),
+  );
+
+  raw.sort(
+    (a, b) =>
+      new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+  );
+
   const occurrenceCounts = new Map<string, number>();
-  for (const event of raw) occurrenceCounts.set(event.title, (occurrenceCounts.get(event.title) ?? 0) + 1);
+  for (const event of raw) {
+    occurrenceCounts.set(
+      event.title,
+      (occurrenceCounts.get(event.title) ?? 0) + 1,
+    );
+  }
+
   const seenSoFar = new Map<string, number>();
 
   return raw.map((event) => {
     const occurrenceIndex = seenSoFar.get(event.title) ?? 0;
     seenSoFar.set(event.title, occurrenceIndex + 1);
-    return { ...event, occurrenceIndex, occurrenceCount: occurrenceCounts.get(event.title)! };
+
+    return {
+      ...event,
+      occurrenceIndex,
+      occurrenceCount: occurrenceCounts.get(event.title)!,
+    };
   });
 }
 

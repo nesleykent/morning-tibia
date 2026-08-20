@@ -14,6 +14,11 @@ export interface ActiveEvent {
   /** ISO timestamp for when the event ends. */
   endAt: string;
   daysRemaining: number;
+  /**
+   * Server-save instant for the official start date of this occurrence when
+   * TibiaWiki exposes a /Dates page for the event.
+   */
+  scheduledStartAt?: string | null;
 }
 
 export interface UpcomingEvent {
