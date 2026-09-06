@@ -6,81 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { parseGameText, type CombinedParseResult } from "@/lib/parser/parseGameText";
-import type { ParsedSignal } from "@/types/parser";
 import type { Merchant, MerchantId } from "@/types/merchant";
-import type { MiniWorldChangeControlType } from "@/types/miniWorldChange";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
-import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
-
-type ApplyChangeFn = (id: string, patch: { state: NonNullable<ParsedSignal["state"]>; detail: string }) => void;
+import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
+import type { WorldChangeValue } from "@/types/worldChange";
+import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
+import { WORLD_CHANGES_BY_ID, GUIDE_KEYWORDS } from "@/lib/defaults/worldChanges";
 
 interface ImportGameTextCardProps {
-  onApplyMiniWorldChange: ApplyChangeFn;
-  onApplyWorldChange: ApplyChangeFn;
+  onApplyMiniWorldChange: (id: string, patch: Partial<MiniWorldChangeValue>) => void;
+  onApplyWorldChange: (id: string, patch: Partial<WorldChangeValue>) => void;
   onApplyMerchant: (id: MerchantId, patch: Partial<Merchant>) => void;
 }
 
-const CONTROL_TYPE_BY_ID = new Map<string, MiniWorldChangeControlType>([
-  ...MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.controlType] as const),
-  ...WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.controlType] as const),
-]);
-
-/** "active" with no detail only means "location/detail pending" for a detail-bearing
- * entry (location/creature/boss) — for a plain toggle or stage it just means active. */
-function pendingsDetail(signal: ParsedSignal): boolean {
-  if (signal.state !== "active" || signal.detail) return false;
-  const controlType = CONTROL_TYPE_BY_ID.get(signal.changeId);
-  return controlType === "location" || controlType === "creature" || controlType === "boss";
-}
-
-function SignalGroup({
-  title,
-  signals,
-}: {
-  title: string;
-  signals: ParsedSignal[];
-}) {
-  if (signals.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-      {signals.map((signal, index) => (
-        <div key={index} className="flex items-start justify-between gap-2 text-sm">
-          <div>
-            <p className="font-medium">{signal.label}</p>
-            {signal.state ? (
-              <p className="text-xs text-muted-foreground">
-                →{" "}
-                {pendingsDetail(signal)
-                  ? "active, location/detail pending"
-                  : signal.state === "location"
-                    ? signal.detail
-                    : signal.state}
-                {signal.detail && signal.state !== "location" ? ` — ${signal.detail}` : ""}
-              </p>
-            ) : (
-              <p className="text-xs text-amber-400">Matched, but no applicable state — check manually.</p>
-            )}
-          </div>
-          {signal.state && (
-            <Badge variant="gold" className="shrink-0">
-              applied
-            </Badge>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** "23 Mini World Changes verified — 5 active, 18 inactive" style summary for a complete
- * World Board reading; omitted entirely for a fragmentary paste (nothing was "verified"). */
-function boardSummary(result: CombinedParseResult): string | null {
-  if (!result.isCompleteSnapshot) return null;
-  const total = result.miniWorldChangeSignals.length;
-  const activeCount = result.miniWorldChangeSignals.filter((s) => s.state && s.state !== "inactive").length;
-  const inactiveCount = total - activeCount;
-  return `World Board recognized as a complete reading — ${total} Mini World Changes verified (${activeCount} active, ${inactiveCount} inactive).`;
+function variantLabel(changeId: string, variantId: string | null): string | null {
+  if (!variantId) return null;
+  const def = MINI_WORLD_CHANGES_BY_ID.get(changeId);
+  return def?.variants.find((v) => v.id === variantId)?.label ?? variantId;
 }
 
 export function ImportGameTextCard({
@@ -90,43 +31,33 @@ export function ImportGameTextCard({
 }: ImportGameTextCardProps) {
   const [text, setText] = useState("");
   const [result, setResult] = useState<CombinedParseResult | null>(null);
-  const summary = result ? boardSummary(result) : null;
 
   const handleParse = () => {
     const parsed = parseGameText(text);
     setResult(parsed);
 
     for (const signal of parsed.miniWorldChangeSignals) {
-      if (signal.state === null) continue;
       onApplyMiniWorldChange(signal.changeId, {
-        state: signal.state,
-        detail: signal.detail,
+        status: "active",
+        variantId: signal.variantId,
       });
+    }
+
+    for (const id of parsed.inactiveMiniWorldChangeIds) {
+      onApplyMiniWorldChange(id, { status: "inactive", variantId: null });
     }
 
     for (const signal of parsed.worldChangeSignals) {
-      if (signal.state === null) continue;
-      onApplyWorldChange(signal.changeId, {
-        state: signal.state,
-        detail: signal.detail,
-      });
+      onApplyWorldChange(signal.changeId, { stateId: signal.stateId });
     }
 
-    // Oriental Trader is the Mini World Change that authorizes Yasir location.
-    // Recognition establishes activity first; choosing a city happens afterwards.
     for (const hint of parsed.merchantHints) {
       if (hint.merchantId !== "yasir") continue;
-      onApplyMerchant("yasir", {
-        location: "",
-        activityState: "pending-location",
-      });
+      onApplyMerchant("yasir", { location: "", activityState: "pending-location" });
     }
 
     if (parsed.inactiveMerchantIds.includes("yasir")) {
-      onApplyMerchant("yasir", {
-        location: "",
-        activityState: "inactive",
-      });
+      onApplyMerchant("yasir", { location: "", activityState: "inactive" });
     }
   };
 
@@ -137,52 +68,126 @@ export function ImportGameTextCard({
           <span aria-hidden="true">📋</span> Import from game text
         </CardTitle>
         <CardDescription>
-          Paste any combination of the World Board&apos;s server log (Mini World Changes) and a
-          Guide NPC chat log (World Changes) — two different Tibia mechanics with two different
-          sources, but you only need one paste box. Both are detected automatically.
+          Paste the World Board&apos;s server log, a Guide NPC chat log, or anything the Towncryer
+          shouted — in any combination. All three are recognised automatically.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground">
-            In-game: use the world board at the Adventurer&apos;s Guild (floor +1, near Charos) for
-            Mini World Changes, and/or ask any Guide NPC about Horestis, Hive, Awash, Deepling, Sea
-            Serpent, Demon War, Twisted Waters, or Overhunting for World Changes. Paste either or
-            both logs below.
-          </p>
+          <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+            <p>
+              <strong className="text-foreground">Mini World Changes</strong> — use the world board
+              at the Adventurer&apos;s Guild (floor +1, near Charos) and copy the whole server log.
+              Keep its first line (&ldquo;You see the world board…&rdquo;): that line is how Morning
+              Tibia knows it has the full list and can mark everything else as not running. The
+              Towncryer in Thais also shouts them one at a time.
+            </p>
+            <p>
+              <strong className="text-foreground">World Changes</strong> — greet any Guide NPC, say{" "}
+              <em>world change</em>, then one of: {GUIDE_KEYWORDS.join(", ")}.
+            </p>
+          </div>
           <Textarea
             rows={6}
             value={text}
             onChange={(e) => {
               setText(e.target.value);
             }}
-            placeholder="Paste your server log and/or Guide NPC chat log here…"
+            placeholder="Paste your server log, Guide NPC chat, or Towncryer shouts here…"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" onClick={handleParse} disabled={!text.trim()}>
-              Parse & apply
+              Parse &amp; apply
             </Button>
           </div>
 
           {result && (
-            <div className="briefing-scrollbar flex max-h-64 flex-col gap-3 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3">
-              {result.miniWorldChangeSignals.length === 0 &&
-              result.worldChangeSignals.length === 0 &&
-              result.merchantHints.length === 0 &&
-              result.inactiveMerchantIds.length === 0 ? (
+            <div className="briefing-scrollbar flex max-h-72 flex-col gap-3 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3">
+              {result.isEmpty ? (
                 <p className="text-sm text-muted-foreground">
-                  No known messages found in that text — nothing to import.
+                  No known World Board, Towncryer or Guide NPC messages found in that text — nothing
+                  was changed.
                 </p>
               ) : (
                 <>
-                  {summary && <p className="text-xs text-muted-foreground">{summary}</p>}
-                  <SignalGroup title="Mini World Changes (World Board)" signals={result.miniWorldChangeSignals} />
-                  <SignalGroup title="World Changes (Guide NPC)" signals={result.worldChangeSignals} />
-                  {result.merchantHints.map((hint, index) => (
-                    <div key={`hint-${index}`} className="text-sm">
+                  <p className="text-xs text-muted-foreground">
+                    {result.isCompleteBoardReading ? (
+                      <>
+                        Complete World Board reading — {result.miniWorldChangeSignals.length} active,{" "}
+                        {result.inactiveMiniWorldChangeIds.length} confirmed not running.
+                      </>
+                    ) : (
+                      <>
+                        Partial paste — only what it actually mentions was updated. Nothing was
+                        marked as not running, because this text can&apos;t prove that.
+                      </>
+                    )}
+                  </p>
+
+                  {result.miniWorldChangeSignals.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Mini World Changes
+                      </p>
+                      {result.miniWorldChangeSignals.map((signal) => {
+                        const def = MINI_WORLD_CHANGES_BY_ID.get(signal.changeId);
+                        const label = variantLabel(signal.changeId, signal.variantId);
+                        const pending = def && def.variants.length > 0 && !signal.variantId;
+                        return (
+                          <div
+                            key={signal.changeId}
+                            className="flex items-start justify-between gap-2 text-sm"
+                          >
+                            <div>
+                              <p className="font-medium">{def?.name ?? signal.changeId}</p>
+                              <p className="text-xs text-muted-foreground">
+                                → active{label ? ` — ${label}` : ""}
+                                {pending ? " — which one isn't in the message, pick it below" : ""}
+                              </p>
+                            </div>
+                            <Badge variant="gold" className="shrink-0">
+                              {signal.source === "towncryer" ? "towncryer" : "board"}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {result.worldChangeSignals.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        World Changes
+                      </p>
+                      {result.worldChangeSignals.map((signal) => {
+                        const def = WORLD_CHANGES_BY_ID.get(signal.changeId);
+                        const state = def?.states.find((s) => s.id === signal.stateId);
+                        return (
+                          <div
+                            key={signal.changeId}
+                            className="flex items-start justify-between gap-2 text-sm"
+                          >
+                            <div>
+                              <p className="font-medium">{def?.name ?? signal.changeId}</p>
+                              <p className="text-xs text-muted-foreground">
+                                → {state?.label ?? signal.stateId}
+                              </p>
+                            </div>
+                            <Badge variant="gold" className="shrink-0">
+                              guide
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {result.merchantHints.map((hint) => (
+                    <div key={hint.merchantId} className="text-sm">
                       <p className="font-medium capitalize">{hint.merchantId}</p>
                       <p className="text-xs text-muted-foreground">
-                        Active, city pending — {hint.candidates.join(", ")}:
+                        Trading somewhere — the message names {hint.candidates.length} possible
+                        cities, not which one:
                       </p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {hint.candidates.map((city) => (
@@ -192,7 +197,10 @@ export function ImportGameTextCard({
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              onApplyMerchant(hint.merchantId, { location: city, activityState: "location-known" })
+                              onApplyMerchant(hint.merchantId, {
+                                location: city,
+                                activityState: "location-known",
+                              })
                             }
                           >
                             {city}
@@ -201,9 +209,11 @@ export function ImportGameTextCard({
                       </div>
                     </div>
                   ))}
+
                   {result.inactiveMerchantIds.includes("yasir") && (
                     <p className="text-xs text-muted-foreground">
-                      Yasir wasn&apos;t mentioned in this complete board reading — marked inactive when applied.
+                      Yasir wasn&apos;t listed in this complete board reading — marked as not
+                      trading today.
                     </p>
                   )}
                 </>

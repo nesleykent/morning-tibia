@@ -7,51 +7,57 @@ const LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
 
 describe("getWorldChangeNarrative", () => {
   it("returns null for an unknown changeId", () => {
-    expect(getWorldChangeNarrative("not-a-real-id", "active", "", "pt")).toBeNull();
+    expect(getWorldChangeNarrative("not-a-real-id", "slumbering", "pt")).toBeNull();
   });
 
-  it("returns null for a state the change doesn't use (e.g. a stage on a toggle-only change)", () => {
-    expect(getWorldChangeNarrative("swamp-fever", "stage1", "", "pt")).toBeNull();
+  it("returns null for a state the change doesn't have", () => {
+    expect(getWorldChangeNarrative("swamp-fever", "burning", "pt")).toBeNull();
   });
 
   it("switches Demon War's headline by which faction is winning", () => {
-    const shaburak = getWorldChangeNarrative("demon-war", "stage1", "Shaburak advantage", "en");
-    const askarak = getWorldChangeNarrative("demon-war", "stage1", "Askarak advantage", "en");
+    const shaburak = getWorldChangeNarrative("demon-war", "shaburak-advantage", "en");
+    const askarak = getWorldChangeNarrative("demon-war", "askarak-advantage", "en");
+
     expect(shaburak?.headline).toContain("Shaburak");
     expect(askarak?.headline).toContain("Askarak");
     expect(shaburak?.headline).not.toBe(askarak?.headline);
   });
 
-  it("switches Awash's stage2 body by whether today's quota was met", () => {
-    const met = getWorldChangeNarrative("awash", "stage2", "Drained — today's quota met", "en");
-    const notMet = getWorldChangeNarrative("awash", "stage2", "Drained — quota not met yet today", "en");
+  it("switches Awash's body by whether today's deepling quota was met", () => {
+    const met = getWorldChangeNarrative("awash", "drained-quota-met", "en");
+    const open = getWorldChangeNarrative("awash", "drained-quota-open", "en");
+
     expect(met?.body).toMatch(/stay open/);
-    expect(notMet?.body).toMatch(/still need/);
+    expect(open?.body).toMatch(/still need/);
+    expect(met?.body).not.toBe(open?.body);
   });
 
-  it("switches Thornfire's stage2 narrative between breaking-out and recovering", () => {
-    const breakingOut = getWorldChangeNarrative("thornfire", "stage2", "Breaking out", "en");
-    const recovering = getWorldChangeNarrative("thornfire", "stage2", "Recovering — fire being fought", "en");
-    expect(breakingOut?.headline).toMatch(/slain/);
-    expect(recovering?.headline).toMatch(/burns/);
-    expect(recovering?.extra?.text).toMatch(/Thornfire Wolf/);
+  it("distinguishes Thornfire breaking out from Thornfire being fought back", () => {
+    const breakingOut = getWorldChangeNarrative("thornfire", "breaking-out", "en");
+    const beingFought = getWorldChangeNarrative("thornfire", "being-fought", "en");
+
+    expect(breakingOut).not.toBeNull();
+    expect(beingFought).not.toBeNull();
+    expect(breakingOut?.headline).not.toBe(beingFought?.headline);
   });
 
-  it("carries a fixed extra fact for Sea Serpent's awake stage", () => {
-    const narrative = getWorldChangeNarrative("sea-serpent", "stage2", "", "pt");
-    expect(narrative?.extra).toEqual({ emoji: "⚔️", text: "Renegade Quara dominam as regiões submersas de Oramond" });
+  it("distinguishes Overhunting dwindling from the deer leaving outright", () => {
+    const dwindling = getWorldChangeNarrative("overhunting", "dwindling", "en");
+    const leaving = getWorldChangeNarrative("overhunting", "leaving", "en");
+
+    expect(dwindling?.headline).not.toBe(leaving?.headline);
   });
 
-  it("provides content in all 4 languages for every defined World Change's known states", () => {
-    // Every guide-npc World Change should have at least one narrative-bearing state per
-    // language — otherwise it'd silently fall back to the compact ✅/❌ line, defeating the
-    // point of the narrative section.
+  it("has fully localized text for every documented state of every World Change", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      const states = def.controlType === "toggle" ? (["active", "inactive"] as const) : (["stage1", "stage2", "stage3"] as const);
-      const hasAnyNarrative = states.some((state) =>
-        LANGUAGES.every((language) => getWorldChangeNarrative(def.id, state, "", language) !== null),
-      );
-      expect(hasAnyNarrative, `${def.id} should have at least one fully-localized narrative state`).toBe(true);
+      for (const state of def.states) {
+        for (const language of LANGUAGES) {
+          expect(
+            getWorldChangeNarrative(def.id, state.id, language),
+            `${def.id}/${state.id}/${language}`,
+          ).not.toBeNull();
+        }
+      }
     }
   });
 });

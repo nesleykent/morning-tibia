@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BriefingOverrides } from "@/types/briefing";
 import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
+import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
+import { WORLD_CHANGES_BY_ID } from "@/lib/defaults/worldChanges";
 import type { WorldChangeValue } from "@/types/worldChange";
 import type { Merchant, MerchantId } from "@/types/merchant";
 import type { MarketTrendBasis } from "@/types/market";
@@ -25,7 +27,6 @@ import { DEFAULT_VIEWER_TIME_ZONE } from "@/lib/utils/timezoneList";
 import { reconcileEventServerSaveBoundaries } from "@/lib/events/reconcileEventServerSave";
 
 const FALLBACK_WORLD = "Ustebra";
-const LOCATION_GATED_MINI_WORLD_CHANGES = new Set(["bibbys-bloodbath", "noodles"]);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -115,42 +116,29 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
         const current = prev.miniWorldChanges[id];
         if (!current) return prev;
 
-        const nextPatch: Partial<MiniWorldChangeValue> = { ...patch };
+        const next: MiniWorldChangeValue = { ...current, ...patch, id, updatedAt: nowIso() };
+        const definition = MINI_WORLD_CHANGES_BY_ID.get(id);
 
-        if (LOCATION_GATED_MINI_WORLD_CHANGES.has(id)) {
-          const proposedDetail =
-            typeof nextPatch.detail === "string" ? nextPatch.detail.trim() : "";
+        // A variant only describes *how* a change is running, so it cannot exist without
+        // the change being active. This also stops a stale variant surviving into a later
+        // session where the board says the change is over.
+        if (next.status !== "active") {
+          next.variantId = null;
+        }
 
-          // A location can only be recorded after the board has already established
-          // that Bibby/Noodles is active. A location picker cannot activate the MWC.
-          if (proposedDetail.length > 0) {
-            const locationAllowed =
-              current.state === "active" || current.state === "location";
-            if (!locationAllowed) return prev;
-          }
-
-          // Any new activity observation starts with location pending, and inactive/
-          // unknown states can never retain a stale location from an earlier session.
-          if (
-            nextPatch.state === "active" ||
-            nextPatch.state === "inactive" ||
-            nextPatch.state === "unknown"
-          ) {
-            nextPatch.detail = "";
-          }
+        // Reject a variant that isn't in this change's closed list (or any variant at all
+        // on a plain on/off change) — a picker must never be able to invent a state the
+        // game doesn't have.
+        if (
+          next.variantId !== null &&
+          !definition?.variants.some((variant) => variant.id === next.variantId)
+        ) {
+          next.variantId = null;
         }
 
         return {
           ...prev,
-          miniWorldChanges: {
-            ...prev.miniWorldChanges,
-            [id]: {
-              ...current,
-              ...nextPatch,
-              id,
-              updatedAt: nowIso(),
-            },
-          },
+          miniWorldChanges: { ...prev.miniWorldChanges, [id]: next },
         };
       });
     },
@@ -159,13 +147,23 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
 
   const updateWorldChange = useCallback(
     (id: string, patch: Partial<WorldChangeValue>) => {
-      persist((prev) => ({
-        ...prev,
-        worldChanges: {
-          ...prev.worldChanges,
-          [id]: { ...prev.worldChanges[id]!, ...patch, id, updatedAt: nowIso() },
-        },
-      }));
+      persist((prev) => {
+        const current = prev.worldChanges[id];
+        if (!current) return prev;
+
+        const next: WorldChangeValue = { ...current, ...patch, id, updatedAt: nowIso() };
+        const definition = WORLD_CHANGES_BY_ID.get(id);
+
+        // Only a documented state of *this* World Change is acceptable.
+        if (
+          next.stateId !== null &&
+          !definition?.states.some((state) => state.id === next.stateId)
+        ) {
+          return prev;
+        }
+
+        return { ...prev, worldChanges: { ...prev.worldChanges, [id]: next } };
+      });
     },
     [persist],
   );

@@ -1,37 +1,98 @@
-import type { ParsedMerchantHint, ParsedSignal } from "@/types/parser";
+import type {
+  ParsedMerchantHint,
+  ParsedMiniWorldChangeSignal,
+  ParsedWorldChangeSignal,
+} from "@/types/parser";
+import type { MerchantId } from "@/types/merchant";
 import { parseBoardLog } from "./parseBoardLog";
+import { parseTowncryerLog } from "./parseTowncryerLog";
 import { parseGuideLog } from "./parseGuideLog";
+import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 
 /**
- * Mini World Changes (World Board) and World Changes (Guide NPC) are two distinct game
- * mechanics with disjoint catalogs of source text — a board message never collides with a
- * Guide NPC reply. That lets a single pasted block of text (server log, chat log, or a mix
- * of both copy-pasted together) be checked against both catalogs at once, so the user
- * doesn't have to split their paste across two tabs.
+ * Checks one pasted block of text against all three in-game sources at once.
+ *
+ * Tibiopedia asks for the World Board log and the Guide NPC chat in two separate boxes.
+ * Morning Tibia accepts one paste instead, which is strictly less work for the player and
+ * costs nothing in accuracy: the three catalogs share no text, so a board line can never be
+ * mistaken for a Guide reply or a Towncryer shout. Whatever the player copied out of their
+ * client, they can drop it in.
+ *
+ * What each source is allowed to conclude stays strictly separate, though:
+ *
+ * - World Board  → Mini World Changes, and (only with the board's own preamble present) the
+ *                  negative that unlisted changes are not running.
+ * - Towncryer    → Mini World Changes, positives only, but sometimes with a variant the
+ *                  board doesn't give.
+ * - Guide NPC    → World Changes only, positives only.
+ *
+ * So Guide text can never touch a Mini World Change, board text can never touch a World
+ * Change, and nothing but a complete board reading can ever mark anything inactive.
  */
 export interface CombinedParseResult {
-  miniWorldChangeSignals: ParsedSignal[];
-  worldChangeSignals: ParsedSignal[];
+  miniWorldChangeSignals: ParsedMiniWorldChangeSignal[];
+  worldChangeSignals: ParsedWorldChangeSignal[];
   merchantHints: ParsedMerchantHint[];
-  unmatchedLineCount: number;
-  /** Only the board half of the paste can ever be a complete snapshot — see parseBoardLog. */
-  isCompleteSnapshot: boolean;
-  inactiveMerchantIds: ParsedMerchantHint["merchantId"][];
+  /** Mini World Changes a complete board reading proves are not running. Empty otherwise. */
+  inactiveMiniWorldChangeIds: string[];
+  /** Merchants a complete board reading proves are not trading. Empty otherwise. */
+  inactiveMerchantIds: MerchantId[];
+  /** True when the paste was a genuine complete World Board reading. */
+  isCompleteBoardReading: boolean;
+  /** True when nothing at all was recognised, so the UI can say so instead of silently doing nothing. */
+  isEmpty: boolean;
 }
 
 export function parseGameText(rawText: string): CombinedParseResult {
   const board = parseBoardLog(rawText);
+  const towncryer = parseTowncryerLog(rawText);
   const guide = parseGuideLog(rawText);
 
-  const totalLines = rawText.split("\n").filter((line) => line.trim().length > 0).length;
-  const matchedCount = board.signals.length + board.merchantHints.length + guide.signals.length;
+  // Merge the two Mini World Change sources. When both mention the same change, prefer the
+  // signal that actually carries a variant — that is how a Towncryer shout fills in the
+  // Jungle Camp faction the World Board leaves open, without either source overwriting the
+  // other with less information.
+  const byChangeId = new Map<string, ParsedMiniWorldChangeSignal>();
+  for (const signal of [...board.signals, ...towncryer.signals]) {
+    const existing = byChangeId.get(signal.changeId);
+    if (!existing || (existing.variantId === null && signal.variantId !== null)) {
+      byChangeId.set(signal.changeId, signal);
+    }
+  }
+  const miniWorldChangeSignals = Array.from(byChangeId.values());
+
+  const inactiveMiniWorldChangeIds: string[] = [];
+  const inactiveMerchantIds: MerchantId[] = [];
+
+  if (board.isCompleteReading) {
+    // Only the board's own listing licenses a negative, and only for changes the board
+    // itself reports. A Towncryer shout in the same paste can add a change but never
+    // subtract one, so `byChangeId` (not just board.signals) is the right exclusion set.
+    for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
+      if (!byChangeId.has(def.id)) inactiveMiniWorldChangeIds.push(def.id);
+    }
+
+    const yasirSeen = [...board.merchantHints, ...towncryer.merchantHints].some(
+      (hint) => hint.merchantId === "yasir",
+    );
+    if (!yasirSeen) inactiveMerchantIds.push("yasir");
+  }
+
+  const merchantHints = [...board.merchantHints, ...towncryer.merchantHints].filter(
+    (hint, index, all) => all.findIndex((h) => h.merchantId === hint.merchantId) === index,
+  );
 
   return {
-    miniWorldChangeSignals: board.signals,
+    miniWorldChangeSignals,
     worldChangeSignals: guide.signals,
-    merchantHints: board.merchantHints,
-    unmatchedLineCount: Math.max(0, totalLines - matchedCount),
-    isCompleteSnapshot: board.isCompleteSnapshot,
-    inactiveMerchantIds: board.inactiveMerchantIds,
+    merchantHints,
+    inactiveMiniWorldChangeIds,
+    inactiveMerchantIds,
+    isCompleteBoardReading: board.isCompleteReading,
+    isEmpty:
+      miniWorldChangeSignals.length === 0 &&
+      guide.signals.length === 0 &&
+      merchantHints.length === 0 &&
+      !board.isCompleteReading,
   };
 }

@@ -1,7 +1,6 @@
 import type { BriefingOverrides } from "@/types/briefing";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WarzoneSchedule } from "@/types/warzone";
-import type { MiniWorldChangeState } from "@/types/miniWorldChange";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import type { MarketPriceId, MarketTrendBasis } from "@/types/market";
@@ -123,67 +122,66 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
   return TREND_SYMBOL[trend];
 }
 
-function formatAchievementValue(
-  state: MiniWorldChangeState,
-  detail: string,
-  t: BriefingTranslation,
-): string | null {
-  if (state === "unknown") return null;
-  if (state === "inactive") return "❌";
-  if (state === "active") return "✅";
-  if (state === "stage1") return `✅ ${t.stageOrdinal(1)}`;
-  if (state === "stage2") return `✅ ${t.stageOrdinal(2)}`;
-  if (state === "stage3") return `✅ ${t.stageOrdinal(3)}`;
-  // location / creature / boss controlType values.
-  return detail.trim().length > 0 ? detail.trim() : null;
-}
-
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const { overrides } = input;
   const t = getTranslation(input.language);
   const locale = NUMBER_LOCALE[input.language];
 
+  // Mini World Changes. A change only produces a line when the player actually knows
+  // something: it is running (with the variant if a source named one), or a complete board
+  // reading proved it is not. "Not checked" produces nothing at all — the briefing must
+  // never present an unasked question as an answer.
   const achievementLines: AchievementLine[] = [];
   let miniWorldChangesVerified = false;
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
-    if (!value) continue;
-    if (value.state !== "unknown") miniWorldChangesVerified = true;
-    if (value.state === "inactive" && !overrides.includeAllChanges) continue;
-    const narrative = getMiniWorldChangeNarrative(def.id, value.state, value.detail, input.language);
-    const valueLabel = narrative ?? formatAchievementValue(value.state, value.detail, t);
-    if (valueLabel === null) continue;
-    achievementLines.push({ emoji: def.emoji, label: def.label.toUpperCase(), valueLabel });
-  }
+    if (!value || value.status === "unchecked") continue;
 
-  const worldChangeLines: WorldChangeLine[] = [];
-  let worldChangesVerified = false;
-  for (const def of WORLD_CHANGE_DEFINITIONS) {
-    if (overrides.worldChanges[def.id]?.state !== "unknown") worldChangesVerified = true;
-    const value = overrides.worldChanges[def.id];
-    if (!value || value.state === "unknown") continue;
-    if (value.state === "inactive" && !overrides.includeAllChanges) continue;
-    const narrative = getWorldChangeNarrative(def.id, value.state, value.detail, input.language);
-    if (narrative) {
-      worldChangeLines.push({
+    miniWorldChangesVerified = true;
+
+    if (value.status === "inactive") {
+      if (!overrides.includeAllChanges) continue;
+      achievementLines.push({
         emoji: def.emoji,
-        label: def.shortLabel.toUpperCase(),
-        headline: narrative.headline,
-        body: narrative.body ?? null,
-        extra: narrative.extra ?? null,
+        label: def.name.toUpperCase(),
+        valueLabel: t.notRunning,
       });
       continue;
     }
-    // Fallback for a state with no authored narrative yet — keep the compact form so
-    // nothing silently disappears from the briefing.
-    const valueLabel = formatAchievementValue(value.state, value.detail, t);
-    if (valueLabel === null) continue;
+
+    const variantLabel =
+      def.variants.find((variant) => variant.id === value.variantId)?.label ?? null;
+    const narrative = getMiniWorldChangeNarrative(def.id, variantLabel, input.language);
+
+    achievementLines.push({
+      emoji: def.emoji,
+      label: def.name.toUpperCase(),
+      valueLabel: narrative ?? variantLabel ?? t.running,
+    });
+  }
+
+  // World Changes. Same rule: a change the player never asked a Guide about contributes
+  // nothing, and a "quiet" state (Horestis asleep, the lake clean) is real knowledge but
+  // only worth printing when the user asks for everything.
+  const worldChangeLines: WorldChangeLine[] = [];
+  let worldChangesVerified = false;
+  for (const def of WORLD_CHANGE_DEFINITIONS) {
+    const value = overrides.worldChanges[def.id];
+    if (!value || !value.stateId) continue;
+
+    const state = def.states.find((option) => option.id === value.stateId);
+    if (!state) continue;
+
+    worldChangesVerified = true;
+    if (state.quiet && !overrides.includeAllChanges) continue;
+
+    const narrative = getWorldChangeNarrative(def.id, state.id, input.language);
     worldChangeLines.push({
       emoji: def.emoji,
       label: def.shortLabel.toUpperCase(),
-      headline: valueLabel,
-      body: null,
-      extra: null,
+      headline: narrative?.headline ?? state.label,
+      body: narrative?.body ?? null,
+      extra: narrative?.extra ?? null,
     });
   }
 

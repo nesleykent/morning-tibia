@@ -1,4 +1,3 @@
-import type { WorldChangeState } from "@/types/worldChange";
 import type { BriefingLanguage } from "./translations";
 
 export interface WorldChangeNarrative {
@@ -15,22 +14,28 @@ function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
   return map[language];
 }
 
-type Resolver = (detail: string, language: BriefingLanguage) => WorldChangeNarrative;
-type ChangeNarratives = Partial<Record<WorldChangeState, Resolver>>;
+/**
+ * Resolvers receive the state id itself, so the few states whose wording depends on which
+ * side is winning (Demon War) or how far a cycle has gone (Awash, Overhunting, Thornfire)
+ * can branch on it — replacing the old free-text "detail" field, which let any string reach
+ * the briefing.
+ */
+type Resolver = (stateId: string, language: BriefingLanguage) => WorldChangeNarrative;
+type ChangeNarratives = Record<string, Resolver>;
 
 function simple(map: Lang<WorldChangeNarrative>): Resolver {
-  return (_detail, language) => pick(map, language);
+  return (_stateId, language) => pick(map, language);
 }
 
 const NARRATIVES: Record<string, ChangeNarratives> = {
   horestis: {
-    inactive: simple({
+    "slumbering": simple({
       pt: { headline: "Horestis dorme em seu túmulo, perto de Ankrahmun." },
       en: { headline: "Horestis is slumbering in his tomb near Ankrahmun." },
       es: { headline: "Horestis duerme en su tumba, cerca de Ankrahmun." },
       pl: { headline: "Horestis śpi w swoim grobowcu w pobliżu Ankrahmun." },
     }),
-    stage1: simple({
+    "risen": simple({
       pt: {
         headline: "Horestis despertou e está disponível para ser enfrentado.",
         body: "O faraó saiu do túmulo perto de Ankrahmun e ataca quem se aproximar.",
@@ -48,7 +53,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         body: "Faraon opuścił swój grobowiec w pobliżu Ankrahmun i atakuje każdego, kto się zbliży.",
       },
     }),
-    stage2: simple({
+    "desecrated": simple({
       pt: {
         headline: "Todos os Ornate Canopic Jars foram quebrados — o corpo de Horestis foi profanado.",
         body: "Uma maldição paira sobre Ankrahmun enquanto o efeito persistir.",
@@ -66,7 +71,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         body: "Nad Ankrahmun wisi klątwa, dopóki efekt się utrzymuje.",
       },
     }),
-    stage3: simple({
+    "curse-ended": simple({
       pt: {
         headline: "A maldição de Horestis já passou e seus servos estão se recuperando lentamente.",
       },
@@ -77,7 +82,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "mage-tower": {
-    active: simple({
+    "portal-open": simple({
       pt: {
         headline: "O portal dimensional está aberto na torre em Zao.",
         body: "O Raging Mage pode ser enfrentado por quem cumprir os requisitos da World Change.",
@@ -99,7 +104,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         extra: { emoji: "👹", text: "Dostępny boss: Raging Mage" },
       },
     }),
-    inactive: simple({
+    "mage-slain": simple({
       pt: { headline: "O Raging Mage foi derrotado e o portal na torre em Zao está fechado." },
       en: { headline: "The Raging Mage has been slain and the portal in the Zao tower is closed." },
       es: { headline: "El Raging Mage fue derrotado y el portal en la torre de Zao está cerrado." },
@@ -108,7 +113,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "masters-voice": {
-    active: simple({
+    "passable": simple({
       pt: {
         headline: "A torre estranha com os servos em Edron está acessível.",
         body: "A World Change está na fase dos Golden Servants — ainda é preciso avançar pelas invasões para liberar o Mad Mage.",
@@ -130,7 +135,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         extra: { emoji: "👹", text: "Boss na końcu: Mad Mage" },
       },
     }),
-    inactive: simple({
+    "impassable": simple({
       pt: {
         headline: "A torre estranha com os servos em Edron está impassável.",
         body: "Um surto grave de slimes bloqueia o acesso por enquanto.",
@@ -151,7 +156,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "swamp-fever": {
-    inactive: simple({
+    "under-control": simple({
       pt: {
         headline: "A febre do pântano em Venore está sob controle — há remédio suficiente para todos.",
         extra: { emoji: "🤒", text: "Feverish Citizens disponíveis para entrega de Medicine Pouches" },
@@ -169,16 +174,10 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         extra: { emoji: "🤒", text: "Feverish Citizens dostępni do dostarczania Medicine Pouch" },
       },
     }),
-    active: simple({
-      pt: { headline: "Venore está sofrendo com a epidemia de febre do pântano." },
-      en: { headline: "Venore is suffering from the swamp fever epidemic." },
-      es: { headline: "Venore está sufriendo la epidemia de fiebre del pantano." },
-      pl: { headline: "Venore zmaga się z epidemią gorączki bagiennej." },
-    }),
   },
 
   thornfire: {
-    stage1: simple({
+    "guarded": simple({
       pt: {
         headline: "Os incendiários seguem presos nas celas sob Shadowthorn, ainda sob vigilância segura.",
       },
@@ -186,8 +185,8 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       es: { headline: "Los incendiarios siguen encerrados en sus celdas bajo Shadowthorn, todavía vigilados." },
       pl: { headline: "Podpalacze wciąż siedzą zamknięci w celach pod Shadowthorn, pod pilną strażą." },
     }),
-    stage2: (detail, language) => {
-      const recovering = detail.toLowerCase().includes("recover");
+    "breaking-out": (stateId, language) => {
+      const recovering = stateId === "being-fought";
       if (recovering) {
         return pick(
           {
@@ -233,7 +232,54 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         language,
       );
     },
-    stage3: simple({
+    "being-fought": (stateId, language) => {
+      const recovering = stateId === "being-fought";
+      if (recovering) {
+        return pick(
+          {
+            pt: {
+              headline: "Shadowthorn ainda está em chamas, mas os Tibianos vêm conseguindo conter o fogo.",
+              extra: { emoji: "🐺", text: "Thornfire Wolf disponível (pode virar Crystal Wolf para tentativa de tame)" },
+            },
+            en: {
+              headline: "Shadowthorn still burns, but Tibians have been successfully fighting the fire back.",
+              extra: { emoji: "🐺", text: "Thornfire Wolf available (can turn into a Crystal Wolf to attempt taming)" },
+            },
+            es: {
+              headline: "Shadowthorn sigue en llamas, pero los tibianos han logrado contener el fuego.",
+              extra: { emoji: "🐺", text: "Thornfire Wolf disponible (puede volverse Crystal Wolf para intentar domar)" },
+            },
+            pl: {
+              headline: "Shadowthorn wciąż płonie, ale Tibianie skutecznie walczą z ogniem.",
+              extra: { emoji: "🐺", text: "Dostępny Thornfire Wolf (może zmienić się w Crystal Wolf do oswojenia)" },
+            },
+          },
+          language,
+        );
+      }
+      return pick(
+        {
+          pt: {
+            headline: "A maioria dos guardas e elfos que continham os incendiários foi derrotada.",
+            body: "Shadowthorn corre risco de ser incendiada.",
+          },
+          en: {
+            headline: "Most of the guards and elves holding back the firestarters have been slain.",
+            body: "Shadowthorn is in danger of being set ablaze.",
+          },
+          es: {
+            headline: "La mayoría de los guardias y elfos que contenían a los incendiarios fueron derrotados.",
+            body: "Shadowthorn corre el riesgo de ser incendiada.",
+          },
+          pl: {
+            headline: "Większość strażników i elfów powstrzymujących podpalaczy została pokonana.",
+            body: "Shadowthorn jest zagrożone podpaleniem.",
+          },
+        },
+        language,
+      );
+    },
+    "burning": simple({
       pt: {
         headline: "Shadowthorn está em chamas!",
         extra: { emoji: "🐺", text: "Thornfire Wolf disponível (pode virar Crystal Wolf para tentativa de tame)" },
@@ -254,13 +300,13 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "twisted-waters": {
-    inactive: simple({
+    "clean": simple({
       pt: { headline: "O grande lago perto de Port Hope está limpo." },
       en: { headline: "The great lake near Port Hope is clean." },
       es: { headline: "El gran lago cerca de Port Hope está limpio." },
       pl: { headline: "Wielkie jezioro w pobliżu Port Hope jest czyste." },
     }),
-    stage1: simple({
+    "turning": simple({
       pt: {
         headline: "Corpos se acumulam no lago perto de Port Hope — a água está prestes a ficar contaminada.",
       },
@@ -268,7 +314,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       es: { headline: "Los cadáveres se acumulan en el lago cerca de Port Hope — el agua está por contaminarse." },
       pl: { headline: "W jeziorze koło Port Hope gromadzą się zwłoki — woda zaraz się zabrudzi." },
     }),
-    stage2: simple({
+    "dirty-swimmers": simple({
       pt: {
         headline: "O Lago Equívoco está contaminado.",
         extra: { emoji: "🎣", text: "Shimmer Swimmers disponíveis para pesca" },
@@ -286,7 +332,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         extra: { emoji: "🎣", text: "Dostępne Shimmer Swimmers do złowienia" },
       },
     }),
-    stage3: simple({
+    "dirty-exhausted": simple({
       pt: {
         headline: "O lago segue contaminado, mas os Shimmer Swimmers não são vistos há um bom tempo.",
       },
@@ -297,20 +343,20 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   awash: {
-    inactive: simple({
+    "flooded": simple({
       pt: { headline: "As minas sob Kazordoon estão inundadas — é preciso entregar carvão para religar as bombas." },
       en: { headline: "The tunnels beneath Kazordoon are flooded — coal is needed to get the pumps running again." },
       es: { headline: "Los túneles bajo Kazordoon están inundados — se necesita carbón para reactivar las bombas." },
       pl: { headline: "Tunele pod Kazordoon są zalane — potrzebny jest węgiel, by uruchomić pompy." },
     }),
-    stage1: simple({
+    "flooded-coal-delivered": simple({
       pt: { headline: "As minas sob Kazordoon seguem inundadas, mas carvão suficiente já foi entregue para manter as bombas funcionando." },
       en: { headline: "The tunnels beneath Kazordoon are still flooded, but enough coal has been delivered to keep the pumps running." },
       es: { headline: "Los túneles bajo Kazordoon siguen inundados, pero ya se entregó suficiente carbón para mantener las bombas funcionando." },
       pl: { headline: "Tunele pod Kazordoon są nadal zalane, ale dostarczono już wystarczająco węgla, by pompy działały." },
     }),
-    stage2: (detail, language) => {
-      const quotaMet = detail.toLowerCase().includes("met") && !detail.toLowerCase().includes("not");
+    "drained-quota-met": (stateId, language) => {
+      const quotaMet = stateId.toLowerCase().includes("met") && !stateId.toLowerCase().includes("not");
       return pick(
         {
           pt: {
@@ -341,7 +387,39 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         language,
       );
     },
-    stage3: simple({
+    "drained-quota-open": (stateId, language) => {
+      const quotaMet = stateId.toLowerCase().includes("met") && !stateId.toLowerCase().includes("not");
+      return pick(
+        {
+          pt: {
+            headline: "A água das minas foi drenada — o acesso aos Deepling Scouts está liberado.",
+            body: quotaMet
+              ? "Deeplings suficientes já foram mortos hoje, então a mina continuará aberta após o próximo Server Save."
+              : "Ainda é preciso matar mais Deeplings hoje para a mina continuar aberta após o próximo Server Save.",
+          },
+          en: {
+            headline: "The mine water has been drained — Deepling Scouts are accessible.",
+            body: quotaMet
+              ? "Enough Deeplings have already been killed today, so the mine will stay open after the next server save."
+              : "More Deeplings still need to be killed today for the mine to stay open after the next server save.",
+          },
+          es: {
+            headline: "El agua de la mina fue drenada — hay acceso a los Deepling Scouts.",
+            body: quotaMet
+              ? "Ya se mataron suficientes Deeplings hoy, así que la mina seguirá abierta tras el próximo Server Save."
+              : "Aún hace falta matar más Deeplings hoy para que la mina siga abierta tras el próximo Server Save.",
+          },
+          pl: {
+            headline: "Woda w kopalni została odpompowana — dostępni są Deepling Scouts.",
+            body: quotaMet
+              ? "Dziś zabito już wystarczająco Deeplingów, więc kopalnia pozostanie otwarta po następnym server save."
+              : "Trzeba dziś zabić jeszcze więcej Deeplingów, by kopalnia została otwarta po następnym server save.",
+          },
+        },
+        language,
+      );
+    },
+    "overrun": simple({
       pt: { headline: "Deeplings demais sobreviveram nos últimos cinco dias — eles vão inundar os túneis novamente e nada pode impedir." },
       en: { headline: "Too many Deeplings survived over the last five days — they will flood the tunnels again and nothing can stop them." },
       es: { headline: "Demasiados Deeplings sobrevivieron en los últimos cinco días — inundarán los túneles de nuevo y nada puede evitarlo." },
@@ -350,13 +428,13 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   steamship: {
-    inactive: simple({
+    "not-running": simple({
       pt: { headline: "O barco a vapor entre Thais e Kazordoon não está operando — é preciso entregar carvão para reativar o serviço." },
       en: { headline: "The steamship between Thais and Kazordoon isn't running — coal is needed to restart the service." },
       es: { headline: "El barco a vapor entre Thais y Kazordoon no está operando — se necesita carbón para reactivar el servicio." },
       pl: { headline: "Parowiec między Thais a Kazordoon nie kursuje — potrzebny jest węgiel, by wznowić usługę." },
     }),
-    stage1: simple({
+    "coal-delivered": simple({
       pt: { headline: "O barco a vapor ainda não está operando, mas carvão suficiente já foi entregue para retomar o serviço amanhã." },
       en: { headline: "The steamship still isn't running, but enough coal has been delivered to start the service again tomorrow." },
       es: { headline: "El barco a vapor todavía no opera, pero ya se entregó suficiente carbón para reanudar el servicio mañana." },
@@ -365,7 +443,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "horse-station": {
-    active: simple({
+    "escaped": simple({
       pt: {
         headline: "Os cavalos escaparam dos estábulos perto de Thais — o aluguel está suspenso enquanto não voltarem.",
         extra: { emoji: "🐎", text: "Wild Horses disponíveis nos arredores de Thais para tentativa de tame" },
@@ -383,7 +461,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         extra: { emoji: "🐎", text: "Dostępne Wild Horses w okolicach Thais do oswojenia" },
       },
     }),
-    inactive: simple({
+    "normal": simple({
       pt: { headline: "Os cavalos estão nos estábulos perto de Thais e podem ser alugados normalmente." },
       en: { headline: "The horses are back in their stables near Thais and can be rented normally." },
       es: { headline: "Los caballos están en los establos cerca de Thais y pueden alquilarse con normalidad." },
@@ -391,8 +469,8 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
   },
 
-  "overhunting-deer": {
-    stage1: simple({
+  overhunting: {
+    "stable": simple({
       pt: {
         headline: "White Deer estão disponíveis na região de Ab'Dendriel.",
         body: "A população está estável — evite caçar demais para não afugentá-los.",
@@ -410,8 +488,8 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         body: "Populacja jest stabilna — nie poluj na nie zbyt intensywnie, bo opuszczą region.",
       },
     }),
-    stage2: (detail, language) => {
-      const leaving = detail.toLowerCase().includes("leav");
+    "dwindling": (stateId, language) => {
+      const leaving = stateId.toLowerCase().includes("leav");
       return pick(
         {
           pt: {
@@ -442,7 +520,39 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         language,
       );
     },
-    stage3: simple({
+    "leaving": (stateId, language) => {
+      const leaving = stateId.toLowerCase().includes("leav");
+      return pick(
+        {
+          pt: {
+            headline: leaving
+              ? "White Deer demais já foram abatidos perto de Ab'Dendriel — a população vai deixar a região em breve."
+              : "A população de White Deer perto de Ab'Dendriel está diminuindo.",
+            body: leaving ? "Lobos famintos devem aparecer no próximo Server Save." : "Se continuar assim, lobos famintos podem aparecer.",
+          },
+          en: {
+            headline: leaving
+              ? "Too many White Deer have already been slain near Ab'Dendriel — the population will leave soon."
+              : "The White Deer population near Ab'Dendriel is dwindling.",
+            body: leaving ? "Starving wolves are expected at the next server save." : "If that continues, starving wolves may show up.",
+          },
+          es: {
+            headline: leaving
+              ? "Ya se han cazado demasiados White Deer cerca de Ab'Dendriel — la población se irá pronto."
+              : "La población de White Deer cerca de Ab'Dendriel está disminuyendo.",
+            body: leaving ? "Se esperan lobos hambrientos en el próximo Server Save." : "Si continúa así, podrían aparecer lobos hambrientos.",
+          },
+          pl: {
+            headline: leaving
+              ? "Zbyt wiele White Deer zostało już zabitych w pobliżu Ab'Dendriel — populacja wkrótce opuści region."
+              : "Populacja White Deer w pobliżu Ab'Dendriel maleje.",
+            body: leaving ? "Przy najbliższym server save spodziewane są głodne wilki." : "Jeśli tak dalej pójdzie, mogą pojawić się głodne wilki.",
+          },
+        },
+        language,
+      );
+    },
+    "wolves": simple({
       pt: { headline: "Lobos famintos rondam a região de Ab'Dendriel — enquanto estiverem lá, nenhum White Deer vai voltar." },
       en: { headline: "Starving wolves are roaming the Ab'Dendriel region — no White Deer will return while they're around." },
       es: { headline: "Lobos hambrientos rondan la región de Ab'Dendriel — mientras estén ahí, ningún White Deer volverá." },
@@ -451,14 +561,14 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "demon-war": {
-    inactive: simple({
+    "stalemate": simple({
       pt: { headline: "A guerra entre os demônios está em impasse — nenhuma facção domina a Demonwar Dungeon." },
       en: { headline: "The demon war is in a stalemate — no faction controls the Demonwar Dungeon." },
       es: { headline: "La guerra entre demonios está estancada — ninguna facción domina la Demonwar Dungeon." },
       pl: { headline: "Wojna demonów utknęła w martwym punkcie — żadna frakcja nie kontroluje Demonwar Dungeon." },
     }),
-    stage1: (detail, language) => {
-      const shaburak = detail.toLowerCase().includes("shaburak");
+    "shaburak-advantage": (stateId, language) => {
+      const shaburak = stateId.toLowerCase().includes("shaburak");
       const winner = shaburak ? "Shaburak" : "Askarak";
       const loser = shaburak ? "Askarak" : "Shaburak";
       return pick(
@@ -483,8 +593,59 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         language,
       );
     },
-    stage2: (detail, language) => {
-      const shaburak = detail.toLowerCase().includes("shaburak");
+    "askarak-advantage": (stateId, language) => {
+      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const winner = shaburak ? "Shaburak" : "Askarak";
+      const loser = shaburak ? "Askarak" : "Shaburak";
+      return pick(
+        {
+          pt: {
+            headline: `Os ${winner} estão vencendo a guerra contra os ${loser}.`,
+            body: "A vantagem atual determina qual facção ocupa a Demonwar Dungeon e quais criaturas ficam disponíveis.",
+          },
+          en: {
+            headline: `The ${winner} are winning the war against the ${loser}.`,
+            body: "The current advantage decides which faction holds the Demonwar Dungeon and which creatures are accessible.",
+          },
+          es: {
+            headline: `Los ${winner} están ganando la guerra contra los ${loser}.`,
+            body: "La ventaja actual determina qué facción ocupa la Demonwar Dungeon y qué criaturas están disponibles.",
+          },
+          pl: {
+            headline: `${winner} wygrywają wojnę z ${loser}.`,
+            body: "Obecna przewaga decyduje, która frakcja zajmuje Demonwar Dungeon i jakie stworzenia są dostępne.",
+          },
+        },
+        language,
+      );
+    },
+    "shaburak-dominant": (stateId, language) => {
+      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const winner = shaburak ? "Shaburak" : "Askarak";
+      return pick(
+        {
+          pt: {
+            headline: `Os ${winner} convocaram seus líderes e dominam o complexo.`,
+            body: "A Demonwar Dungeon está totalmente sob controle dessa facção por enquanto.",
+          },
+          en: {
+            headline: `The ${winner} have summoned their leaders and dominate the complex.`,
+            body: "The Demonwar Dungeon is fully under this faction's control for now.",
+          },
+          es: {
+            headline: `Los ${winner} invocaron a sus líderes y dominan el complejo.`,
+            body: "La Demonwar Dungeon está totalmente bajo el control de esta facción por ahora.",
+          },
+          pl: {
+            headline: `${winner} przywołali swoich przywódców i dominują w kompleksie.`,
+            body: "Demonwar Dungeon jest obecnie całkowicie pod kontrolą tej frakcji.",
+          },
+        },
+        language,
+      );
+    },
+    "askarak-dominant": (stateId, language) => {
+      const shaburak = stateId.toLowerCase().includes("shaburak");
       const winner = shaburak ? "Shaburak" : "Askarak";
       return pick(
         {
@@ -511,19 +672,19 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "sea-serpent": {
-    inactive: simple({
+    "asleep": simple({
       pt: { headline: "A Fire-Feathered Serpent está profundamente adormecida." },
       en: { headline: "The Fire-Feathered Serpent is fast asleep." },
       es: { headline: "La Fire-Feathered Serpent está profundamente dormida." },
       pl: { headline: "Fire-Feathered Serpent jest pogrążony w głębokim śnie." },
     }),
-    stage1: simple({
+    "dreaming": simple({
       pt: { headline: "A Serpent sonha e a terra sangra lava." },
       en: { headline: "The Serpent dreams and the earth bleeds lava." },
       es: { headline: "La Serpent sueña y la tierra sangra lava." },
       pl: { headline: "Serpent śni, a ziemia krwawi lawą." },
     }),
-    stage2: simple({
+    "awake": simple({
       pt: {
         headline: "A Serpent está desperta.",
         extra: { emoji: "⚔️", text: "Renegade Quara dominam as regiões submersas de Oramond" },
@@ -544,13 +705,13 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   deeplings: {
-    stage1: simple({
+    "hiding": simple({
       pt: { headline: "As criaturas do fundo do mar estão escondidas nas águas negras, longe da superfície." },
       en: { headline: "The creatures of the deep are hiding in the black waters below." },
       es: { headline: "Las criaturas de las profundidades se esconden en las aguas negras del fondo." },
       pl: { headline: "Stworzenia z głębin ukrywają się w czarnych wodach poniżej." },
     }),
-    stage2: simple({
+    "floodgates-open": simple({
       pt: {
         headline: "God-king Qjell parece satisfeito — as comportas para a Drowned Library foram abertas.",
       },
@@ -558,7 +719,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       es: { headline: "El God-king Qjell parece complacido — se abrieron las compuertas hacia la Drowned Library." },
       pl: { headline: "God-king Qjell wydaje się zadowolony — bramy do Drowned Library zostały otwarte." },
     }),
-    stage3: simple({
+    "arcanum-breached": simple({
       pt: {
         headline: "O Inner Arcanum das profundezas foi rompido.",
         extra: { emoji: "🐙", text: "Dark Guardians podem ser enfrentados" },
@@ -579,13 +740,13 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 
   "hive-born": {
-    stage1: simple({
+    "defended": simple({
       pt: { headline: "A Hive está bem defendida e preparada para a guerra." },
       en: { headline: "The hive is well defended and prepared for war." },
       es: { headline: "La Hive está bien defendida y preparada para la guerra." },
       pl: { headline: "Hive jest dobrze broniona i przygotowana do wojny." },
     }),
-    stage2: simple({
+    "breached": simple({
       pt: {
         headline: "As defesas da Hive foram rompidas — a estrutura a leste está aberta.",
       },
@@ -593,7 +754,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       es: { headline: "Las defensas de la Hive fueron rotas — la estructura al este está abierta." },
       pl: { headline: "Obrona Hive została przełamana — struktura na wschodzie jest otwarta." },
     }),
-    stage3: simple({
+    "fallen": simple({
       pt: {
         headline: "Todas as estruturas da Hive estão abertas.",
         body: "As defesas caíram e os exércitos estão em polvorosa — leste e oeste, bosses da Hive, Ladybugs e reward rooms acessíveis.",
@@ -614,14 +775,17 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   },
 };
 
-/** Returns null when there's no narrative content for this exact (changeId, state) pair —
- * callers should fall back to the compact status-line rendering in that case. */
+/**
+ * Returns the narrative for a World Change's confirmed state, or null when that pair has no
+ * authored text yet (the caller then falls back to the state's plain label). `stateId` is
+ * always a documented state — a World Change with no Guide reply recorded is simply not
+ * passed here at all.
+ */
 export function getWorldChangeNarrative(
   changeId: string,
-  state: WorldChangeState,
-  detail: string,
+  stateId: string,
   language: BriefingLanguage,
 ): WorldChangeNarrative | null {
-  const resolver = NARRATIVES[changeId]?.[state];
-  return resolver ? resolver(detail, language) : null;
+  const resolver = NARRATIVES[changeId]?.[stateId];
+  return resolver ? resolver(stateId, language) : null;
 }

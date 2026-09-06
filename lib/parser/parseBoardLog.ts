@@ -1,42 +1,34 @@
-import type { ParseResult, ParsedMerchantHint, ParsedSignal } from "@/types/parser";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
-import { BOARD_MESSAGES } from "./boardMessages";
+import type { ParsedBoardResult, ParsedMerchantHint, ParsedMiniWorldChangeSignal } from "@/types/parser";
+import { BOARD_MESSAGES, WORLD_BOARD_PREAMBLE } from "./boardMessages";
 import { normalizeForMatch } from "./textMatch";
-
-const LABEL_BY_ID = new Map(
-  MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.label]),
-);
-
-const WORLD_BOARD_PREAMBLE =
-  "You see the world board. This board will notify you of currently active mini world changes all over Tibia.";
 
 const NORMALIZED_PREAMBLE = normalizeForMatch(WORLD_BOARD_PREAMBLE);
 
 /**
- * Matches World Board text against the canonical board-message catalog.
+ * Reads World Board text out of a pasted server log.
  *
- * A paste containing at least one recognized World Board entry represents the
- * current board reading. The World Board lists active Mini World Changes only,
- * therefore every catalog entry absent from that reading is inactive.
+ * The board prints one line per currently active Mini World Change, so each recognised line
+ * proves that change is running — and, where the wording names one, which variant.
  *
- * This rule is independent of client timestamps. The official board preamble
- * also identifies a complete reading, including the valid case where no Mini
- * World Change is currently active.
+ * The delicate part is the negative. Because the board is an exhaustive listing, a
+ * *complete* reading also proves every unlisted change is not running. But that only holds
+ * if we actually know the paste is complete, and the only honest evidence for that is the
+ * board's own opening line. Matching a recognised message is emphatically NOT evidence: a
+ * player who copies one interesting line has said nothing whatsoever about the other 23
+ * changes, and treating that as a full reading would silently mark them all inactive.
+ *
+ * (This function used to do exactly that — `preamble || anyRecognisedEntry` — so a
+ * one-line paste wiped the board. The completeness rule now matches what the type
+ * documents.)
  */
-export function parseBoardLog(rawText: string): ParseResult {
+export function parseBoardLog(rawText: string): ParsedBoardResult {
   const normalizedInput = normalizeForMatch(rawText);
-  const signals: ParsedSignal[] = [];
+  const signals: ParsedMiniWorldChangeSignal[] = [];
   const merchantHints: ParsedMerchantHint[] = [];
-  let matchedCount = 0;
 
   for (const entry of BOARD_MESSAGES) {
     const normalizedEntry = normalizeForMatch(entry.text);
-
-    if (!normalizedEntry || !normalizedInput.includes(normalizedEntry)) {
-      continue;
-    }
-
-    matchedCount += 1;
+    if (!normalizedEntry || !normalizedInput.includes(normalizedEntry)) continue;
 
     if (entry.merchantHint) {
       merchantHints.push({
@@ -51,58 +43,15 @@ export function parseBoardLog(rawText: string): ParseResult {
 
     signals.push({
       changeId: entry.changeId,
-      label: LABEL_BY_ID.get(entry.changeId) ?? entry.changeId,
+      variantId: entry.variantId ?? null,
       matchedText: entry.text,
-      state: entry.state ?? null,
-      detail: entry.detail ?? "",
+      source: "board",
     });
   }
-
-  const hasRecognizedBoardEntry =
-    signals.length > 0 || merchantHints.length > 0;
-
-  const isCompleteSnapshot =
-    normalizedInput.includes(NORMALIZED_PREAMBLE) ||
-    hasRecognizedBoardEntry;
-
-  const inactiveMerchantIds: ParseResult["inactiveMerchantIds"] = [];
-
-  if (isCompleteSnapshot) {
-    const seenChangeIds = new Set(
-      signals.map((signal) => signal.changeId),
-    );
-
-    for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
-      if (seenChangeIds.has(def.id)) continue;
-
-      signals.push({
-        changeId: def.id,
-        label: def.label,
-        matchedText: "",
-        state: "inactive",
-        detail: "",
-      });
-    }
-
-    const yasirIsActive = merchantHints.some(
-      (hint) => hint.merchantId === "yasir",
-    );
-
-    if (!yasirIsActive) {
-      inactiveMerchantIds.push("yasir");
-    }
-  }
-
-  const totalLines = rawText
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .length;
 
   return {
     signals,
     merchantHints,
-    unmatchedLineCount: Math.max(0, totalLines - matchedCount),
-    isCompleteSnapshot,
-    inactiveMerchantIds,
+    isCompleteReading: normalizedInput.includes(NORMALIZED_PREAMBLE),
   };
 }

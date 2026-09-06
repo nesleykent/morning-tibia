@@ -56,22 +56,36 @@ describe("mergeOverridesWithDefaults — merchant activityState migration", () =
   });
 });
 
-describe("mergeOverridesWithDefaults — Bibby/Noodles closed-location migration", () => {
-  it("keeps a saved location that's still in the closed list", () => {
+describe("mergeOverridesWithDefaults — legacy Mini World Change saves", () => {
+  it("maps a renamed id onto its canonical one", () => {
+    // "bibbys-bloodbath" was the app's own name for what TibiaWiki calls Warpath.
     const saved = {
       miniWorldChanges: {
-        "bibbys-bloodbath": { id: "bibbys-bloodbath", state: "location", detail: "Carlin", updatedAt: "t" },
+        "bibbys-bloodbath": { id: "bibbys-bloodbath", state: "active", detail: "", updatedAt: "t" },
       },
     };
     const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
-    expect(merged.miniWorldChanges["bibbys-bloodbath"]).toMatchObject({ state: "location", detail: "Carlin" });
+    expect(merged.miniWorldChanges["warpath"]).toMatchObject({ status: "active", variantId: null });
   });
 
-  it("drops a saved location no longer in the closed list back to 'active, pending'", () => {
+  it("keeps a legacy location that matches a real variant label", () => {
     const saved = {
       miniWorldChanges: {
-        "bibbys-bloodbath": {
-          id: "bibbys-bloodbath",
+        "spirit-gate": { id: "spirit-gate", state: "location", detail: "Vengoth", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.miniWorldChanges["spirit-grounds"]).toMatchObject({
+      status: "active",
+      variantId: "vengoth",
+    });
+  });
+
+  it("drops a free-typed legacy location rather than forcing it onto a variant", () => {
+    const saved = {
+      miniWorldChanges: {
+        noodles: {
+          id: "noodles",
           state: "location",
           detail: "Some free-typed place from before the closed list existed",
           updatedAt: "t",
@@ -79,17 +93,76 @@ describe("mergeOverridesWithDefaults — Bibby/Noodles closed-location migration
       },
     };
     const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
-    expect(merged.miniWorldChanges["bibbys-bloodbath"]).toMatchObject({ state: "active", detail: "" });
+    expect(merged.miniWorldChanges["noodles-is-gone"]).toMatchObject({
+      status: "active",
+      variantId: null,
+    });
   });
 
-  it("leaves an unrelated Mini World Change (no closed list) untouched", () => {
+  it("turns the old 'unknown' state into 'unchecked', never 'inactive'", () => {
     const saved = {
       miniWorldChanges: {
-        "fury-gate": { id: "fury-gate", state: "active", detail: "", updatedAt: "t" },
+        "fury-gate": { id: "fury-gate", state: "unknown", detail: "", updatedAt: "t" },
       },
     };
     const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
-    expect(merged.miniWorldChanges["fury-gate"]).toMatchObject({ state: "active" });
+    expect(merged.miniWorldChanges["fury-gates"]?.status).toBe("unchecked");
+  });
+
+  it("preserves a confirmed-inactive save", () => {
+    const saved = {
+      miniWorldChanges: {
+        "fury-gate": { id: "fury-gate", state: "inactive", detail: "", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.miniWorldChanges["fury-gates"]?.status).toBe("inactive");
+  });
+
+  it("maps an old stage state to 'active' without inventing a variant", () => {
+    // stage1..3 meant different things per change and can't be mapped back reliably.
+    const saved = {
+      miniWorldChanges: {
+        "poacher-caves": { id: "poacher-caves", state: "stage2", detail: "", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.miniWorldChanges["poacher-caves"]).toMatchObject({
+      status: "active",
+      variantId: null,
+    });
+  });
+});
+
+describe("mergeOverridesWithDefaults — legacy World Change saves", () => {
+  it("resets an old stage-based save to 'not asked' instead of guessing a state", () => {
+    const saved = {
+      worldChanges: {
+        horestis: { id: "horestis", state: "stage2", detail: "", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.worldChanges["horestis"]?.stateId).toBeNull();
+  });
+
+  it("keeps a save already using a documented state id", () => {
+    const saved = {
+      worldChanges: {
+        horestis: { id: "horestis", stateId: "risen", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.worldChanges["horestis"]?.stateId).toBe("risen");
+  });
+
+  it("rejects a state id that isn't documented for that change", () => {
+    const saved = {
+      worldChanges: {
+        horestis: { id: "horestis", stateId: "burning", updatedAt: "t" },
+      },
+    };
+    const merged = mergeOverridesWithDefaults(saved, WORLD, DATE);
+    expect(merged.worldChanges["horestis"]?.stateId).toBeNull();
   });
 });
 

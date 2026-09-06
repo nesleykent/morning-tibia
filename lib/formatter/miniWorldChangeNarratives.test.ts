@@ -7,58 +7,77 @@ const LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
 
 describe("getMiniWorldChangeNarrative", () => {
   it("returns null for an unknown changeId", () => {
-    expect(getMiniWorldChangeNarrative("not-a-real-id", "active", "", "pt")).toBeNull();
+    expect(getMiniWorldChangeNarrative("not-a-real-id", null, "pt")).toBeNull();
   });
 
-  it("returns null for a state the change doesn't use", () => {
-    expect(getMiniWorldChangeNarrative("fury-gate", "stage1", "", "pt")).toBeNull();
+  it("names the location when a source supplied one", () => {
+    expect(getMiniWorldChangeNarrative("spirit-grounds", "Vengoth", "en")).toContain("Vengoth");
   });
 
-  it("interpolates the parsed location into a location-type narrative", () => {
-    const withLocation = getMiniWorldChangeNarrative("spirit-gate", "location", "Vengoth", "en");
-    expect(withLocation).toContain("Vengoth");
+  it("says plainly that the spot is unknown when no source named one", () => {
+    // Fury Gates is the clearest case: the board and the Towncryer both confirm a gate is
+    // open and neither ever says which of the ten cities it is.
+    const pending = getMiniWorldChangeNarrative("fury-gates", null, "en");
+    const known = getMiniWorldChangeNarrative("fury-gates", "Thais", "en");
+
+    expect(pending).toMatch(/isn't known yet/i);
+    expect(known).toContain("Thais");
+    expect(pending).not.toBe(known);
   });
 
-  it("distinguishes each stage of a genuine stage-type change (Poacher Caves)", () => {
-    const stage1 = getMiniWorldChangeNarrative("poacher-caves", "stage1", "", "en");
-    const stage3 = getMiniWorldChangeNarrative("poacher-caves", "stage3", "", "en");
-    expect(stage1).toMatch(/wild animals dominate/i);
-    expect(stage3).toMatch(/vengeful spirits/i);
-    expect(stage1).not.toBe(stage3);
+  it("distinguishes each Poacher Caves phase by what it means, not by a number", () => {
+    const game = getMiniWorldChangeNarrative("poacher-caves", "Wild animals dominate", "en");
+    const poachers = getMiniWorldChangeNarrative("poacher-caves", "Poachers dominate", "en");
+    const wolves = getMiniWorldChangeNarrative(
+      "poacher-caves",
+      "Vengeful ghost wolves dominate",
+      "en",
+    );
+
+    expect(game).toMatch(/wild animals dominate/i);
+    expect(poachers).toMatch(/poachers are ravaging/i);
+    expect(wolves).toMatch(/ghost wolves/i);
+    expect(new Set([game, poachers, wolves]).size).toBe(3);
   });
 
-  it("resolves a formerly-mismodeled toggle change to a single active narrative, not a stage", () => {
-    expect(getMiniWorldChangeNarrative("goroma-volcano", "active", "", "en")).toMatch(/erupting/i);
-    expect(getMiniWorldChangeNarrative("goroma-volcano", "stage1", "", "en")).toBeNull();
+  it("names the Jungle Camp boss that follows from the winning faction", () => {
+    expect(getMiniWorldChangeNarrative("jungle-camp", "Hunters dominate", "en")).toMatch(/Arthom/);
+    expect(getMiniWorldChangeNarrative("jungle-camp", "Dworcs dominate", "en")).toMatch(/Oodok/);
+    // With no faction known, it must not pick one.
+    const unknown = getMiniWorldChangeNarrative("jungle-camp", null, "en");
+    expect(unknown).not.toMatch(/Arthom|Oodok/);
   });
 
-  it("gives Bibby's Bloodbath and Noodles a distinct 'active, location pending' narrative", () => {
-    for (const changeId of ["bibbys-bloodbath", "noodles"]) {
+  it("never claims to know where Noodles is", () => {
+    // The World Board says only that he left the castle; he then wanders the peninsula.
+    for (const language of LANGUAGES) {
+      const text = getMiniWorldChangeNarrative("noodles-is-gone", null, language);
+      expect(text, language).not.toBeNull();
+      expect(text).not.toMatch(/Greenshore|Cyclops|Snake Tower/);
+    }
+  });
+
+  it("has fully localized text for every Mini World Change", () => {
+    for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
       for (const language of LANGUAGES) {
-        const pending = getMiniWorldChangeNarrative(changeId, "active", "", language);
-        const known = getMiniWorldChangeNarrative(changeId, "location", "Carlin", language);
-        expect(pending, `${changeId}/${language} active narrative`).not.toBeNull();
-        expect(known, `${changeId}/${language} location narrative`).not.toBeNull();
-        expect(pending).not.toBe(known);
+        expect(
+          getMiniWorldChangeNarrative(def.id, null, language),
+          `${def.id}/${language}`,
+        ).not.toBeNull();
       }
     }
   });
 
-  it("provides content in all 4 languages for every defined Mini World Change's known states", () => {
-    const STATES_BY_CONTROL_TYPE = {
-      toggle: ["active"],
-      stage: ["stage1", "stage2", "stage3"],
-      location: ["location"],
-      creature: ["creature"],
-      boss: ["boss"],
-    } as const;
-
+  it("has localized text for every variant of every change", () => {
     for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
-      const states = STATES_BY_CONTROL_TYPE[def.controlType];
-      const hasAnyNarrative = states.some((state) =>
-        LANGUAGES.every((language) => getMiniWorldChangeNarrative(def.id, state, "somewhere", language) !== null),
-      );
-      expect(hasAnyNarrative, `${def.id} should have at least one fully-localized narrative state`).toBe(true);
+      for (const variant of def.variants) {
+        for (const language of LANGUAGES) {
+          expect(
+            getMiniWorldChangeNarrative(def.id, variant.label, language),
+            `${def.id}/${variant.id}/${language}`,
+          ).not.toBeNull();
+        }
+      }
     }
   });
 });

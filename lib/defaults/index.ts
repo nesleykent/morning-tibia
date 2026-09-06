@@ -2,9 +2,10 @@ import type { BriefingOverrides } from "@/types/briefing";
 import type { MarketPrice } from "@/types/market";
 import type { Merchant, MerchantActivityState } from "@/types/merchant";
 import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
+import type { WorldChangeValue } from "@/types/worldChange";
 import { toDateKey } from "@/lib/utils/date";
-import { createDefaultMiniWorldChangeValues, MINI_WORLD_CHANGE_DEFINITIONS } from "./miniWorldChanges";
-import { createDefaultWorldChangeValues } from "./worldChanges";
+import { createDefaultMiniWorldChangeValues, MINI_WORLD_CHANGES_BY_ID } from "./miniWorldChanges";
+import { createDefaultWorldChangeValues, WORLD_CHANGES_BY_ID } from "./worldChanges";
 import { createDefaultMerchants } from "./merchants";
 import { createDefaultMarketPrices } from "./marketPrices";
 
@@ -37,27 +38,117 @@ function migrateMerchants(
   return merged;
 }
 
-/** Bibby's Bloodbath and Noodles gained closed location lists — an older save's free-typed
- * detail might not be one of the now-valid spots. Drop it back to "active, pending" rather
- * than keep displaying a place the board could never actually report. */
+/**
+ * Saves written before the World/Mini World Change model was corrected used a different
+ * shape entirely: `{ state, detail }` where `state` was one of
+ * unknown/active/inactive/stage1..3/location, and several change ids have since been
+ * renamed to their canonical TibiaWiki names.
+ *
+ * Rather than guess, this migration keeps only what the old save could actually justify:
+ *
+ * - `unknown`   → unchecked (no evidence then, none now).
+ * - `inactive`  → inactive.
+ * - everything else was some flavour of "active", so → active. The old `detail` string is
+ *   matched against the change's variant labels, and kept ONLY on an exact match; a
+ *   free-typed spot from the old model (or a stage number, which no longer means anything
+ *   for a Mini World Change) is dropped back to "running, variant unknown" instead of being
+ *   forced onto a variant it may not correspond to.
+ *
+ * The old ids that changed name are mapped so a save from yesterday still loads.
+ */
+const RENAMED_MINI_WORLD_CHANGE_IDS: Record<string, string> = {
+  "fury-gate": "fury-gates",
+  "bibbys-bloodbath": "warpath",
+  "devovorga-essence": "devovorgas-essence",
+  "big-iceberg": "chakoya-iceberg",
+  "spirit-gate": "spirit-grounds",
+  "goroma-volcano": "fire-from-the-earth",
+  "darama-nomads": "nomads",
+  "bored-witch": "bored",
+  noodles: "noodles-is-gone",
+  "thais-kingsday": "kingsday",
+  "spiders-nest": "spider-nest",
+};
+
 function migrateMiniWorldChanges(
   defaults: Record<string, MiniWorldChangeValue>,
   saved: Record<string, unknown> | undefined,
 ): Record<string, MiniWorldChangeValue> {
   if (!saved) return defaults;
   const merged: Record<string, MiniWorldChangeValue> = { ...defaults };
-  const defByCid = new Map(MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def]));
-  for (const [id, value] of Object.entries(saved)) {
-    if (!value || typeof value !== "object") continue;
+
+  for (const [savedId, raw] of Object.entries(saved)) {
+    if (!raw || typeof raw !== "object") continue;
+    const id = RENAMED_MINI_WORLD_CHANGE_IDS[savedId] ?? savedId;
     const defaultValue = defaults[id];
-    const def = defByCid.get(id);
+    const def = MINI_WORLD_CHANGES_BY_ID.get(id);
     if (!defaultValue || !def) continue;
-    const mwc = { ...defaultValue, ...value, id } as MiniWorldChangeValue;
-    if (def.suggestions && mwc.state === "location" && !def.suggestions.includes(mwc.detail)) {
-      mwc.state = "active";
-      mwc.detail = "";
+
+    const value = raw as Partial<MiniWorldChangeValue> & { state?: string; detail?: string };
+
+    let status: MiniWorldChangeValue["status"];
+    if (value.status === "unchecked" || value.status === "inactive" || value.status === "active") {
+      status = value.status;
+    } else if (value.state === "inactive") {
+      status = "inactive";
+    } else if (value.state && value.state !== "unknown") {
+      status = "active";
+    } else {
+      status = "unchecked";
     }
-    merged[id] = mwc;
+
+    let variantId: string | null = null;
+    if (status === "active") {
+      const candidate =
+        typeof value.variantId === "string" ? value.variantId : undefined;
+      const legacyDetail = typeof value.detail === "string" ? value.detail.trim() : "";
+      variantId =
+        def.variants.find((variant) => variant.id === candidate)?.id ??
+        def.variants.find((variant) => variant.label === legacyDetail)?.id ??
+        null;
+    }
+
+    merged[id] = {
+      id,
+      status,
+      variantId,
+      updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : defaultValue.updatedAt,
+    };
+  }
+  return merged;
+}
+
+/**
+ * World Change saves moved from `{ state, detail }` to a single documented `stateId`. The
+ * old states were generic (stage1..3) and can't be mapped back to a specific documented
+ * state without guessing which one was meant, so an old save's World Changes are reset to
+ * "not asked" — the honest outcome, and one paste of a Guide log restores them.
+ */
+function migrateWorldChanges(
+  defaults: Record<string, WorldChangeValue>,
+  saved: Record<string, unknown> | undefined,
+): Record<string, WorldChangeValue> {
+  if (!saved) return defaults;
+  const merged: Record<string, WorldChangeValue> = { ...defaults };
+
+  for (const [id, raw] of Object.entries(saved)) {
+    if (!raw || typeof raw !== "object") continue;
+    const def = WORLD_CHANGES_BY_ID.get(id);
+    const defaultValue = defaults[id];
+    if (!def || !defaultValue) continue;
+
+    const value = raw as Partial<WorldChangeValue>;
+    const stateId =
+      typeof value.stateId === "string" &&
+      def.states.some((state) => state.id === value.stateId)
+        ? value.stateId
+        : null;
+
+    merged[id] = {
+      id,
+      stateId,
+      updatedAt: stateId ? (value.updatedAt ?? null) : null,
+    };
   }
   return merged;
 }
@@ -149,7 +240,10 @@ export function mergeOverridesWithDefaults(
       defaults.miniWorldChanges,
       partial.miniWorldChanges as Record<string, unknown>,
     ),
-    worldChanges: { ...defaults.worldChanges, ...(partial.worldChanges ?? {}) },
+    worldChanges: migrateWorldChanges(
+      defaults.worldChanges,
+      partial.worldChanges as Record<string, unknown>,
+    ),
     merchants: migrateMerchants(defaults.merchants, partial.merchants as Record<string, unknown>),
     marketPrices: migrateMarketPrices(defaults.marketPrices, partial.marketPrices as Record<string, unknown>),
   };

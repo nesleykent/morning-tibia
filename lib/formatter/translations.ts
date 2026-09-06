@@ -21,7 +21,10 @@ export interface BriefingTranslation {
   merchantRashid: string;
   warzoneToday: string;
   tibiaDrome: string;
-  stageOrdinal: (n: 1 | 2 | 3) => string;
+  /** A Mini World Change confirmed running, when no narrative sentence is authored. */
+  running: string;
+  /** A Mini World Change a complete World Board reading proved is not running. */
+  notRunning: string;
   /** Nothing has been checked this session — every entry is still "unknown". */
   miniWorldChangesNotVerified: string;
   /** At least one entry was checked (via a World Board paste), and none came back active. */
@@ -48,7 +51,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     merchantRashid: "RASHID",
     warzoneToday: "WARZONES",
     tibiaDrome: "TIBIA DROME",
-    stageOrdinal: (n) => `${n}º Estágio`,
+    running: "Ativa.",
+    notRunning: "Não está acontecendo.",
     miniWorldChangesNotVerified: "Nenhuma Mini World Change foi verificada ainda hoje — cole o texto do World Board para conferir.",
     miniWorldChangesNoneActive: "World Board conferido — nenhuma Mini World Change ativa no momento.",
     worldChangesNotVerified: "Nenhuma World Change foi consultada ainda hoje — pergunte a um Guide NPC para conferir.",
@@ -70,7 +74,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     merchantRashid: "RASHID",
     warzoneToday: "WARZONES",
     tibiaDrome: "TIBIA DROME",
-    stageOrdinal: (n) => `Stage ${n}`,
+    running: "Running.",
+    notRunning: "Not running.",
     miniWorldChangesNotVerified: "No Mini World Changes have been checked yet today — paste the World Board text to check them.",
     miniWorldChangesNoneActive: "World Board checked — no Mini World Changes are active right now.",
     worldChangesNotVerified: "No World Changes have been checked yet today — ask a Guide NPC to check them.",
@@ -92,7 +97,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     merchantRashid: "RASHID",
     warzoneToday: "WARZONES",
     tibiaDrome: "TIBIA DROME",
-    stageOrdinal: (n) => `Etapa ${n}`,
+    running: "Activa.",
+    notRunning: "No está ocurriendo.",
     miniWorldChangesNotVerified: "Aún no se verificó ninguna Mini World Change hoy — pega el texto del World Board para comprobarlas.",
     miniWorldChangesNoneActive: "World Board revisado — ninguna Mini World Change está activa en este momento.",
     worldChangesNotVerified: "Aún no se consultó ninguna World Change hoy — pregúntale a un Guide NPC para comprobarlas.",
@@ -114,7 +120,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     merchantRashid: "RASHID",
     warzoneToday: "WARZONES",
     tibiaDrome: "TIBIA DROME",
-    stageOrdinal: (n) => `Etap ${n}`,
+    running: "Aktywna.",
+    notRunning: "Nieaktywna.",
     miniWorldChangesNotVerified: "Żadna Mini World Change nie została dziś jeszcze sprawdzona — wklej tekst z World Board, aby to zrobić.",
     miniWorldChangesNoneActive: "Sprawdzono World Board — obecnie żadna Mini World Change nie jest aktywna.",
     worldChangesNotVerified: "Żadna World Change nie została dziś jeszcze sprawdzona — zapytaj Guide NPC, aby to zrobić.",

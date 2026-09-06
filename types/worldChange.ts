@@ -1,35 +1,57 @@
-import type { MiniWorldChangeControlType, MiniWorldChangeState } from "./miniWorldChange";
-
 /**
- * A World Change: a larger, longer-running Tibia game mechanic checked in-game by asking
- * a Guide NPC one of a fixed set of keywords (Horestis, Mage Tower, Awash, Hive, …) —
- * distinct from the smaller "Mini World Changes" announced on the World Board
- * (types/miniWorldChange.ts). Do not merge the two lists; they're different game
- * mechanics with different in-game sources (see TibiaWiki's World_Changes article).
+ * A World Change: one of Tibia's longer-running, player-influenceable world states
+ * (TibiaWiki, "World Changes"). Unlike Mini World Changes these are shaped by what players
+ * do — draining the Kazordoon mines, killing deeplings, putting out the Shadowthorn fires
+ * — and they are checked by greeting any Guide NPC and saying a keyword.
  *
- * "guide-npc" items have a documented, exact Guide NPC reply for every state (see
- * lib/parser/guideMessages.ts) and are populated only by pasting a chat log in the import
- * panel — read-only in the grid. "manual" items have no such documented text (TibiaWiki
- * doesn't quote a verbatim Guide reply for them) and stay directly editable.
+ * The official keyword list (quoted by Guide NPCs themselves, and by TibiaWiki's World
+ * Changes article) is exactly 14 keywords: Horestis, Mage Tower, Master's Voice, Swamp
+ * Fever, Thornfire, Twisted Waters, Awash, Steamship, Horses, Overhunting, Demon War,
+ * Sea Serpent, Deepling, Hive. Those 14 are what this catalog tracks.
+ *
+ * Modelling note: a World Change is ALWAYS in one of its documented states — there is no
+ * "inactive" in the Mini-World-Change sense. Horestis is never "off"; he is either
+ * slumbering or risen or desecrated. So a value here is simply "which documented state did
+ * the Guide report", plus null for "we haven't asked". Reusing the Mini World Change's
+ * active/inactive/stage union here (as this file used to) invented a distinction the game
+ * does not have.
  */
-export type WorldChangeControlType = MiniWorldChangeControlType;
-export type WorldChangeState = MiniWorldChangeState;
-export type WorldChangeSource = "manual" | "guide-npc";
+
+export interface WorldChangeStateOption {
+  id: string;
+  /** Short, player-facing name for this state, in canonical English. */
+  label: string;
+  /**
+   * True when this state is the "nothing interesting is happening" end of the cycle, so the
+   * briefing can skip it unless the user asks for everything. Not the same as "inactive" —
+   * it's still a real, confirmed state of the world.
+   */
+  quiet?: boolean;
+}
 
 export interface WorldChangeDefinition {
   id: string;
-  label: string;
+  /** Canonical TibiaWiki World Change name. */
+  name: string;
   shortLabel: string;
   emoji: string;
-  controlType: WorldChangeControlType;
-  source: WorldChangeSource;
+  /** The exact keyword to say to a Guide NPC, verbatim from the official list. */
+  guideKeyword: string;
+  /** Where it happens, per TibiaWiki's own Location field. */
+  location: string;
+  /** Every state with documented Guide reply text, in cycle order. */
+  states: readonly WorldChangeStateOption[];
   description: string;
-  suggestions?: string[];
+  /**
+   * Set when a source other than a Guide NPC also reports this change in game
+   * (e.g. Pyro Peter in Venore for Thornfire). Informational only.
+   */
+  alternativeSource?: string;
 }
 
 export interface WorldChangeValue {
   id: string;
-  state: WorldChangeState;
-  detail: string;
+  /** A `WorldChangeStateOption.id`, or null when no Guide has been asked this session. */
+  stateId: string | null;
   updatedAt: string | null;
 }

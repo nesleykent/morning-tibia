@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { parseGameText } from "./parseGameText";
+import { WORLD_BOARD_PREAMBLE } from "./boardMessages";
 
-describe("2026-08-19 live Tibia regression", () => {
-  it("parses the six observed Mini World Changes and the two previously broken Guide replies", () => {
-    const log = `
+/**
+ * A real World Board reading plus Guide replies, copied from a live world on 2026-08-19.
+ * Kept as a regression because it exercises every awkward shape at once: client timestamps,
+ * a board line whose variant is named, several whose variants are not, and Guide replies for
+ * three different World Changes.
+ */
+const OBSERVED_LOG = `
 19:21:22 A fiery fury gate has opened near one of the major cities somewhere in Tibia.
 19:21:22 Poachers have slaughtered nearly all wild animals north of the Green Claw Swamp. But vengeful spirits show up there now!
 19:21:22 A sandstorm travels through Darama, leading to isles full of deadly creatures inside a nightmare. Avoid the river near Drefia!
@@ -16,44 +21,51 @@ describe("2026-08-19 live Tibia regression", () => {
 19:21:01 Guide Luke: The strange tower with the servants on Edron is covered in slime.
 `;
 
-    const result = parseGameText(log);
-    const mini = new Map(
-      result.miniWorldChangeSignals.map((signal) => [signal.changeId, signal]),
+describe("2026-08-19 live Tibia regression", () => {
+  it("reads all six board changes and all three Guide replies", () => {
+    const result = parseGameText(OBSERVED_LOG);
+    const mini = new Map(result.miniWorldChangeSignals.map((s) => [s.changeId, s]));
+    const world = new Map(result.worldChangeSignals.map((s) => [s.changeId, s]));
+
+    // Variants the board's own wording supplies.
+    expect(mini.get("poacher-caves")?.variantId).toBe("ghost-wolves");
+    expect(mini.get("nightmare-isles")?.variantId).toBe("the-river-near-drefia");
+    expect(mini.get("spirit-grounds")?.variantId).toBe("ghostlands");
+
+    // Variants it does not: the gate's city and the nomad camp stay open questions.
+    expect(mini.get("fury-gates")).toBeDefined();
+    expect(mini.get("fury-gates")?.variantId).toBeNull();
+    expect(mini.get("nomads")?.variantId).toBeNull();
+
+    // Fire from the Earth has no variants at all — running is the whole story.
+    expect(mini.get("fire-from-the-earth")?.variantId).toBeNull();
+
+    expect(world.get("demon-war")?.stateId).toBe("askarak-advantage");
+    expect(world.get("horse-station")?.stateId).toBe("normal");
+    expect(world.get("masters-voice")?.stateId).toBe("passable");
+  });
+
+  it("does not conclude anything is inactive: this paste has no board preamble", () => {
+    const result = parseGameText(OBSERVED_LOG);
+
+    // Six recognised board lines used to be treated as the whole board, which marked the
+    // other seventeen Mini World Changes — and Yasir — as confirmed not running. The log
+    // was copied from the middle of a server log, so it never proved that.
+    expect(result.isCompleteBoardReading).toBe(false);
+    expect(result.inactiveMiniWorldChangeIds).toEqual([]);
+    expect(result.inactiveMerchantIds).toEqual([]);
+  });
+
+  it("does conclude it once the board's own opening line is included", () => {
+    const result = parseGameText(
+      `19:21:20 You see the world board. ${WORLD_BOARD_PREAMBLE}\n${OBSERVED_LOG}`,
     );
-    const world = new Map(
-      result.worldChangeSignals.map((signal) => [signal.changeId, signal]),
-    );
 
-    expect(mini.get("fury-gate")?.state).toBe("active");
-    expect(mini.get("poacher-caves")?.state).toBe("stage3");
-
-    expect(mini.get("nightmare-isles")?.state).toBe("location");
-    expect(mini.get("nightmare-isles")?.detail).toBe("River near Drefia");
-
-    expect(mini.get("darama-nomads")?.state).toBe("active");
-    expect(mini.get("goroma-volcano")?.state).toBe("active");
-
-    expect(mini.get("spirit-gate")?.state).toBe("location");
-    expect(mini.get("spirit-gate")?.detail).toBe("Ghostlands");
-
-    expect(world.get("demon-war")?.state).toBe("stage1");
-    expect(world.get("demon-war")?.detail).toBe("Askarak advantage");
-
-    expect(world.get("masters-voice")?.state).toBe("active");
-    expect(world.get("horse-station")?.state).toBe("inactive");
-
-    // Recognized World Board messages are the current board reading,
-    // independently of whether client timestamps are enabled.
-    expect(result.isCompleteSnapshot).toBe(true);
-
-    // Every absent MWC becomes inactive instead of remaining Unknown.
-    expect(mini.get("hive-outpost")?.state).toBe("inactive");
-    expect(mini.get("big-iceberg")?.state).toBe("inactive");
-    expect(mini.get("bibbys-bloodbath")?.state).toBe("inactive");
-    expect(mini.get("noodles")?.state).toBe("inactive");
-    expect(mini.get("thais-kingsday")?.state).toBe("inactive");
-
-    // Oriental Trader is absent from the complete board snapshot.
+    expect(result.isCompleteBoardReading).toBe(true);
+    expect(result.inactiveMiniWorldChangeIds).toContain("hive-outpost");
+    expect(result.inactiveMiniWorldChangeIds).toContain("warpath");
+    expect(result.inactiveMiniWorldChangeIds).toContain("noodles-is-gone");
+    expect(result.inactiveMiniWorldChangeIds).not.toContain("fury-gates");
     expect(result.inactiveMerchantIds).toEqual(["yasir"]);
   });
 });

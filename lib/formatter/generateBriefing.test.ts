@@ -10,16 +10,15 @@ function makeInput(
   const referenceDate = new Date(2026, 7, 17); // 17 Aug 2026
   const overrides = { ...createDefaultOverrides("Ustebra", referenceDate), ...overridesPatch };
 
-  overrides.miniWorldChanges["fury-gate"] = {
-    id: "fury-gate",
-    state: "active",
-    detail: "",
+  overrides.miniWorldChanges["fury-gates"] = {
+    id: "fury-gates",
+    status: "active",
+    variantId: null,
     updatedAt: null,
   };
   overrides.worldChanges["hive-born"] = {
     id: "hive-born",
-    state: "stage3",
-    detail: "",
+    stateId: "fallen",
     updatedAt: null,
   };
   overrides.merchants.yasir = {
@@ -68,9 +67,9 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("🗺️ REGIÃO BOOSTADA\nVenore");
     expect(message).toContain("💰 YASIR\nCarlin");
     expect(message).toContain("👳🏼‍♂️ RASHID\nSvargrond");
-    expect(message).toContain("🔥 FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
+    expect(message).toContain("🔥 FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
     expect(message).toContain("*🌍 WORLD CHANGES*");
-    expect(message).toContain("👾 HIVE BORN");
+    expect(message).toContain("🐝 HIVE BORN");
     expect(message).toContain("Todas as estruturas da Hive estão abertas.");
     expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
   });
@@ -79,14 +78,12 @@ describe("generateBriefingMessage", () => {
     const input = makeInput();
     input.overrides.worldChanges["demon-war"] = {
       id: "demon-war",
-      state: "stage2",
-      detail: "Shaburak dominant",
+      stateId: "shaburak-dominant",
       updatedAt: null,
     };
     input.overrides.worldChanges["sea-serpent"] = {
       id: "sea-serpent",
-      state: "stage2",
-      detail: "",
+      stateId: "awake",
       updatedAt: null,
     };
     const message = generateBriefingMessage(input);
@@ -99,31 +96,51 @@ describe("generateBriefingMessage", () => {
     const input = makeInput();
     input.overrides.worldChanges["hive-born"] = {
       id: "hive-born",
-      state: "unknown",
-      detail: "",
+      stateId: null,
       updatedAt: null,
     };
     const message = generateBriefingMessage(input);
     expect(message).not.toContain("HIVE BORN");
   });
 
-  it("omits unknown mini world changes always, and inactive ones unless includeAll is set", () => {
+  it("never mentions an unchecked change, and hides confirmed-inactive ones by default", () => {
     const input = makeInput();
-    input.overrides.miniWorldChanges["spiders-nest"] = {
-      id: "spiders-nest",
-      state: "inactive",
-      detail: "",
+    input.overrides.miniWorldChanges["spider-nest"] = {
+      id: "spider-nest",
+      status: "inactive",
+      variantId: null,
       updatedAt: null,
     };
 
     const message = generateBriefingMessage(input);
-    expect(message).not.toContain("GRIMVALE"); // still 'unknown', never shown
-    expect(message).not.toContain("SPIDER'S NEST"); // 'inactive', hidden by default
+    // Grimvale was never checked — saying anything about it would be a claim we can't back.
+    expect(message).not.toContain("GRIMVALE");
+    expect(message).not.toContain("SPIDER NEST");
 
     input.overrides.includeAllChanges = true;
     const fullMessage = generateBriefingMessage(input);
-    expect(fullMessage).not.toContain("GRIMVALE"); // 'unknown' stays hidden even with includeAll
-    expect(fullMessage).toContain("🕷️ SPIDER'S NEST: ❌");
+    // Even with "include everything", an unchecked change stays out: there is nothing to say.
+    expect(fullMessage).not.toContain("GRIMVALE");
+    expect(fullMessage).toContain("SPIDER NEST");
+  });
+
+  it("says where a change is when a source named the spot, and says so plainly when not", () => {
+    const input = makeInput("pt" === "pt" ? {} : {}, "en");
+    input.overrides.miniWorldChanges["fury-gates"] = {
+      id: "fury-gates",
+      status: "active",
+      variantId: null,
+      updatedAt: null,
+    };
+    expect(generateBriefingMessage(input)).toMatch(/which one isn't known yet/i);
+
+    input.overrides.miniWorldChanges["fury-gates"] = {
+      id: "fury-gates",
+      status: "active",
+      variantId: "thais",
+      updatedAt: null,
+    };
+    expect(generateBriefingMessage(input)).toMatch(/fury gate has opened near Thais/i);
   });
 
   it("shows a graceful empty state when there are no upcoming events", () => {
@@ -201,16 +218,15 @@ describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
     const input = makeInput();
     // makeInput() always seeds fury-gate/hive-born as a baseline — undo that here so these
     // tests can exercise the true "nothing checked yet" starting point.
-    input.overrides.miniWorldChanges["fury-gate"] = {
-      id: "fury-gate",
-      state: "unknown",
-      detail: "",
+    input.overrides.miniWorldChanges["fury-gates"] = {
+      id: "fury-gates",
+      status: "unchecked",
+      variantId: null,
       updatedAt: null,
     };
     input.overrides.worldChanges["hive-born"] = {
       id: "hive-born",
-      state: "unknown",
-      detail: "",
+      stateId: null,
       updatedAt: null,
     };
     return input;
@@ -224,16 +240,17 @@ describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
 
   it("shows a distinct 'checked, none active' message once at least one entry was verified inactive", () => {
     const input = cleanInput();
-    input.overrides.miniWorldChanges["fury-gate"] = {
-      id: "fury-gate",
-      state: "inactive",
-      detail: "",
+    input.overrides.miniWorldChanges["fury-gates"] = {
+      id: "fury-gates",
+      status: "inactive",
+      variantId: null,
       updatedAt: null,
     };
+    // A "quiet" state is still real, confirmed knowledge — the hive being well defended is
+    // an answer — but it isn't news, so the section reports as checked-and-quiet.
     input.overrides.worldChanges["hive-born"] = {
       id: "hive-born",
-      state: "inactive",
-      detail: "",
+      stateId: "defended",
       updatedAt: null,
     };
     const message = generateBriefingMessage(input);
@@ -276,7 +293,7 @@ describe("generatePlainTextBriefing", () => {
       expect(plain).not.toContain(decorative);
     }
     expect(plain).toContain("CRIATURA BOOSTADA\nGore Horn");
-    expect(plain).toContain("FURY GATE: Um portão de fúria se abriu perto de uma das grandes cidades.");
+    expect(plain).toContain("FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
     expect(plain).toContain("HIVE BORN");
     expect(plain).toContain("Todas as estruturas da Hive estão abertas.");
   });

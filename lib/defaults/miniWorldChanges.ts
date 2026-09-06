@@ -1,326 +1,412 @@
-import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
+import type {
+  MiniWorldChangeDefinition,
+  MiniWorldChangeValue,
+} from "@/types/miniWorldChange";
 
 /**
- * Bibby's Bloodbath ship event only ever anchors at one of these 3 spots (TibiaWiki,
- * "Bibby Bloodbath"). A closed list, not the general-purpose COMMON_LOCATIONS catalog —
- * anywhere else is not a valid reading of the board text.
+ * The 24 Mini World Changes, verified entry by entry against TibiaWiki's "Mini World
+ * Changes" list, "The World Board" message catalog, "Towncryer" shout catalog, and each
+ * change's own article.
+ *
+ * 23 are modelled as cards here. The 24th, **Oriental Trader**, is Yasir's travelling
+ * shop — it feeds the merchant card instead of getting a duplicate card of its own (see
+ * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), while following
+ * exactly the same evidence rules as everything else.
+ *
+ * Names are TibiaWiki's canonical MWC names. Two were previously wrong and are corrected
+ * here: what the app called "Bibby's Bloodbath" is the **Warpath** MWC (Bibby Bloodbath is
+ * the boss it spawns), and "Spirit Gate" is the **Spirit Grounds** MWC ("Spirit Gate" is
+ * only the wording inside the board message).
+ *
+ * `variants` is the closed set of forms a change can take, and it exists ONLY where the
+ * game really has one. Most MWCs are plain on/off. The ones that aren't:
+ *
+ * - Fury Gates — opens near exactly one of 10 named cities. The board says "near one of the
+ *   major cities somewhere in Tibia" and never names it, so the board can confirm it is
+ *   open but not where. (Previously modelled as a plain toggle, which lost the entire
+ *   point of the change.)
+ * - Nomads — exactly one of 4 camps in Kha'labal is up ("only one Nomad Camp out of four
+ *   possible camps can be found when it's active"). The board says only "There must be a
+ *   camp somewhere." (Previously modelled as a fixed single spot.)
+ * - Warpath — the orc camp appears at one of 3 places; the board names none of them.
+ * - Jungle Camp — either the Hunters or the Dworcs dominate, which decides both the
+ *   creatures and the possible boss (Arthom the Hunter vs Oodok Witchmaster). The World
+ *   Board does not say which; the **Towncryer does**. (Previously a plain toggle.)
+ * - Poacher Caves — three dominance phases, and here the board text itself names the phase.
+ * - Nightmare Isles / Spirit Grounds — the board names the location outright.
+ *
+ * Noodles deliberately has no variants: the board doesn't name a spot, the dog wanders the
+ * whole Thaian peninsula, and the wiki's list is only where he *spawns at server save*.
+ * Those spots are kept as `reference` so they show as a hint, never as a state the app
+ * claims to know.
  */
-export const BIBBY_BLOODBATH_LOCATIONS = ["Carlin", "Femor Hills", "Jakundaf Desert"] as const;
 
-/**
- * Every spot Noodles the pig has ever been documented fleeing to (TibiaWiki, "Noodles").
- * Closed for the same reason as Bibby's list above.
- */
-export const NOODLES_LOCATIONS = [
-  "West of Greenshore",
-  "Northwest of Thais",
-  "Around Royal Castle",
-  "Royal Castle Kitchen",
-  "West of Royal Castle",
-  "East of Thais, near Hoggle's house",
-  "East of Thais",
-  "Northeast of Snake Tower",
-  "South Thais exit",
-  "South of Thais, near Wolf Dungeon",
-  "White Flower Temple",
-  "South of Thais, near Minotaur Camp",
-  "Cyclops Camp",
+const FURY_GATE_CITIES = [
+  "Ab'Dendriel",
+  "Ankrahmun",
+  "Carlin",
+  "Darashia",
+  "Edron",
+  "Kazordoon",
+  "Liberty Bay",
+  "Port Hope",
+  "Thais",
+  "Venore",
 ] as const;
 
-/**
- * Mini World Changes — announced on the World Board at the Adventurer's Guild, floor +1,
- * near Charos (see lib/parser/boardMessages.ts for the verbatim board text catalog, from
- * TibiaWiki's "The World Board" article). Distinct from "World Changes"
- * (lib/defaults/worldChanges.ts), which are a different mechanic checked via Guide NPC —
- * do not merge the two lists.
- *
- * Every entry's board text is either `coverage: "full"` (the board always gives the
- * complete state — which stage, or which of a known, finite set of locations — so the
- * card is read-only, populated only via the import panel) or `coverage: "partial"` (the
- * board only confirms the change is active, without the exact stage/location, so that
- * detail stays user-editable after import).
- *
- * Three entries that were previously here are deliberately NOT Mini World Changes and
- * have been removed after verifying against TibiaWiki:
- * - "Roshamuul" is a permanent town unlocked by a quest, not a Board-announced or
- *   Guide-NPC-checked mechanic at all.
- * - "Overhunting Creature" is actually a *World Change* (Guide NPC keyword
- *   "Overhunting") — already correctly modeled as "overhunting-deer" in
- *   lib/defaults/worldChanges.ts.
- * - "Dream Courts Arena Boss" is a distinct "Boss of the Day" system with no Board text
- *   or Guide NPC keyword — not trackable by either mechanic.
- *
- * The 24th canonical Mini World Change, "Oriental Trader" (Yasir travels between Carlin,
- * Liberty Bay, and Ankrahmun), isn't modeled as its own card here — its board message is
- * parsed as a merchant hint straight into Yasir's location instead (see
- * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), since that's the
- * field it actually feeds. It still follows the same evidence rules as every other entry
- * here: the board message means "active, city pending" until a candidate is picked, and a
- * complete board reading that omits the message means Yasir is confirmed not currently
- * trading (see Merchant.activityState in types/merchant.ts and parseBoardLog's
- * inactiveMerchantIds) — never rendered as merely "unknown" in either case.
- *
- * Devovorga Essence, Chakoya Iceberg, "Fire from the Earth" (Goroma Volcano), and Thawing
- * were previously modeled with `controlType: "stage"` / `coverage: "partial"`, assuming
- * multi-stage escalation like Horestis or Awash. Re-verified against TibiaWiki (current
- * pages + full revision history): none of the four actually has stages — each is a plain
- * active/inactive toggle at a fixed location, and the single board message per event
- * already gives the complete state. Only Bibby's Bloodbath and Noodles remain genuinely
- * `"partial"` — their board text confirms activity but never names a location, confirmed
- * across every revision the page has ever had.
- */
+const NOMAD_CAMPS = [
+  "Northeast of the Shadow Tomb",
+  "South of the Tarpit Tomb",
+  "South of the Ancient Ruins Tomb",
+  "Northeast of the Ancient Ruins Tomb",
+] as const;
+
+const WARPATH_LOCATIONS = [
+  "North of the Jakundaf Desert",
+  "North of Carlin",
+  "East of the Femor Hills",
+] as const;
+
+/** Where Noodles is known to spawn at server save (TibiaWiki, "Noodles is Gone"). */
+const NOODLES_SPAWN_POINTS = [
+  "Inside the castle kitchen",
+  "Around the Rain Castle",
+  "North-west of Thais, behind the castle river",
+  "North-west of Thais",
+  "West of Greenshore",
+  "North-west of Greenshore",
+  "South of Thais, near the Wolf Dungeon",
+  "South of Thais, near the Minotaur Camp",
+  "The southern peninsula with the Cyclops Camp",
+  "Near the White Flower Temple",
+  "North-east of the Snake Tower guildhall",
+  "East of Thais",
+] as const;
+
+function toVariants(labels: readonly string[]) {
+  return labels.map((label) => ({
+    id: label
+      .toLowerCase()
+      .replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, ""),
+    label,
+  }));
+}
+
 export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
-    id: "fury-gate",
-    label: "Fury Gate",
-    shortLabel: "Fury Gate",
+    id: "fury-gates",
+    name: "Fury Gates",
+    shortLabel: "Fury Gates",
     emoji: "🔥",
-    category: "gate",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the Fury Gate in Feyrist is currently open.",
+    location: "Fury Dungeon, near one of ten cities",
+    variants: toVariants(FURY_GATE_CITIES),
+    variantKind: "location",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "A fiery gate to the Fury Dungeon opens near one of ten cities. Neither the World Board nor the Towncryer says which one — you find out by going to look.",
   },
   {
     id: "hive-outpost",
-    label: "Hive Outpost",
+    name: "Hive Outpost",
     shortLabel: "Hive Outpost",
     emoji: "👾",
-    category: "hive",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether a Hive infestation has been sighted south-west of Liberty Bay.",
+    location: "Hive Outpost (Vandura), south-west of Liberty Bay",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "A hive infestation south-west of Liberty Bay, at a fixed spot.",
   },
   {
-    id: "bibbys-bloodbath",
-    label: "Bibby's Bloodbath",
-    shortLabel: "Bibby's",
+    id: "warpath",
+    name: "Warpath",
+    shortLabel: "Warpath",
     emoji: "🏴‍☠️",
-    category: "rotation",
-    controlType: "location",
-    coverage: "partial",
-    description: "Current location of the Bibby's Bloodbath ship event.",
-    suggestions: BIBBY_BLOODBATH_LOCATIONS,
+    location: "Jakundaf Desert, Carlin or Femor Hills",
+    variants: toVariants(WARPATH_LOCATIONS),
+    variantKind: "location",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "A travelling orc camp appears at one of three places; clearing it spawns Bibby Bloodbath. Neither source names which place.",
   },
   {
-    id: "devovorga-essence",
-    label: "Devovorga Essence",
+    id: "devovorgas-essence",
+    name: "Devovorga's Essence",
     shortLabel: "Devovorga",
     emoji: "🧪",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
+    location: "Vengoth",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
     description:
-      "Whether Devovorga's essence is available at Vengoth to enter its lair (a genuine Mini World Change, distinct from the seasonal Rise of Devovorga event) — a single active/inactive toggle, no stages.",
+      "Tentacle pieces can be used at Vengoth to enter a boss lair and fight Devovorga's incarnations.",
   },
   {
-    id: "big-iceberg",
-    label: "Chakoya Iceberg",
+    id: "chakoya-iceberg",
+    name: "Chakoya Iceberg",
     shortLabel: "Iceberg",
     emoji: "🧊",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the big iceberg is washed up at the coast north of Port Hope — a single active/inactive toggle, no stages.",
+    location: "Northern Tiquanda, coast north of Port Hope",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "An iceberg full of chakoyas washes up north of Port Hope, at a fixed spot.",
   },
   {
-    id: "spirit-gate",
-    label: "Spirit Gate",
-    shortLabel: "Spirit Gate",
+    id: "spirit-grounds",
+    name: "Spirit Grounds",
+    shortLabel: "Spirit Grounds",
     emoji: "🌀",
-    category: "gate",
-    controlType: "location",
-    coverage: "full",
-    description: "Where the current Spirit Gate is open — Darama, Ghostlands, or Vengoth.",
-    suggestions: ["Darama", "Ghostlands", "Vengoth"],
+    location: "Reached via Darama, Ghostlands or Vengoth",
+    variants: toVariants(["Darama", "Ghostlands", "Vengoth"]),
+    variantKind: "location",
+    boardNamesVariant: true,
+    towncryerNamesVariant: true,
+    description:
+      "A gate to the spirit grounds opens in one of three regions. Both the board and the Towncryer name which one.",
   },
   {
     id: "nightmare-isles",
-    label: "Nightmare Isles",
+    name: "Nightmare Isles",
     shortLabel: "Nightmare Isles",
     emoji: "🌑",
-    category: "rotation",
-    controlType: "location",
-    coverage: "full",
-    description: "Where the Nightmare Isles portal currently is, when accessible.",
-    suggestions: [
+    location: "Nightmare Isles, via Kha'labal or Devourer",
+    variants: toVariants([
       "Darama's northernmost coast",
-      "River near Drefia",
-      "Ankrahmun tar pits",
-    ],
+      "The river near Drefia",
+      "The Ankrahmun tar pits",
+    ]),
+    variantKind: "location",
+    boardNamesVariant: true,
+    towncryerNamesVariant: true,
+    description:
+      "A sandstorm opens a portal to the Nightmare Isles at one of three spots. Both sources name which one.",
   },
   {
-    id: "goroma-volcano",
-    label: "Fire from the Earth (Goroma Volcano)",
+    id: "fire-from-the-earth",
+    name: "Fire from the Earth",
     shortLabel: "Fire from the Earth",
     emoji: "🌋",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
+    location: "Goroma",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
     description:
-      "Whether the Hellgore volcano on Goroma is erupting (canonical TibiaWiki name: \"Fire from the Earth\") — a single active/inactive toggle, no stages.",
+      "The Hellgore volcano on Goroma erupts, flooding the land with lava and stronger creatures.",
   },
   {
-    id: "darama-nomads",
-    label: "Darama Nomads",
-    shortLabel: "Darama",
+    id: "nomads",
+    name: "Nomads",
+    shortLabel: "Nomads",
     emoji: "🐫",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the nomad camp is active in Kha'labal, north of Ankrahmun's desert — a fixed spot, not a rotating one.",
+    location: "Kha'labal, north of Ankrahmun",
+    variants: toVariants(NOMAD_CAMPS),
+    variantKind: "location",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "Exactly one of four nomad camps is pitched somewhere in Kha'labal. Three of the four hold a claimable chest. Neither source says which camp is up.",
   },
   {
-    id: "bored-witch",
-    label: "Bored Witch",
+    id: "bored",
+    name: "Bored",
     shortLabel: "Bored Witch",
     emoji: "🧙",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether Witch Wyda is currently bored (visitable) or not.",
+    location: "Green Claw Swamp",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The witch Wyda is bored and worth visiting — she may have a surprise.",
   },
   {
-    id: "noodles",
-    label: "Noodles",
+    id: "noodles-is-gone",
+    name: "Noodles is Gone",
     shortLabel: "Noodles",
-    emoji: "🍜",
-    category: "rotation",
-    controlType: "location",
-    coverage: "partial",
-    description: "Current location of the Noodles NPC.",
-    suggestions: NOODLES_LOCATIONS,
+    emoji: "🐕",
+    location: "Thais and its surroundings",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "The king's dog has left the castle. He wanders the whole Thaian peninsula, so there is no fixed spot to record — get a leash from King Tibianus and go find him.",
+    reference: NOODLES_SPAWN_POINTS,
   },
   {
-    id: "thais-kingsday",
-    label: "Thais Kingsday",
+    id: "kingsday",
+    name: "Kingsday",
     shortLabel: "Kingsday",
     emoji: "👑",
-    category: "seasonal",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the Thais Kingsday festivities are currently active.",
+    location: "Thais",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "Kingsday is being celebrated in Thais, with raids in the Knights Arena.",
   },
   {
     id: "thawing",
-    label: "Thawing",
+    name: "Thawing",
     shortLabel: "Thawing",
     emoji: "❄️",
-    category: "seasonal",
-    controlType: "toggle",
-    coverage: "full",
-    description:
-      "Whether enough snow has melted near Svargrond to reveal Ice Flowers — a single active/inactive toggle (Ice Flowers are the reward, not a separate stage or mechanic).",
+    location: "Svargrond",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "Enough snow has melted near Svargrond to reveal Ice Flowers.",
   },
   {
-    id: "spiders-nest",
-    label: "Spider's Nest",
-    shortLabel: "Spider's Nest",
+    id: "spider-nest",
+    name: "Spider Nest",
+    shortLabel: "Spider Nest",
     emoji: "🕷️",
-    category: "hunt",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the Spider's Nest task area is currently active.",
+    location: "Thaian–Venorean road, close to Venore",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "Mamma Longlegs is on the loose and her nest can be exterminated.",
   },
   {
     id: "poacher-caves",
-    label: "Poacher Caves",
+    name: "Poacher Caves",
     shortLabel: "Poacher Caves",
     emoji: "🏹",
-    category: "hunt",
-    controlType: "stage",
-    coverage: "full",
+    location: "Poacher Caves, north of the Green Claw Swamp",
+    variants: [
+      { id: "game", label: "Wild animals dominate" },
+      { id: "poachers", label: "Poachers dominate" },
+      { id: "ghost-wolves", label: "Vengeful ghost wolves dominate" },
+    ],
+    variantKind: "phase",
+    boardNamesVariant: true,
+    towncryerNamesVariant: true,
     description:
-      "Dominance phase north of the Green Claw Swamp: Stage 1 game dominates, Stage 2 poachers dominate, Stage 3 vengeful ghost wolves dominate.",
+      "A three-way dominance cycle north of the Green Claw Swamp. Both the board and the Towncryer say which side currently holds the area.",
   },
   {
     id: "jungle-camp",
-    label: "Jungle Camp",
+    name: "Jungle Camp",
     shortLabel: "Jungle Camp",
     emoji: "🏕️",
-    category: "hunt",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether hunters and dworcs are fighting over Trapwood's holy grounds.",
+    location: "Hunter Camp / Dworc Camp, Tiquanda",
+    variants: [
+      { id: "hunters", label: "Hunters dominate" },
+      { id: "dworcs", label: "Dworcs dominate" },
+    ],
+    variantKind: "faction",
+    boardNamesVariant: false,
+    towncryerNamesVariant: true,
+    description:
+      "Hunters and dworcs fight over Trapwood's holy grounds; the winner decides the creatures and the possible boss (Arthom the Hunter or Oodok Witchmaster). The World Board doesn't say who is winning — the Towncryer does.",
   },
   {
     id: "grimvale",
-    label: "Grimvale",
+    name: "Grimvale",
     shortLabel: "Grimvale",
     emoji: "🌲",
-    category: "seasonal",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the full moon effect is active on the island of Grimvale.",
+    location: "Grimvale",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The full moon is over Grimvale, enabling the Grimvale Quest.",
   },
   {
     id: "stampede",
-    label: "Stampede",
+    name: "Stampede",
     shortLabel: "Stampede",
     emoji: "🐘",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether Tiquanda's elephants have been stirred into a stampede.",
+    location: "Tiquanda",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The Ape God has stirred Tiquanda's elephants; tusks can be looted.",
   },
   {
     id: "bank-robbery",
-    label: "Bank Robbery",
+    name: "Bank Robbery",
     shortLabel: "Bank Robbery",
     emoji: "💰",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether banks in major coastal towns are currently being robbed.",
+    location: "Ab'Dendriel, Carlin, Thais and Venore",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "Banks in the main coastal towns are robbed at the same time — the thieves hide out in the Dwarf Mines, the Ghostlands, the Ancient Temple and Shadowthorn respectively.",
   },
   {
     id: "river-runs-deep",
-    label: "River Runs Deep",
+    name: "River Runs Deep",
     shortLabel: "River Runs Deep",
     emoji: "🎣",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the Zao Steppe river currently has more fish than usual.",
+    location: "Zao Steppe",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The Zao Steppe river runs deep and sandfish can be caught.",
   },
   {
     id: "lumberjack",
-    label: "Lumberjack",
+    name: "Lumberjack",
     shortLabel: "Lumberjack",
     emoji: "🪓",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the Queen's royal trees are currently being cut down.",
+    location: "Fields of Glory, north of Carlin",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The Queen's royal trees are being cut down north of Carlin.",
   },
   {
     id: "down-the-drain",
-    label: "Down the Drain",
+    name: "Down the Drain",
     shortLabel: "Down the Drain",
     emoji: "🌊",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the river south of the outlaw camp is flooding a reachable island.",
+    location: "Outlaw Camp",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "The river south of the outlaw camp floods, making a small island reachable.",
   },
   {
     id: "chyllfroest",
-    label: "Chyllfroest",
+    name: "Chyllfroest",
     shortLabel: "Chyllfroest",
     emoji: "🥶",
-    category: "rotation",
-    controlType: "toggle",
-    coverage: "full",
-    description: "Whether the ice bridge from Svargrond to the frosty island is open.",
+    location: "Chyllfroest",
+    variants: [],
+    variantKind: null,
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description: "An ice bridge connects Svargrond to the frosty island of Chyllfroest.",
   },
 ];
+
+export const MINI_WORLD_CHANGES_BY_ID = new Map(
+  MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def]),
+);
 
 export function createDefaultMiniWorldChangeValues(): Record<string, MiniWorldChangeValue> {
   const values: Record<string, MiniWorldChangeValue> = {};
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     values[def.id] = {
       id: def.id,
-      state: "unknown",
-      detail: "",
+      status: "unchecked",
+      variantId: null,
       updatedAt: null,
     };
   }

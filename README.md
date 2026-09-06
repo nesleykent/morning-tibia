@@ -33,44 +33,62 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    (active ones flagged with a badge) with a 5/7/14-day window control for how far ahead
    it reaches. The Tibia Drome rotation itself lives in the top status bar's countdown,
    not as a separate card.
-3. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes (announced
-   on the World Board at the Adventurer's Guild — 23 of the canonical 24, the 24th being
-   Yasir's location, see below) and World Changes (checked in-game by asking a Guide NPC —
-   14 with documented reply text) are different game systems with different in-game
-   sources, so they get separate sections and separate data models — never merged. Three
-   entries that were previously miscategorized here have been removed after verifying
-   against TibiaWiki: "Roshamuul" (a quest-unlocked town, not Board or Guide-NPC checked
-   at all), "Overhunting Creature" (actually a World Change, already modeled correctly as
-   `overhunting-deer`), and "Dream Courts Arena Boss" (a separate "Boss of the Day"
-   system with no Board text or Guide NPC keyword). A dedicated **Import from game text**
-   panel — front and center on the dashboard, not hidden behind a button — recreates
-   Tibiopedia's paste-and-parse workflow with original code: a single paste box accepts
-   either or both logs at once and both catalogs are checked automatically, since the two
-   mechanics' source text never collides. Within each mechanic, every entry is split into
-   **Auto** (the board/Guide NPC text always gives the complete state, so the card is
-   read-only, populated only by pasting a log — no pointless manual dropdown next to
-   something only the game itself can tell you) and **Needs your input** (the text only
-   confirms the change is active without the exact stage or spot, so that detail stays
-   editable after import, from a closed pick list for Bibby's Bloodbath and Noodles rather
-   than free text — see below). See [lib/parser](lib/parser).
+3. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes and World
+   Changes are different systems with different in-game sources, so they get separate
+   sections and separate data models — never merged. Everything below was verified entry by
+   entry against TibiaWiki's ["Mini World Changes"](https://tibia.fandom.com/wiki/Mini_World_Changes),
+   ["The World Board"](https://tibia.fandom.com/wiki/The_World_Board),
+   ["Towncryer"](https://tibia.fandom.com/wiki/Towncryer) and
+   ["World Changes"](https://tibia.fandom.com/wiki/World_Changes) articles plus each
+   change's own page, and cross-checked against live Guide NPC transcripts.
 
-   **World Board "complete snapshot" detection.** The board's own fixed opening line ("You
-   see the world board. This board will notify you...") is the one safe signal that a paste
-   is a genuine, full board reading rather than a fragment — [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts)
-   only infers "inactive" for an unmentioned Mini World Change (or "inactive" for Yasir,
-   see below) when that exact preamble is present. A partial paste, or any Guide NPC chat
-   log, never triggers this — absence there stays exactly what it is: no evidence, i.e.
-   `unknown`, never silently downgraded to "inactive". Every state distinguishes four
-   things, not three: no evidence yet (`unknown`), confirmed not happening (`inactive`),
-   confirmed happening with the exact detail still unknown (`active`, shown as "Active —
-   pending location/creature/boss"), and confirmed happening with the detail known
-   (`location`/`creature`/`boss`/a stage). Bibby's Bloodbath and Noodles are the clearest
-   example: the board can confirm they're active without saying where, so they land in
-   `active` (pending) until a later, more specific board line — or the player — supplies
-   one of their closed set of possible spots (3 for Bibby, 13 for Noodles — see
-   `BIBBY_BLOODBATH_LOCATIONS` / `NOODLES_LOCATIONS` in
-   [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)); free text isn't
-   offered for either, since anywhere else isn't a valid reading of the board.
+   **Mini World Changes** — 24 exist; 23 are cards here and the 24th, *Oriental Trader*, is
+   Yasir's merchant card (see below) rather than a duplicate. Two sources report them, and
+   they are modelled separately because they carry different amounts of information:
+
+   - **The World Board** (Adventurer's Guild floor +1, near Charos) prints one line per
+     *currently active* change. Being an exhaustive listing, a **complete** reading is the
+     only evidence in the whole app that can prove a negative.
+   - **The Towncryer** (Thais, around the depot and docks) shouts one change at a time. It
+     can never prove a negative — but for **Jungle Camp** it is the only in-game way to
+     learn which side is winning, since the board's single line names neither.
+
+   **World Changes** — 14, one per official Guide NPC keyword. Greet any Guide, say *world
+   change*, then the keyword; the card shows the exact keyword to say. TibiaWiki lists a
+   15th, **Insectoid Invasion** (Greenshore), which is deliberately *not* tracked: it has no
+   Guide keyword, so no player can check it remotely, and it isn't a Mini World Change
+   either (no board or Towncryer message), so a permanently-unanswerable card would be pure
+   noise.
+
+   A single **Import from game text** panel accepts a World Board log, a Guide chat log and
+   Towncryer shouts in any combination — the three catalogs share no text, so nothing can be
+   mistaken for anything else. (Tibiopedia uses two separate boxes; one is strictly less
+   work and costs nothing in accuracy.) See [lib/parser](lib/parser).
+
+   **What the app is allowed to conclude.** The board's own opening line ("You see the world
+   board. This board will notify you…") is the *only* thing that marks a paste as a complete
+   reading, and therefore the only thing that lets an unmentioned change be recorded as not
+   running — see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts). A fragment, a Guide log,
+   or a Towncryer shout never does. Four knowledge states are distinguished, matching what a
+   player can actually know:
+
+   | State | Meaning | How it arises |
+   |---|---|---|
+   | `unchecked` | No evidence at all. Never shown as "inactive", never enters the briefing. | Default |
+   | `inactive` | Confirmed not running. | A **complete** board reading that omits it |
+   | `active`, no variant | Confirmed running; the source couldn't say which form. | e.g. Fury Gates, Nomads, Warpath |
+   | `active` + variant | Confirmed running, and which one. | Board/Towncryer wording, or the player |
+
+   **Variants exist only where the game has them** — seven of the 23. *Fury Gates* opens at
+   one of **10 cities** and no source ever names it; *Nomads* is one of **4 camps** in
+   Kha'labal ("only one out of four can be found"); *Warpath* is one of **3 spots**;
+   *Jungle Camp* is Hunters **or** Dworcs, which also decides the boss (Arthom the Hunter vs
+   Oodok Witchmaster); *Poacher Caves*, *Spirit Grounds* and *Nightmare Isles* have variants
+   the board itself names. Everything else is simply running or not — and *Noodles is Gone*
+   deliberately has **no** location state at all, because the board never says where he is
+   and he wanders the whole Thaian peninsula; his known server-save spawn areas are shown as
+   a hint, never as something the app claims to know.
+
 4. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
    Change), so his location is a closed pick list, not free text; the World Board's
@@ -138,10 +156,11 @@ defaults and stay manually editable.
 | Tibia Coin, Gold Token, Silver Token sell/buy offers | [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule) (published `data/market/world/{World}/{world}_{item}.json`, one file per item per world) | CORS-open, re-fetched every 15 minutes while the dashboard is open (`lib/data/marketHistoryMapping.ts` + `worldProvider.ts`). Fully read-only — no manual override. Real day-by-day history (years of `day_average_sell`/`day_average_buy` entries, refreshed upstream about once a day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
-| All 14 World Changes with a documented Guide NPC reply (Hive Born, Horestis, Deeplings, Sea Serpent, Demon War, Twisted Waters, Awash, Steamship, Overhunting, The Mage's Tower, Their Master's Voice, Thornfire, Swamp Fever, Horse Station) | Guide NPC chat log, pasted by the user, parsed against [documented verbatim reply text](lib/parser/guideMessages.ts) | Read-only in the grid — populated only via the import panel. |
-| 21 of the 23 modeled Mini World Changes (`coverage: "full"` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts)) | World Board server log, pasted by the user, parsed against [documented verbatim board text](lib/parser/boardMessages.ts) | Read-only — the board always gives the complete state for these. A *complete* board reading (the board's own fixed preamble is present — see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts)) also infers "inactive" for any of these left unmentioned; a fragmentary paste never does. |
-| Yasir's location (3 possible cities) | World Board's "Oriental Trader" message, parsed as a merchant hint | Active, city pending until a candidate is picked (or the board itself names one) — closed pick list, no free text, since there's no 4th option. A complete board reading that omits this message marks him confirmed inactive instead of merely unverified. |
-| The other 2 Mini World Changes (`coverage: "partial"` — Bibby's Bloodbath, Noodles), boosted region | Manual, local | The board confirms these are active but never names a location in that same line (verified across every revision the board's wiki page has ever had), so the entry lands in `active` (pending) — closed pick list of 3/13 known spots respectively, not free text — until a location is supplied, or a complete board reading that omits them entirely marks them inactive. Boosted region has no source at all — multi-select from a curated location list instead of free text. |
+| All 14 World Changes | Guide NPC chat log, pasted by the user, parsed against [verbatim reply text](lib/parser/guideMessages.ts) | One keyword per change (`guideKeyword`), shown on the card. A reply establishes one documented state; silence about a keyword only ever means "not asked". Each card also has a picker limited to that change's documented states, for a player who read the reply but didn't copy it. |
+| The 23 Mini World Changes | World Board server log **and/or** Towncryer shouts, parsed against [board text](lib/parser/boardMessages.ts) and [Towncryer text](lib/parser/towncryerMessages.ts) | A recognised line proves the change is running, plus its variant where the wording names one. Only a **complete** board reading — identified by the board's own preamble, see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts) — records unmentioned changes as not running; a fragment, a Guide log or a Towncryer shout never does. |
+| Which variant a running change has (7 of the 23) | Board/Towncryer wording where it names one; otherwise the player | Closed pick list of the real possibilities, enabled only once a source has confirmed the change is running — a picker can never manufacture activity. Fury Gates (10 cities), Nomads (4 camps) and Warpath (3 spots) are normally player-supplied, since no in-game source names them. |
+| Yasir's location (3 possible cities) | The "Oriental Trader" message on the board, or the Towncryer's version of it | Trading with the city pending until one is picked — closed pick list, no free text. A complete board reading that omits it marks him confirmed not trading, rather than merely unverified. |
+| Boosted region | Manual, local | No source of any kind — multi-select from a curated location list. |
 
 ## Architecture
 
@@ -183,22 +202,22 @@ lib/
                    marketHistoryMapping.ts (pure, unit tested — parses the market history
                    JSON worldProvider.ts fetches), wikiContentClient.ts (build-time-only
                    TibiaWiki fetcher, unit tested)
-  parser/        — boardMessages.ts / guideMessages.ts (verbatim catalogs, one per
-                   mechanic) + parseBoardLog.ts (also detects a "complete snapshot" via the
-                   board's own fixed preamble, inferring inactivity for anything left
-                   unmentioned — never done for a fragment, and never for Guide NPC text)
-                   / parseGuideLog.ts, combined into a single parseGameText.ts so the
-                   import panel can check one paste against both catalogs at once — all
-                   unit tested
+  parser/        — boardMessages.ts / towncryerMessages.ts / guideMessages.ts (verbatim
+                   catalogs, one per in-game source) + parseBoardLog.ts (which alone can
+                   report a complete reading, via the board's own preamble) /
+                   parseTowncryerLog.ts / parseGuideLog.ts (positives only), combined into
+                   parseGameText.ts so one paste is checked against all three at once and
+                   only the board can ever conclude something is not running — all unit
+                   tested
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
                    (PT/EN/ES/PL section labels) + worldChangeNarratives.ts /
                    miniWorldChangeNarratives.ts (the per-state narrative text catalogs),
                    unit tested
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
   rashid/        — the weekday rotation calculator, unit tested
-  defaults/      — seed data for every manual field, tibiaLocations.ts (the shared
-                   curated location list for boosted region / suggestions), the closed
-                   BIBBY_BLOODBATH_LOCATIONS / NOODLES_LOCATIONS lists, plus
+  defaults/      — the Mini World Change / World Change catalogs (names, locations,
+                   variants, Guide keywords, documented states), tibiaLocations.ts (the
+                   curated location list used for boosted region), plus
                    mergeOverridesWithDefaults for safely loading an older localStorage
                    save (migrating the old single boostedRegion string into
                    boostedRegions: string[], an old market price's previousValue into a
@@ -264,17 +283,20 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 
 ## Current limitations
 
-- 2 Mini World Changes (Bibby's Bloodbath, Noodles) and boosted region are manual by
-  design — the World Board confirms these are active but never names a location, and
-  there's no API for boosted region at all ("Insectoid Invasion" isn't a
-  Guide-NPC-checkable mechanic either, so it isn't listed as one — see the data source
-  table above).
+- Fury Gates, Nomads and Warpath normally need the player to say *where*: no in-game
+  source names the city/camp/spot, so the board can only ever confirm that they're running.
+  That's the mechanic, not a gap in the app. Boosted region has no source at all.
+- "Insectoid Invasion" is a real World Change but has no Guide NPC keyword, so it can't be
+  checked remotely and isn't tracked — see the data source table above.
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
-- Several World Changes (Swamp Fever, Horse Station, and a couple of others) only have
-  one state's Guide NPC reply publicly documented, not the full escalation — those
-  changes auto-detect for that one state and stay manually correctable for the rest.
+- Swamp Fever has only one Guide reply publicly transcribed (the calm state), so only that
+  state auto-detects. A few replies (Horse Station's "working normally", and the
+  non-primary Mage Tower / Thornfire / Master's Voice states) come from secondary fan
+  sources and are marked `unverifiedWording` in
+  [`lib/parser/guideMessages.ts`](lib/parser/guideMessages.ts) — if the wording is slightly
+  off, the parser simply doesn't match it rather than reporting a wrong state.
 - Timezone conversion for the warzone schedule compares UTC offsets for a single
   reference date rather than doing full calendar-aware conversion — it can be off by a
   day boundary or mid-window DST transition in rare edge cases. (Rashid's rotation uses a
@@ -312,35 +334,54 @@ Mini World Changes (World Board) and World Changes (Guide NPC) are separate list
 to the one that matches the in-game mechanic:
 
 - Mini World Change → add to `MINI_WORLD_CHANGE_DEFINITIONS` in
-  [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts) (needs a
-  `coverage` of `"full"` or `"partial"` — only set `"full"` if
-  [`lib/parser/boardMessages.ts`](lib/parser/boardMessages.ts) gives the complete state
-  for every case, not just an "it's active" confirmation). If it's `"partial"` and
-  `controlType: "location"`, give it a closed `suggestions` list of every spot TibiaWiki
-  documents (like Bibby's Bloodbath / Noodles) rather than leaving it free text — the
-  card then renders a strict picker instead of an open input.
+  [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts), then add its
+  verbatim board line to [`boardMessages.ts`](lib/parser/boardMessages.ts) and its
+  Towncryer shout to [`towncryerMessages.ts`](lib/parser/towncryerMessages.ts). Give it
+  `variants` **only** if the game really has distinct forms, and set `boardNamesVariant` /
+  `towncryerNamesVariant` from whether that source's wording actually names one — if it
+  doesn't, leave `variantId` off the message rather than picking a plausible value.
 - World Change → add to `WORLD_CHANGE_DEFINITIONS` in
-  [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) (needs a `source` of
-  `"manual"` or `"guide-npc"` — only set `"guide-npc"` if
-  [`lib/parser/guideMessages.ts`](lib/parser/guideMessages.ts) has exact, verbatim reply
-  text for it).
+  [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) with its official
+  `guideKeyword` and its documented `states`, then add verbatim reply text per state to
+  [`guideMessages.ts`](lib/parser/guideMessages.ts). Mark any wording you couldn't verify
+  against a primary source with `unverifiedWording: true`.
+
+Either way, add localized narrative text for every new state/variant — a test asserts full
+PT/EN/ES/PL coverage — and `lib/defaults/catalogIntegrity.test.ts` will check the catalogs
+and message files agree.
 
 ```ts
+// Mini World Change
 {
   id: "unique-id",
-  label: "Display Name",
+  name: "Canonical TibiaWiki Name",
   shortLabel: "Short Name",
   emoji: "✨",
-  controlType: "toggle", // toggle | stage | location | creature | boss
+  location: "Where it happens, per TibiaWiki's Location field",
+  variants: [],          // only if the game really has distinct forms
+  variantKind: null,     // "location" | "faction" | "phase"
+  boardNamesVariant: false,
+  towncryerNamesVariant: false,
+  description: "One line describing what this tracks.",
+}
+
+// World Change
+{
+  id: "unique-id",
+  name: "Canonical TibiaWiki Name",
+  shortLabel: "Short Name",
+  emoji: "✨",
+  guideKeyword: "Keyword",   // exactly what you say to a Guide NPC
+  location: "Where it happens",
+  states: [{ id: "quiet-state", label: "Nothing happening", quiet: true }],
   description: "One line describing what this tracks.",
 }
 ```
 
 Both grids and `createDefaultMiniWorldChangeValues()` / `createDefaultWorldChangeValues()`
-pick new entries up automatically — no other file needs to change. `controlType`
-determines which inline editor renders (`StatusSelector`, `StageSelector`, or a text
-input with suggestions); it feeds into how the item is formatted in the generated
-briefing (see `lib/formatter/briefingModel.ts`).
+pick new entries up automatically — no other file needs to change. A `quiet` World Change
+state is still real, confirmed knowledge, but it's only printed in the briefing when
+"Include everything" is on (see `lib/formatter/briefingModel.ts`).
 
 ## How to change the generated briefing format
 

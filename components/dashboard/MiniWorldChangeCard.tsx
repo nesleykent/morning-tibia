@@ -2,12 +2,20 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusSelector } from "./StatusSelector";
-import { StageSelector } from "./StageSelector";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { MiniWorldChangeDefinition, MiniWorldChangeValue } from "@/types/miniWorldChange";
-import { stateBadgeLabel, stateBadgeVariant, stateForDetailValue } from "@/lib/utils/miniWorldChangeDisplay";
+import {
+  pendingVariantLabel,
+  statusBadgeLabel,
+  statusBadgeVariant,
+} from "@/lib/utils/miniWorldChangeDisplay";
 
 interface MiniWorldChangeCardProps {
   definition: MiniWorldChangeDefinition;
@@ -15,101 +23,70 @@ interface MiniWorldChangeCardProps {
   onChange: (patch: Partial<MiniWorldChangeValue>) => void;
 }
 
+const VARIANT_PROMPT: Record<string, string> = {
+  location: "Where is it?",
+  faction: "Who's winning?",
+  phase: "Which phase?",
+};
+
 export function MiniWorldChangeCard({ definition, value, onChange }: MiniWorldChangeCardProps) {
-  const listId = `${definition.id}-suggestions`;
-  // A closed-list location (Bibby's Bloodbath, Noodles) can only ever settle on one of a
-  // known, finite set of spots — free text would let the user record a place the board
-  // could never actually report, so it gets a strict picker instead of an open Input.
-  const isClosedLocationList = definition.controlType === "location" && Boolean(definition.suggestions);
-  const closedLocationEnabled =
-    value.state === "active" || value.state === "location";
+  // Whether it's running at all is something only the game can tell the player — the World
+  // Board or the Towncryer — so there is no manual on/off here. What the player CAN
+  // contribute is the variant, once a source has confirmed it's running but couldn't say
+  // which form it took (which city the fury gate is at, which side holds the jungle camp).
+  const hasVariants = definition.variants.length > 0;
+  const canPickVariant = hasVariants && value.status === "active";
+  const needsVariant = canPickVariant && value.variantId === null;
 
   return (
-    <Card className="transition-colors hover:border-gold/40">
+    <Card
+      className={`transition-colors hover:border-gold/40 ${needsVariant ? "border-gold/50" : ""}`}
+    >
       <CardContent className="flex flex-col gap-2 p-2.5">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 text-sm font-medium leading-tight">
             <span aria-hidden="true">{definition.emoji}</span>
-            <span>{definition.label}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help">{definition.name}</span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>{definition.description}</p>
+                <p className="mt-1 text-muted-foreground">{definition.location}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <Badge variant={stateBadgeVariant(value.state)} className="shrink-0">
-            {stateBadgeLabel(value.state, definition.controlType, value.detail)}
+          <Badge variant={statusBadgeVariant(definition, value)} className="shrink-0">
+            {statusBadgeLabel(definition, value)}
           </Badge>
         </div>
 
-        {definition.coverage === "full" &&
-          value.state !== "unknown" &&
-          value.detail &&
-          definition.controlType !== "location" &&
-          definition.controlType !== "creature" &&
-          definition.controlType !== "boss" && (
-            <p className="text-[11px] text-muted-foreground">{value.detail}</p>
-          )}
-
-        {definition.coverage === "partial" && definition.controlType === "toggle" && (
-          <StatusSelector value={value.state} onChange={(state) => onChange({ state })} />
-        )}
-
-        {definition.coverage === "partial" && definition.controlType === "stage" && (
-          <StageSelector value={value.state} onChange={(state) => onChange({ state })} />
-        )}
-
-        {definition.coverage === "partial" && isClosedLocationList && (
+        {canPickVariant && (
           <Select
-            value={value.detail || undefined}
-            disabled={!closedLocationEnabled}
-            onValueChange={(detail) => onChange({ detail, state: "location" })}
+            value={value.variantId ?? undefined}
+            onValueChange={(variantId) => onChange({ variantId })}
           >
-            <SelectTrigger aria-label={`${definition.label} location`}>
+            <SelectTrigger
+              aria-label={`${definition.name} — ${pendingVariantLabel(definition.variantKind)}`}
+            >
               <SelectValue
-                placeholder={
-                  value.state === "inactive"
-                    ? "Inactive — no location"
-                    : value.state === "unknown"
-                      ? "Not checked yet…"
-                      : "Active — pending location…"
-                }
+                placeholder={VARIANT_PROMPT[definition.variantKind ?? ""] ?? "Pick one…"}
               />
             </SelectTrigger>
             <SelectContent>
-              {definition.suggestions!.map((suggestion) => (
-                <SelectItem key={suggestion} value={suggestion}>
-                  {suggestion}
+              {definition.variants.map((variant) => (
+                <SelectItem key={variant.id} value={variant.id}>
+                  {variant.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
 
-        {definition.coverage === "partial" &&
-          !isClosedLocationList &&
-          (definition.controlType === "location" ||
-            definition.controlType === "creature" ||
-            definition.controlType === "boss") && (
-          <>
-            <Input
-              value={value.detail}
-              placeholder={
-                definition.controlType === "location"
-                  ? "Location…"
-                  : definition.controlType === "creature"
-                    ? "Creature name…"
-                    : "Boss name…"
-              }
-              list={definition.suggestions ? listId : undefined}
-              onChange={(event) => {
-                const detail = event.target.value;
-                onChange({ detail, state: stateForDetailValue(definition.controlType, detail) });
-              }}
-            />
-            {definition.suggestions && (
-              <datalist id={listId}>
-                {definition.suggestions.map((suggestion) => (
-                  <option key={suggestion} value={suggestion} />
-                ))}
-              </datalist>
-            )}
-          </>
+        {value.status === "active" && definition.reference && (
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Known spots: {definition.reference.slice(0, 4).join(" · ")}…
+          </p>
         )}
       </CardContent>
     </Card>

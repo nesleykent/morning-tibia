@@ -1,51 +1,42 @@
-import type { ParseResult, ParsedSignal } from "@/types/parser";
-import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
+import type { ParsedGuideResult, ParsedWorldChangeSignal } from "@/types/parser";
 import { GUIDE_MESSAGES } from "./guideMessages";
 import { normalizeForMatch } from "./textMatch";
 
-const LABEL_BY_ID = new Map(WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def.label]));
-
 /**
- * Matches a pasted Guide NPC chat log against the known catalog of Guide reply text
- * (see guideMessages.ts) using substring matching on normalized text. If a keyword's
- * reply changed between when the world changed and when it settled (e.g. asking twice),
- * the LAST matching entry per World Change wins, since it appears later in the log.
+ * Reads Guide NPC replies out of a pasted chat log.
+ *
+ * A Guide answers one keyword at a time, so this can only ever establish the state of the
+ * World Changes actually asked about. Absence of a keyword means the player didn't ask —
+ * never that nothing is happening — so this parser has no completeness concept at all and
+ * can never mark anything unchecked or inactive.
+ *
+ * If a log contains the same World Change twice (asked at the start of a session and again
+ * later, across a server save), the LAST reply wins, since that is the more recent truth.
  */
-export function parseGuideLog(rawText: string): ParseResult {
+export function parseGuideLog(rawText: string): ParsedGuideResult {
   const normalizedInput = normalizeForMatch(rawText);
-  const bestById = new Map<string, ParsedSignal>();
-  let matchedCount = 0;
+  const bestById = new Map<string, { signal: ParsedWorldChangeSignal; index: number }>();
 
   for (const entry of GUIDE_MESSAGES) {
     const normalizedEntry = normalizeForMatch(entry.text);
-    const index = normalizedInput.indexOf(normalizedEntry);
+    if (!normalizedEntry) continue;
+
+    // lastIndexOf: if the same reply appears twice, anchor on the later occurrence.
+    const index = normalizedInput.lastIndexOf(normalizedEntry);
     if (index === -1) continue;
-    matchedCount += 1;
 
     const existing = bestById.get(entry.changeId);
-    if (existing) {
-      const existingIndex = normalizedInput.indexOf(normalizeForMatch(existing.matchedText));
-      if (existingIndex > index) continue; // keep the later occurrence
-    }
+    if (existing && existing.index >= index) continue;
 
     bestById.set(entry.changeId, {
-      changeId: entry.changeId,
-      label: LABEL_BY_ID.get(entry.changeId) ?? entry.changeId,
-      matchedText: entry.text,
-      state: entry.state,
-      detail: entry.detail ?? "",
+      index,
+      signal: {
+        changeId: entry.changeId,
+        stateId: entry.stateId,
+        matchedText: entry.text,
+      },
     });
   }
 
-  const totalLines = rawText.split("\n").filter((line) => line.trim().length > 0).length;
-
-  return {
-    signals: Array.from(bestById.values()),
-    merchantHints: [],
-    unmatchedLineCount: Math.max(0, totalLines - matchedCount),
-    // A Guide NPC reply answers one keyword at a time — never a full-board listing — so
-    // absence here can never imply inactivity, unlike a complete World Board reading.
-    isCompleteSnapshot: false,
-    inactiveMerchantIds: [],
-  };
+  return { signals: Array.from(bestById.values(), (v) => v.signal) };
 }

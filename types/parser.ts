@@ -1,44 +1,58 @@
-import type { MiniWorldChangeState } from "./miniWorldChange";
 import type { MerchantId } from "./merchant";
 
 /**
- * One thing the parser found in pasted game text. `state` carries whatever the source text
- * actually establishes — including "active" for a change the board confirms is happening
- * but doesn't pinpoint an exact location/stage for (the detail then stays pending until the
- * player supplies it, or a later complete board reading marks it inactive again).
+ * One Mini World Change the pasted text proves is currently running.
+ *
+ * There is no "inactive" signal here on purpose: no single message can ever say a change is
+ * NOT running. Inactivity is only ever derived, at the parse-result level, from a complete
+ * World Board reading — see `ParsedBoardResult.isCompleteReading`.
  */
-export interface ParsedSignal {
-  /** id of a MiniWorldChangeDefinition (board parser) or WorldChangeDefinition (guide parser). */
+export interface ParsedMiniWorldChangeSignal {
   changeId: string;
-  label: string;
+  /** The variant the source named, or null when the source confirms activity without it. */
+  variantId: string | null;
   matchedText: string;
-  state: MiniWorldChangeState | null;
-  detail: string;
+  source: "board" | "towncryer";
 }
 
-/** A hint about a merchant that the source text doesn't fully disambiguate on its own. */
+/** One World Change state a Guide NPC reply establishes. */
+export interface ParsedWorldChangeSignal {
+  changeId: string;
+  stateId: string;
+  matchedText: string;
+}
+
+/** A merchant the text places somewhere, without necessarily disambiguating where. */
 export interface ParsedMerchantHint {
   merchantId: MerchantId;
   candidates: string[];
   matchedText: string;
 }
 
-export interface ParseResult {
-  signals: ParsedSignal[];
+export interface ParsedBoardResult {
+  signals: ParsedMiniWorldChangeSignal[];
   merchantHints: ParsedMerchantHint[];
-  unmatchedLineCount: number;
   /**
-   * True only when the pasted text was confidently recognized as a genuine, complete
-   * World Board reading (via the board's own fixed preamble text) — never inferred from a
-   * fragmentary paste. Only ever set by the board parser; the Guide NPC parser (an
-   * individual per-keyword query, not a full-board listing) always reports false, since
-   * absence there never implies inactivity.
+   * True only when the paste contains the World Board's own fixed opening line
+   * ("This board will notify you of currently active mini world changes all over Tibia."),
+   * which is the one thing that identifies the text as a whole board reading rather than a
+   * fragment someone copied a couple of lines out of.
+   *
+   * This is the ONLY thing that licenses marking unmentioned changes inactive, and it is
+   * never inferred from the presence of some recognised message — a player who pastes a
+   * single line has told us nothing about the other 23 changes. It is deliberately a
+   * conservative test: a genuine full reading whose first line was trimmed off is treated
+   * as a fragment, which loses a little convenience but cannot wrongly clear a change the
+   * player would then miss.
    */
-  isCompleteSnapshot: boolean;
-  /**
-   * Merchant ids whose only evidence source is this complete board reading and who went
-   * unmentioned in it — safe to treat as confirmed inactive. Always empty unless
-   * isCompleteSnapshot is true.
-   */
-  inactiveMerchantIds: MerchantId[];
+  isCompleteReading: boolean;
+}
+
+export interface ParsedTowncryerResult {
+  signals: ParsedMiniWorldChangeSignal[];
+  merchantHints: ParsedMerchantHint[];
+}
+
+export interface ParsedGuideResult {
+  signals: ParsedWorldChangeSignal[];
 }

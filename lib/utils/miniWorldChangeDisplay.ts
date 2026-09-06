@@ -1,58 +1,55 @@
-import type { MiniWorldChangeControlType, MiniWorldChangeState } from "@/types/miniWorldChange";
+import type {
+  MiniWorldChangeDefinition,
+  MiniWorldChangeStatus,
+  MiniWorldChangeValue,
+  MiniWorldChangeVariantKind,
+} from "@/types/miniWorldChange";
 
-const STAGE_ORDINAL: Partial<Record<MiniWorldChangeState, string>> = {
-  stage1: "Stage 1",
-  stage2: "Stage 2",
-  stage3: "Stage 3",
-};
+export type StatusBadgeVariant = "active" | "inactive" | "unknown" | "gold";
 
-export type StatusBadgeVariant =
-  | "active"
-  | "inactive"
-  | "stage1"
-  | "stage2"
-  | "stage3"
-  | "unknown"
-  | "gold";
-
-export function stateBadgeVariant(state: MiniWorldChangeState): StatusBadgeVariant {
-  if (state === "active") return "active";
-  if (state === "inactive") return "inactive";
-  if (state === "stage1" || state === "stage2" || state === "stage3") return state;
-  if (state === "location" || state === "creature" || state === "boss") return "gold";
-  return "unknown";
+export function statusBadgeVariant(
+  definition: MiniWorldChangeDefinition,
+  value: MiniWorldChangeValue,
+): StatusBadgeVariant {
+  if (value.status === "inactive") return "inactive";
+  if (value.status === "unchecked") return "unknown";
+  // Active but the variant that decides where/what is still open — worth its own colour so
+  // it doesn't read as a finished answer.
+  if (definition.variants.length > 0 && value.variantId === null) return "gold";
+  return "active";
 }
 
-export function stateBadgeLabel(
-  state: MiniWorldChangeState,
-  controlType: MiniWorldChangeControlType,
-  detail: string,
+/** What a missing variant should be called, in the words the mechanic actually uses. */
+export function pendingVariantLabel(kind: MiniWorldChangeVariantKind | null): string {
+  if (kind === "location") return "where?";
+  if (kind === "faction") return "who?";
+  if (kind === "phase") return "which phase?";
+  return "";
+}
+
+export function statusBadgeLabel(
+  definition: MiniWorldChangeDefinition,
+  value: MiniWorldChangeValue,
 ): string {
-  if (state === "unknown") return "Unknown";
-  if (state === "active") {
-    // "active" on a location/creature/boss entry means confirmed active but the exact
-    // detail isn't known yet — distinct from a plain toggle's "active", and never the
-    // same badge as "unknown" (no evidence at all).
-    if (controlType === "location") return "Active — pending location";
-    if (controlType === "creature") return "Active — pending creature";
-    if (controlType === "boss") return "Active — pending boss";
-    return "Active";
-  }
-  if (state === "inactive") return "Inactive";
-  if (state === "stage1" || state === "stage2" || state === "stage3") return STAGE_ORDINAL[state]!;
-  if (controlType === "location") return detail.trim() || "Location set";
-  if (controlType === "creature") return detail.trim() || "Creature set";
-  if (controlType === "boss") return detail.trim() || "Boss set";
-  return "Unknown";
+  if (value.status === "unchecked") return "Not checked";
+  if (value.status === "inactive") return "Not running";
+
+  const variant = definition.variants.find((v) => v.id === value.variantId);
+  if (variant) return variant.label;
+  if (definition.variants.length > 0) return `Running — ${pendingVariantLabel(definition.variantKind)}`;
+  return "Running";
 }
 
-export function stateForDetailValue(
-  controlType: MiniWorldChangeControlType,
-  detail: string,
-): MiniWorldChangeState {
-  if (detail.trim().length === 0) return "unknown";
-  if (controlType === "location") return "location";
-  if (controlType === "creature") return "creature";
-  if (controlType === "boss") return "boss";
-  return "unknown";
+/** Ordering for the grid: what needs the player's attention first. */
+export function miniWorldChangeSortWeight(
+  definition: MiniWorldChangeDefinition,
+  value: MiniWorldChangeValue,
+): number {
+  if (value.status === "active") {
+    return definition.variants.length > 0 && value.variantId === null ? 0 : 1;
+  }
+  if (value.status === "unchecked") return 2;
+  return 3;
 }
+
+export const STATUS_ORDER: MiniWorldChangeStatus[] = ["active", "unchecked", "inactive"];
