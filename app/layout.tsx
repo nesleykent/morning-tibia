@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { Sunrise } from "lucide-react";
+import { Inter, Spectral } from "next/font/google";
 import { ViewerSettingsProvider } from "@/lib/context/ViewerSettingsContext";
 import { TopStatusBar } from "@/components/dashboard/TopStatusBar";
 import { fetchDromeRotation } from "@/lib/data/wikiContentClient";
 import "./globals.css";
+
+const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+// A text serif with real colour on screen — the dispatch is meant to be read, not scanned.
+const serif = Spectral({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-serif", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Morning Tibia — Daily World Briefing",
@@ -12,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#14171c",
+  themeColor: "#0b0d16",
   width: "device-width",
   initialScale: 1,
 };
@@ -23,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const drome = await fetchDromeRotation(new Date());
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body>
         <ViewerSettingsProvider>
           <div className="flex min-h-dvh flex-col">
@@ -31,16 +36,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 position:sticky ancestor corrupts hit-testing/paint order for portalled
                 popover content (our Select/Popover dropdowns render via a body-level
                 Portal) — a solid background avoids it entirely. */}
-            <div className="sticky top-0 z-50 border-b border-border bg-card">
-              <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-4 py-2.5">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gold/15 text-gold">
-                    <Sunrise className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-semibold tracking-tight">Morning Tibia</span>
-                </span>
-                <TopStatusBar drome={drome} />
-              </div>
+            {/* Transparent: the dawn field is the page, and a filled bar would cut it. */}
+            <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 pt-6 sm:px-8">
+              <span className="flex items-center gap-2">
+                <Sunrise className="h-4 w-4 text-gold" />
+                <span className="text-[13px] font-medium tracking-[-0.01em]">Morning Tibia</span>
+              </span>
+              <TopStatusBar drome={drome} />
             </div>
             <main className="flex-1">{children}</main>
           </div>

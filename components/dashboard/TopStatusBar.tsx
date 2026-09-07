@@ -37,14 +37,15 @@ export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
   const dromeMsLeft = isClient && drome?.endsAt ? new Date(drome.endsAt).getTime() - now.getTime() : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11.5px]">
       {serverSaveMsLeft !== null && (
         <span
           className="flex items-center gap-1.5 text-muted-foreground"
           title="Time until the next server save (10:00 CET/CEST)"
         >
           <Server className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          Server save in{" "}
+          <span className="hidden sm:inline">Server save in</span>
+          
           <span className="font-mono font-medium text-foreground">{formatCountdownClock(serverSaveMsLeft)}</span>
         </span>
       )}
