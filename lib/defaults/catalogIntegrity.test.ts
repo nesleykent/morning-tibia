@@ -8,10 +8,31 @@ import { BOARD_MESSAGES } from "@/lib/parser/boardMessages";
  * ever changes, these are the tests that should be re-verified against a source first.
  */
 describe("Mini World Change catalog", () => {
-  it("models 23 changes, the 24th (Oriental Trader) being Yasir's merchant card", () => {
-    expect(MINI_WORLD_CHANGE_DEFINITIONS).toHaveLength(23);
+  it("models 26 changes; Oriental Trader lives on Yasir's merchant card", () => {
+    expect(MINI_WORLD_CHANGE_DEFINITIONS).toHaveLength(26);
     const yasir = BOARD_MESSAGES.filter((m) => m.merchantHint?.merchantId === "yasir");
     expect(yasir).toHaveLength(1);
+  });
+
+  it("marks exactly the changes no source can announce", () => {
+    // TibiaWiki BR calls Beaver Breakout and Shipwrecked "mini world change silenciosa".
+    // Forsaken has no board or Towncryer text either, but for a different reason: it never
+    // stops, it only rotates.
+    const byDetection = (d: string) =>
+      MINI_WORLD_CHANGE_DEFINITIONS.filter((x) => x.detection === d)
+        .map((x) => x.id)
+        .sort();
+
+    expect(byDetection("silent")).toEqual(["beaver-breakout", "shipwrecked"]);
+    expect(byDetection("always-active")).toEqual(["forsaken"]);
+    expect(byDetection("announced")).toHaveLength(23);
+  });
+
+  it("gives every non-announced change an explanation of how to check it", () => {
+    for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
+      if (def.detection === "announced") continue;
+      expect(def.howToCheck, `${def.id} needs howToCheck`).toBeTruthy();
+    }
   });
 
   it("uses canonical TibiaWiki names", () => {
@@ -42,6 +63,7 @@ describe("Mini World Change catalog", () => {
     );
     expect(withVariants.sort()).toEqual(
       [
+        "forsaken", // 4 creature rotations
         "fury-gates", // 10 cities
         "jungle-camp", // hunters vs dworcs
         "nightmare-isles", // 3 portal spots
@@ -95,10 +117,16 @@ describe("Mini World Change catalog", () => {
     }
   });
 
-  it("covers every modelled change with at least one board message", () => {
+  it("covers every ANNOUNCED change with a board message, and no silent one", () => {
     const covered = new Set(BOARD_MESSAGES.map((m) => m.changeId).filter(Boolean));
     for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
-      expect(covered.has(def.id), `no board message for ${def.id}`).toBe(true);
+      if (def.detection === "announced") {
+        expect(covered.has(def.id), `no board message for ${def.id}`).toBe(true);
+      } else {
+        // A silent change must have no board text at all — if it gained one, it would start
+        // being inferred inactive when absent, which is the bug this guards against.
+        expect(covered.has(def.id), `${def.id} is not announced but has board text`).toBe(false);
+      }
     }
   });
 });

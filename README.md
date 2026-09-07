@@ -25,7 +25,17 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    the world's own server clock. Its state is shared through `ViewerSettingsContext`
    between this layout-level bar and the dashboard beneath it — one source of truth, not
    two copies that could drift apart.
-2. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
+2. **A page ordered by the morning, not by the data model** — the screen follows the actual
+   task: *today's conditions → import what the game told you → settle the few things only you
+   can settle → see what today makes possible → review and share the briefing → the full
+   catalog as reference.* The briefing sits **above** the catalog rather than beneath 40
+   status rows, the import box collapses to one line once it has done its job, and the
+   sections for unresolved work and opportunities render nothing at all when they're empty.
+   Mini World Changes and World Changes are grouped by what the player actually knows
+   (running / needs you / can't be checked / not running / not checked), so the group heading
+   carries the state once instead of every row repeating a "Not checked" pill.
+
+3. **Daily world overview** — date, selected world, live PvP/BattlEye/transfer/online
    status, boosted creature & boss (with official artwork), one or more boosted regions
    (multi-select, picked from a curated list of real Tibia locations — not free text),
    today's warzone schedule (each execution shown as `12:00 (1-2-3)`, already converted
@@ -33,7 +43,7 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    (active ones flagged with a badge) with a 5/7/14-day window control for how far ahead
    it reaches. The Tibia Drome rotation itself lives in the top status bar's countdown,
    not as a separate card.
-3. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes and World
+4. **Two distinct Tibia mechanics, tracked separately** — Mini World Changes and World
    Changes are different systems with different in-game sources, so they get separate
    sections and separate data models — never merged. Everything below was verified entry by
    entry against TibiaWiki's ["Mini World Changes"](https://tibia.fandom.com/wiki/Mini_World_Changes),
@@ -42,9 +52,9 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    ["World Changes"](https://tibia.fandom.com/wiki/World_Changes) articles plus each
    change's own page, and cross-checked against live Guide NPC transcripts.
 
-   **Mini World Changes** — 24 exist; 23 are cards here and the 24th, *Oriental Trader*, is
-   Yasir's merchant card (see below) rather than a duplicate. Two sources report them, and
-   they are modelled separately because they carry different amounts of information:
+   **Mini World Changes** — 26 are modelled; *Oriental Trader* is Yasir's merchant card (see
+   below) rather than a duplicate. Two sources *announce* them, and they are modelled
+   separately because they carry different amounts of information:
 
    - **The World Board** (Adventurer's Guild floor +1, near Charos) prints one line per
      *currently active* change. Being an exhaustive listing, a **complete** reading is the
@@ -52,6 +62,22 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    - **The Towncryer** (Thais, around the depot and docks) shouts one change at a time. It
      can never prove a negative — but for **Jungle Camp** it is the only in-game way to
      learn which side is winning, since the board's single line names neither.
+
+   **Three changes are announced by neither**, and treating them as though they were would
+   be the app's worst possible bug: a complete board reading would appear to prove they are
+   not running, when the board could never have mentioned them. TibiaWiki BR (more current
+   than the English wiki here) documents them explicitly:
+
+   | Change | Detection | How you actually find out |
+   |---|---|---|
+   | Beaver Breakout | `silent` | Go to Silvertides in Marapur and see whether the Giant Beavers are out of their pen. |
+   | Shipwrecked | `silent` | Look at Krailos' north coast — or, with Krailos revealed by the Measuring Tibia Quest, check the map for active pirate respawns on the steppe. |
+   | Forsaken | `always-active` | It never stops; the Forsaken Mine just rotates between four creature sets each server save. Look down from the first floor before descending. |
+
+   Each Mini World Change therefore carries a `detection` field, and only `announced` ones
+   can ever be inferred inactive — enforced in `parseGameText` and covered by regression
+   tests. The UI gives the silent ones their own group with their own wording and an
+   explicit "I saw it / not today" control, rather than pretending a paste could settle them.
 
    **World Changes** — 14, one per official Guide NPC keyword. Greet any Guide, say *world
    change*, then the keyword; the card shows the exact keyword to say. TibiaWiki lists a
@@ -75,6 +101,7 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    | State | Meaning | How it arises |
    |---|---|---|
    | `unchecked` | No evidence at all. Never shown as "inactive", never enters the briefing. | Default |
+   | *(silent)* | Not "unchecked" in the same sense — **no** paste will ever settle it. | Beaver Breakout, Shipwrecked |
    | `inactive` | Confirmed not running. | A **complete** board reading that omits it |
    | `active`, no variant | Confirmed running; the source couldn't say which form. | e.g. Fury Gates, Nomads, Warpath |
    | `active` + variant | Confirmed running, and which one. | Board/Towncryer wording, or the player |
@@ -89,7 +116,27 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    and he wanders the whole Thaian peninsula; his known server-save spawn areas are shown as
    a hint, never as something the app claims to know.
 
-4. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
+5. **Today's achievement opportunities** — Morning Tibia doesn't just report the world
+   state, it says what that state makes possible before it disappears. Every relationship in
+   [`lib/defaults/achievements.ts`](lib/defaults/achievements.ts) is researched and sourced,
+   never inferred from a shared theme or location. The bar is an authoritative statement:
+   usually TibiaWiki's own achievement spoiler naming the enabling change ("Obtainable for
+   killing 50 water elementals … during Down the Drain Mini World Change"), otherwise a
+   creature page stating the creature only exists under that condition ("Terrified Elephant:
+   only appears during the Stampede Mini World Change"; "Askarak Prince: these creatures will
+   only spawn when their side is on the winning hand in the Arak War").
+
+   An opportunity is only ever derived from a condition the app has actually *established* —
+   `active`, or a Guide-reported World Change state. Unchecked produces nothing, and neither
+   does "not running", so a fresh session shows no opportunities at all and the section
+   simply isn't rendered. Faction- and stage-specific links are honoured: Askarak Nemesis
+   appears only while the Askarak are winning, Biodegradable only while the lake actually has
+   shimmer swimmers in it. Deliberately excluded, to show where the line is: Fury Gates,
+   Spirit Grounds and Hive Outpost have no achievement whose requirement names them, and
+   Shipwrecked's excellent Pirate Corsair respawn isn't tied to any achievement — so those
+   stay described on the change itself rather than promoted to opportunities.
+
+6. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
    Change), so his location is a closed pick list, not free text; the World Board's
    "Oriental ships sighted…" message auto-fills it via the import panel. His card carries
@@ -121,7 +168,7 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    literally "this second" — the dataset itself refreshes about once a day) also appears in
    the generated briefing text next to the price, which itself reflects the same selected
    basis.
-5. **Briefing generator** — turns all of the above into a formatted daily message (rich
+7. **Briefing generator** — turns all of the above into a formatted daily message (rich
    WhatsApp-style with `*bold*` and emoji, or a plain-text variant) in your choice of
    Portuguese, English, Spanish, or Polish, with one-click Copy, Copy plain text, Share
    (native share sheet with a clipboard fallback), Reset, and Refresh. **Mini World
@@ -137,7 +184,7 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    fully localized across all 4 languages; a few World Changes (Demon War, Awash,
    Overhunting, Thornfire) even vary their wording by the parsed detail (which faction is
    winning, whether today's quota was met).
-6. **Editing workflow** — every editable field is inline-editable; manual corrections are
+8. **Editing workflow** — every editable field is inline-editable; manual corrections are
    saved per world/day in `localStorage` so a recurring user can update quickly without
    re-entering everything. Loading an older save after a data-model change (a renamed
    field, a new category) backfills whatever's missing from current defaults instead of
@@ -160,6 +207,8 @@ defaults and stay manually editable.
 | The 23 Mini World Changes | World Board server log **and/or** Towncryer shouts, parsed against [board text](lib/parser/boardMessages.ts) and [Towncryer text](lib/parser/towncryerMessages.ts) | A recognised line proves the change is running, plus its variant where the wording names one. Only a **complete** board reading — identified by the board's own preamble, see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts) — records unmentioned changes as not running; a fragment, a Guide log or a Towncryer shout never does. |
 | Which variant a running change has (7 of the 23) | Board/Towncryer wording where it names one; otherwise the player | Closed pick list of the real possibilities, enabled only once a source has confirmed the change is running — a picker can never manufacture activity. Fury Gates (10 cities), Nomads (4 camps) and Warpath (3 spots) are normally player-supplied, since no in-game source names them. |
 | Yasir's location (3 possible cities) | The "Oriental Trader" message on the board, or the Towncryer's version of it | Trading with the city pending until one is picked — closed pick list, no free text. A complete board reading that omits it marks him confirmed not trading, rather than merely unverified. |
+| The 3 Mini World Changes no source announces (Beaver Breakout, Shipwrecked, Forsaken) | The player, after looking in game | Never inferred from a paste in either direction. A complete board reading leaves them untouched, because the board has no line for them — see `detection` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts). |
+| Today's achievement opportunities | Derived from confirmed conditions via [`lib/achievements/opportunities.ts`](lib/achievements/opportunities.ts) | Never from an unchecked or ruled-out condition. Each relationship is sourced in [`lib/defaults/achievements.ts`](lib/defaults/achievements.ts); catalog/parser drift is caught by tests. |
 | Boosted region | Manual, local | No source of any kind — multi-select from a curated location list. |
 
 ## Architecture
@@ -209,6 +258,10 @@ lib/
                    parseGameText.ts so one paste is checked against all three at once and
                    only the board can ever conclude something is not running — all unit
                    tested
+  achievements/  — opportunities.ts (turns confirmed conditions into today's achievement
+                   chances; returns nothing from unchecked state, by design)
+  dashboard/     — dailyDigest.ts (groups raw state into what's running / needs you /
+                   can't be checked / ruled out, so the page can be laid out by meaning)
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
                    (PT/EN/ES/PL section labels) + worldChangeNarratives.ts /
                    miniWorldChangeNarratives.ts (the per-state narrative text catalogs),
@@ -288,6 +341,12 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   That's the mechanic, not a gap in the app. Boosted region has no source at all.
 - "Insectoid Invasion" is a real World Change but has no Guide NPC keyword, so it can't be
   checked remotely and isn't tracked — see the data source table above.
+- Beaver Breakout and Shipwrecked can only ever be settled by going to look; Forsaken's
+  daily creature rotation likewise. That is the game, not a gap in the app — but it does mean
+  those three never resolve from a paste alone.
+- Achievement opportunities cover the relationships that survive a documented-source check.
+  Content with no achievement tied to it (Fury Gates, Spirit Grounds, Hive Outpost,
+  Shipwrecked's Pirate Corsair respawn) deliberately produces none rather than a padded list.
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.

@@ -248,6 +248,19 @@ export function renderRichBriefing(
     worldChangeBody,
   ]);
 
+  // Only rendered when today's state actually created one — never an empty heading.
+  const opportunitySection =
+    model.opportunityLines.length > 0
+      ? joinNonEmpty([
+          `*🏆 ${t.sectionOpportunities}*`,
+          joinNonEmpty(
+            model.opportunityLines.map(
+              (line) => `${line.emoji} ${line.achievement} — ${t.opportunityBecause(line.condition)}`,
+            ),
+          ),
+        ])
+      : "";
+
   const upcomingBody =
     model.upcomingEventLines.length > 0
       ? joinNonEmpty(
@@ -268,6 +281,7 @@ export function renderRichBriefing(
     marketSection,
     achievementSection,
     worldChangeSection,
+    opportunitySection,
     upcomingSection,
   ].join("\n\n");
 }
@@ -381,6 +395,18 @@ export function renderPlainBriefing(
     worldChangeBody,
   ]);
 
+  const plainOpportunitySection =
+    model.opportunityLines.length > 0
+      ? joinNonEmpty([
+          t.sectionOpportunities.toUpperCase(),
+          joinNonEmpty(
+            model.opportunityLines.map(
+              (line) => `${line.achievement} - ${t.opportunityBecause(line.condition)}`,
+            ),
+          ),
+        ])
+      : "";
+
   const upcomingBody =
     model.upcomingEventLines.length > 0
       ? joinNonEmpty(
@@ -402,6 +428,7 @@ export function renderPlainBriefing(
     marketSection,
     achievementSection,
     worldChangeSection,
+    plainOpportunitySection,
     upcomingSection,
   ].join("\n\n");
 }

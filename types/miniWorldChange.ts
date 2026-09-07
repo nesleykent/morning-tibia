@@ -1,24 +1,43 @@
 /**
- * A Mini World Change: one of the 24 short, randomly-occurring world states Tibia rotates
- * through (TibiaWiki, "Mini World Changes"). They cannot be triggered by players, come
- * with no warning, and last a few hours.
+ * A Mini World Change: one of the short, randomly-occurring world states Tibia rotates
+ * through. They cannot be triggered by players, come with no warning, and last a few hours.
  *
- * A player has exactly two documented ways to learn about them, and Morning Tibia models
- * both because they carry *different* amounts of information:
+ * Two sources *announce* them, and they carry different amounts of information:
  *
  * - **The World Board** (Adventurer's Guild floor +1, near Charos) prints one line per
- *   currently active MWC into the server log. Because it is a listing, a *complete*
- *   reading also proves which changes are NOT active.
- * - **The Towncryer** (Thais, around the depot and docks) shouts one MWC at a time. It is
- *   an announcement, never a listing, so it can only ever prove that one change is active
- *   — silence about the other 23 means nothing. For two changes (Jungle Camp, and the
- *   Nightmare Isles/Spirit Grounds wording) the shout actually reveals *more* than the
- *   board does.
+ *   currently active change into the server log. Because it is a listing, a *complete*
+ *   reading also proves which announced changes are NOT running.
+ * - **The Towncryer** (Thais, around the depot and docks) shouts one change at a time. It
+ *   is an announcement, never a listing, so it can only ever prove a change IS running.
+ *   For Jungle Camp it is the only source that names the winning faction.
+ *
+ * Crucially, **not every Mini World Change is announced at all.** TibiaWiki BR documents
+ * *mini world changes silenciosas* — silent ones — which neither source can report, so the
+ * player has to go and look. Modelling every change as announced would make a complete
+ * board reading appear to prove they are not running, which is exactly the kind of false
+ * certainty this app must never produce. See `MiniWorldChangeDetection`.
  *
  * This is a different game mechanic from "World Changes" (types/worldChange.ts), which are
  * player-influenced, longer-running, and checked by asking a Guide NPC a keyword. Do not
  * merge the two lists.
  */
+
+/**
+ * How — and whether — a player can find out that this change is running.
+ *
+ * - `announced`    — the World Board lists it and the Towncryer shouts it. Absence from a
+ *                    complete board reading is real evidence it is not running.
+ * - `silent`       — **no** source reports it (TibiaWiki BR: "mini world change
+ *                    silenciosa, portanto é necessário checar pessoalmente"). Absence from
+ *                    the board proves nothing whatsoever, because the board could never
+ *                    have mentioned it. Only going to look — or, for Shipwrecked, a map
+ *                    revealed by the Measuring Tibia Quest — can settle it.
+ * - `always-active` — the change never stops; what rotates is *which* variant is in effect
+ *                    (the Forsaken Mine's creature set changes each server save). "Not
+ *                    running" is not a state it has, so the only open question is which
+ *                    variant, and only looking answers it.
+ */
+export type MiniWorldChangeDetection = "announced" | "silent" | "always-active";
 
 /**
  * What the player actually knows about a Mini World Change right now. These are knowledge
@@ -60,6 +79,13 @@ export interface MiniWorldChangeDefinition {
    */
   variants: readonly MiniWorldChangeVariant[];
   variantKind: MiniWorldChangeVariantKind | null;
+  /** Whether any in-game source announces this change at all — see the type's docs. */
+  detection: MiniWorldChangeDetection;
+  /**
+   * For `silent` and `always-active` changes: how the player actually finds out, in one
+   * short sentence. The UI shows this instead of pretending a paste could settle it.
+   */
+  howToCheck?: string;
   /** True when the World Board's own message text names which variant is running. */
   boardNamesVariant: boolean;
   /** True when the Towncryer's shout names which variant is running. */

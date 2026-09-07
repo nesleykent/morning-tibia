@@ -213,25 +213,33 @@ describe("generateBriefingMessage", () => {
   });
 });
 
-describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
-  function cleanInput(): BriefingInput {
-    const input = makeInput();
-    // makeInput() always seeds fury-gate/hive-born as a baseline — undo that here so these
-    // tests can exercise the true "nothing checked yet" starting point.
-    input.overrides.miniWorldChanges["fury-gates"] = {
-      id: "fury-gates",
-      status: "unchecked",
-      variantId: null,
-      updatedAt: null,
-    };
-    input.overrides.worldChanges["hive-born"] = {
-      id: "hive-born",
-      stateId: null,
-      updatedAt: null,
-    };
-    return input;
-  }
+function cleanInput(): BriefingInput {
+  const input = makeInput();
+  // makeInput() also seeds Yasir as trading in Carlin, which is a genuine condition and
+  // would legitimately produce the "Si, Ariki!" opportunity. Reset him too, so these tests
+  // start from a world where truly nothing has been established.
+  input.overrides.merchants.yasir = {
+    ...input.overrides.merchants.yasir!,
+    location: "",
+    activityState: "not-verified",
+  };
+  // makeInput() always seeds fury-gate/hive-born as a baseline — undo that here so these
+  // tests can exercise the true "nothing checked yet" starting point.
+  input.overrides.miniWorldChanges["fury-gates"] = {
+    id: "fury-gates",
+    status: "unchecked",
+    variantId: null,
+    updatedAt: null,
+  };
+  input.overrides.worldChanges["hive-born"] = {
+    id: "hive-born",
+    stateId: null,
+    updatedAt: null,
+  };
+  return input;
+}
 
+describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
   it("shows a distinct 'not yet verified' message when nothing has been checked at all", () => {
     const message = generateBriefingMessage(cleanInput());
     expect(message).toContain("Nenhuma Mini World Change foi verificada ainda hoje");
@@ -526,5 +534,73 @@ describe("approved briefing hierarchy in rich and plain formats", () => {
     expect(plain).not.toContain(
       "41.340 gp",
     );
+  });
+});
+
+describe("achievement opportunities in the briefing", () => {
+  it("says nothing about opportunities when nothing is confirmed", () => {
+    const message = generateBriefingMessage(cleanInput());
+    expect(message).not.toContain("Oportunidades");
+    expect(message).not.toContain("Trail of the Ape God");
+  });
+
+  it("lists an opportunity once its enabling change is confirmed running", () => {
+    const input = cleanInput();
+    input.overrides.miniWorldChanges["stampede"] = {
+      id: "stampede",
+      status: "active",
+      variantId: null,
+      updatedAt: null,
+    };
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("Oportunidades de hoje");
+    expect(message).toContain("Trail of the Ape God");
+    // The line must be localized, not an English task description dropped into a PT briefing.
+    expect(message).toContain("graças a Stampede");
+  });
+
+  it("never lists one from a change that was ruled out", () => {
+    const input = cleanInput();
+    input.overrides.miniWorldChanges["stampede"] = {
+      id: "stampede",
+      status: "inactive",
+      variantId: null,
+      updatedAt: null,
+    };
+    expect(generateBriefingMessage(input)).not.toContain("Trail of the Ape God");
+  });
+
+  it("keeps the plain briefing free of markdown while still listing opportunities", () => {
+    const input = cleanInput();
+    input.overrides.miniWorldChanges["kingsday"] = {
+      id: "kingsday",
+      status: "active",
+      variantId: null,
+      updatedAt: null,
+    };
+    const plain = generatePlainTextBriefing(input);
+    expect(plain).toContain("Loyal Subject");
+    expect(plain).not.toContain("*");
+  });
+  it("localizes the opportunity line in every supported language", () => {
+    const expected: Record<string, string> = {
+      pt: "graças a Stampede",
+      en: "thanks to Stampede",
+      es: "gracias a Stampede",
+      pl: "dzięki Stampede",
+    };
+    for (const [language, phrase] of Object.entries(expected)) {
+      const input = cleanInput();
+      input.language = language as BriefingInput["language"];
+      input.overrides.miniWorldChanges["stampede"] = {
+        id: "stampede",
+        status: "active",
+        variantId: null,
+        updatedAt: null,
+      };
+      const message = generateBriefingMessage(input);
+      expect(message, language).toContain("Trail of the Ape God");
+      expect(message, language).toContain(phrase);
+    }
   });
 });

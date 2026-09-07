@@ -4,14 +4,30 @@ import type {
 } from "@/types/miniWorldChange";
 
 /**
- * The 24 Mini World Changes, verified entry by entry against TibiaWiki's "Mini World
- * Changes" list, "The World Board" message catalog, "Towncryer" shout catalog, and each
- * change's own article.
+ * The Mini World Changes, verified entry by entry against TibiaWiki's "Mini World Changes"
+ * list, "The World Board" message catalog, "Towncryer" shout catalog, each change's own
+ * article, and — for the changes the English wiki does not cover — TibiaWiki BR's
+ * "Mini World Changes" page (https://www.tibiawiki.com.br/wiki/Mini_World_Changes),
+ * which is more current and marks the *silent* ones explicitly.
  *
- * 23 are modelled as cards here. The 24th, **Oriental Trader**, is Yasir's travelling
- * shop — it feeds the merchant card instead of getting a duplicate card of its own (see
+ * 26 are modelled as cards here. **Oriental Trader** is Yasir's travelling shop — it feeds
+ * the merchant card instead of getting a duplicate card of its own (see
  * lib/parser/boardMessages.ts and components/dashboard/MerchantCard.tsx), while following
  * exactly the same evidence rules as everything else.
+ *
+ * Three changes are NOT announced by any source, and getting this wrong is dangerous: if
+ * they were modelled as announced, a complete World Board reading would "prove" they are
+ * not running, when in truth the board could never have mentioned them.
+ *
+ * - **Beaver Breakout** (silent) and **Shipwrecked** (silent) — TibiaWiki BR states plainly
+ *   that each is a "mini world change silenciosa, portanto é necessário checar pessoalmente
+ *   se ela está ocorrendo em seu servidor". Shipwrecked has one documented alternative: a
+ *   Krailos map fully revealed by the Measuring Tibia Quest shows when the pirate respawns
+ *   are active on the Krailos Steppe.
+ * - **Forsaken** (always-active) — a different shape again. The Forsaken Mine south of
+ *   Ab'Dendriel rotates its creature set at every server save between four possibilities,
+ *   so it is never "off"; the only open question is which set is down there, answered by
+ *   looking from the first floor before descending.
  *
  * Names are TibiaWiki's canonical MWC names. Two were previously wrong and are corrected
  * here: what the app called "Bibby's Bloodbath" is the **Warpath** MWC (Bibby Bloodbath is
@@ -103,6 +119,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Fury Dungeon, near one of ten cities",
     variants: toVariants(FURY_GATE_CITIES),
     variantKind: "location",
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -116,6 +133,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Hive Outpost (Vandura), south-west of Liberty Bay",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "A hive infestation south-west of Liberty Bay, at a fixed spot.",
@@ -128,6 +146,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Jakundaf Desert, Carlin or Femor Hills",
     variants: toVariants(WARPATH_LOCATIONS),
     variantKind: "location",
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -141,6 +160,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Vengoth",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -154,6 +174,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Northern Tiquanda, coast north of Port Hope",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "An iceberg full of chakoyas washes up north of Port Hope, at a fixed spot.",
@@ -166,6 +187,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Reached via Darama, Ghostlands or Vengoth",
     variants: toVariants(["Darama", "Ghostlands", "Vengoth"]),
     variantKind: "location",
+    detection: "announced",
     boardNamesVariant: true,
     towncryerNamesVariant: true,
     description:
@@ -183,6 +205,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
       "The Ankrahmun tar pits",
     ]),
     variantKind: "location",
+    detection: "announced",
     boardNamesVariant: true,
     towncryerNamesVariant: true,
     description:
@@ -196,6 +219,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Goroma",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -209,6 +233,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Kha'labal, north of Ankrahmun",
     variants: toVariants(NOMAD_CAMPS),
     variantKind: "location",
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -222,6 +247,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Green Claw Swamp",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The witch Wyda is bored and worth visiting — she may have a surprise.",
@@ -234,6 +260,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Thais and its surroundings",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -248,6 +275,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Thais",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "Kingsday is being celebrated in Thais, with raids in the Knights Arena.",
@@ -260,6 +288,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Svargrond",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "Enough snow has melted near Svargrond to reveal Ice Flowers.",
@@ -272,6 +301,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Thaian–Venorean road, close to Venore",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "Mamma Longlegs is on the loose and her nest can be exterminated.",
@@ -288,6 +318,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
       { id: "ghost-wolves", label: "Vengeful ghost wolves dominate" },
     ],
     variantKind: "phase",
+    detection: "announced",
     boardNamesVariant: true,
     towncryerNamesVariant: true,
     description:
@@ -304,6 +335,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
       { id: "dworcs", label: "Dworcs dominate" },
     ],
     variantKind: "faction",
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: true,
     description:
@@ -317,6 +349,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Grimvale",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The full moon is over Grimvale, enabling the Grimvale Quest.",
@@ -329,6 +362,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Tiquanda",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The Ape God has stirred Tiquanda's elephants; tusks can be looted.",
@@ -341,6 +375,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Ab'Dendriel, Carlin, Thais and Venore",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -354,6 +389,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Zao Steppe",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The Zao Steppe river runs deep and sandfish can be caught.",
@@ -366,6 +402,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Fields of Glory, north of Carlin",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The Queen's royal trees are being cut down north of Carlin.",
@@ -378,9 +415,63 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Outlaw Camp",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "The river south of the outlaw camp floods, making a small island reachable.",
+  },
+  {
+    id: "beaver-breakout",
+    name: "Beaver Breakout",
+    shortLabel: "Beaver Breakout",
+    emoji: "🦫",
+    location: "Silvertides, Marapur",
+    variants: [],
+    variantKind: null,
+    detection: "silent",
+    howToCheck:
+      "Go to Silvertides in Marapur and look: if the Giant Beavers are out of their pen, it's running.",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "The Giant Beavers break out of their pen at Silvertides. Nothing announces this — the World Board and the Towncryer are both silent on it, so a complete board reading says nothing either way.",
+  },
+  {
+    id: "shipwrecked",
+    name: "Shipwrecked",
+    shortLabel: "Shipwrecked",
+    emoji: "🏝️",
+    location: "North coast of Krailos",
+    variants: [],
+    variantKind: null,
+    detection: "silent",
+    howToCheck:
+      "Go and look at the north coast of Krailos — or, with Krailos fully revealed by the Measuring Tibia Quest, check the map for active pirate respawns on the Krailos Steppe.",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "A wrecked pirate ship washes up on Krailos' north coast, filling the steppe with pirates — the game's best Pirate Corsair respawn while it lasts. Neither announcement source reports it.",
+  },
+  {
+    id: "forsaken",
+    name: "Forsaken",
+    shortLabel: "Forsaken",
+    emoji: "⛏️",
+    location: "Forsaken Mine, south of Ab'Dendriel",
+    variants: [
+      { id: "rorcs", label: "Rorcs" },
+      { id: "leaf-golems", label: "Leaf Golems & Forest Furies" },
+      { id: "cyclopes", label: "Cyclopes" },
+      { id: "lost-dwarves", label: "Drillworms & Lost Dwarves" },
+    ],
+    variantKind: "phase",
+    detection: "always-active",
+    howToCheck:
+      "Enter the mine and look down from the first floor before descending — the second floor's creatures tell you which rotation is in effect.",
+    boardNamesVariant: false,
+    towncryerNamesVariant: false,
+    description:
+      "The Forsaken Mine's inhabitants rotate at every server save between four creature sets. It is never 'off' — the only question is which set is down there, and only looking answers it. The Drillworm/Lost Dwarf rotation is far harder than the other three.",
   },
   {
     id: "chyllfroest",
@@ -390,6 +481,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     location: "Chyllfroest",
     variants: [],
     variantKind: null,
+    detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description: "An ice bridge connects Svargrond to the frosty island of Chyllfroest.",
@@ -405,7 +497,11 @@ export function createDefaultMiniWorldChangeValues(): Record<string, MiniWorldCh
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     values[def.id] = {
       id: def.id,
-      status: "unchecked",
+      // An always-active change starts out active, because that is simply true of the game
+      // — the Forsaken Mine is always inhabited. What is unknown is which rotation, which
+      // `variantId: null` says exactly. Calling it "unchecked" would imply the player might
+      // discover it isn't happening, which can never occur.
+      status: def.detection === "always-active" ? "active" : "unchecked",
       variantId: null,
       updatedAt: null,
     };

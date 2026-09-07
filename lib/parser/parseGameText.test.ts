@@ -5,6 +5,10 @@ import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 
 const PREAMBLE = `You see the world board. ${WORLD_BOARD_PREAMBLE}`;
 
+const ANNOUNCED_COUNT = MINI_WORLD_CHANGE_DEFINITIONS.filter(
+  (def) => def.detection === "announced",
+).length;
+
 describe("parseGameText", () => {
   it("reads board text and Guide text out of a single paste", () => {
     const result = parseGameText(`
@@ -66,9 +70,8 @@ describe("parseGameText", () => {
 
       expect(result.isCompleteBoardReading).toBe(true);
       expect(result.miniWorldChangeSignals.map((s) => s.changeId)).toEqual(["spider-nest"]);
-      expect(result.inactiveMiniWorldChangeIds).toHaveLength(
-        MINI_WORLD_CHANGE_DEFINITIONS.length - 1,
-      );
+      // Only the ANNOUNCED changes can be cleared: the board never mentions the silent ones.
+      expect(result.inactiveMiniWorldChangeIds).toHaveLength(ANNOUNCED_COUNT - 1);
       expect(result.inactiveMiniWorldChangeIds).not.toContain("spider-nest");
       expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
@@ -76,7 +79,7 @@ describe("parseGameText", () => {
     it("an empty board proves everything is quiet today", () => {
       const result = parseGameText(PREAMBLE);
 
-      expect(result.inactiveMiniWorldChangeIds).toHaveLength(MINI_WORLD_CHANGE_DEFINITIONS.length);
+      expect(result.inactiveMiniWorldChangeIds).toHaveLength(ANNOUNCED_COUNT);
       expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
 
@@ -153,5 +156,38 @@ describe("parseGameText", () => {
     expect(result.miniWorldChangeSignals).toHaveLength(0);
     expect(result.worldChangeSignals).toHaveLength(0);
     expect(result.inactiveMiniWorldChangeIds).toEqual([]);
+  });
+
+  describe("changes no source can announce", () => {
+    it("never marks a silent change inactive, even on a complete board reading", () => {
+      // The whole point: the board has no line for these, so its silence is not evidence.
+      // Before this was modelled, a complete reading "proved" they weren't running.
+      const result = parseGameText(PREAMBLE);
+
+      expect(result.isCompleteBoardReading).toBe(true);
+      expect(result.inactiveMiniWorldChangeIds).not.toContain("beaver-breakout");
+      expect(result.inactiveMiniWorldChangeIds).not.toContain("shipwrecked");
+    });
+
+    it("never marks the always-active change inactive either", () => {
+      const result = parseGameText(PREAMBLE);
+      expect(result.inactiveMiniWorldChangeIds).not.toContain("forsaken");
+    });
+
+    it("clears only announced changes, whatever else the board lists", () => {
+      const result = parseGameText(`
+        ${PREAMBLE}
+        Stampede! The Ape God has stirred up Tiquanda's elephants again!
+      `);
+
+      const cleared = new Set(result.inactiveMiniWorldChangeIds);
+      for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
+        if (def.detection === "announced" && def.id !== "stampede") {
+          expect(cleared.has(def.id), `${def.id} should be cleared`).toBe(true);
+        } else {
+          expect(cleared.has(def.id), `${def.id} must never be cleared`).toBe(false);
+        }
+      }
+    });
   });
 });

@@ -51,9 +51,14 @@ export function BriefingPreview({
   return (
     <Card className="border-parchment-border/60 bg-parchment text-parchment-foreground shadow-elevated">
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-parchment-foreground">
-          <span aria-hidden="true">📨</span> Briefing preview
-        </CardTitle>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-parchment-foreground/60">
+            Your briefing
+          </p>
+          <CardTitle className="mt-0.5 text-parchment-foreground">
+            Ready to copy or share
+          </CardTitle>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={language} onValueChange={(value) => onLanguageChange(value as BriefingLanguage)}>
             <SelectTrigger className="h-8 w-32 border-parchment-border/60 bg-parchment-foreground/5 text-parchment-foreground">
@@ -72,8 +77,12 @@ export function BriefingPreview({
             onValueChange={(value) => onPreferredFormatChange(value as BriefingFormat)}
           >
             <TabsList className="bg-parchment-foreground/10">
-              <TabsTrigger value="rich">Rich</TabsTrigger>
-              <TabsTrigger value="plain">Plain</TabsTrigger>
+              <TabsTrigger value="rich" className="min-h-[36px] sm:min-h-0">
+                Rich
+              </TabsTrigger>
+              <TabsTrigger value="plain" className="min-h-[36px] sm:min-h-0">
+                Plain
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -85,16 +94,14 @@ export function BriefingPreview({
           </pre>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Copy follows the Rich/Plain choice above rather than being a second, separate
+              decision — previously "Copy briefing" always copied rich and "Copy plain text"
+              always copied plain, so the tabs only changed what you looked at. */}
           <CopyButton
-            text={richBriefing}
-            label="Copy briefing"
+            key={preferredFormat}
+            text={activeText}
+            label={preferredFormat === "plain" ? "Copy plain text" : "Copy briefing"}
             variant="default"
-            size="sm"
-          />
-          <CopyButton
-            text={plainBriefing}
-            label="Copy plain text"
-            variant="outline"
             size="sm"
           />
           <Button type="button" variant="outline" size="sm" onClick={handleShare}>

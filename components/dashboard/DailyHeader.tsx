@@ -1,7 +1,6 @@
 "use client";
 
-import { Sunrise, Users, Shield, ArrowLeftRight, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Users, Shield, ArrowLeftRight, MapPin } from "lucide-react";
 import { WorldSelector } from "./WorldSelector";
 import { ToolbarActions } from "./ToolbarActions";
 import type { World, WorldDetail } from "@/types/world";
@@ -33,18 +32,18 @@ export function DailyHeader({
   isRefreshing,
 }: DailyHeaderProps) {
   return (
-    <header className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-card sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15 text-gold">
-            <Sunrise className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-xs text-muted-foreground">{toBriefingDate(referenceDate)}</p>
-            <h1 className="text-lg font-semibold">
-              Bom dia, <span className="text-gold">{world || "…"}</span>!
-            </h1>
-          </div>
+    // Not a card. This is the page's masthead: a greeting, the world picker, and the world's
+    // vital signs. Boxing it made the first screen — on mobile, most of it — a container the
+    // player has to scroll past before reaching anything about their morning.
+    <header className="flex flex-col gap-2.5 border-b border-border/60 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {toBriefingDate(referenceDate)}
+          </p>
+          <h1 className="mt-0.5 text-[22px] font-medium leading-tight tracking-tight sm:text-2xl">
+            Bom dia, <span className="text-gold">{world || "…"}</span>
+          </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <WorldSelector
@@ -57,37 +56,51 @@ export function DailyHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
+      {/* World vitals as one quiet line of text rather than five pills — they are context,
+          not status the player has to act on. */}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground">
         {worldDetailLoading ? (
-          <>
-            <div className="skeleton h-5 w-24 rounded-full" />
-            <div className="skeleton h-5 w-20 rounded-full" />
-            <div className="skeleton h-5 w-28 rounded-full" />
-          </>
+          <div className="skeleton h-4 w-64 rounded" />
         ) : worldDetail ? (
           <>
-            <Badge variant="secondary">
-              <Users className="h-3 w-3" /> {worldDetail.playersOnline.toLocaleString("pt-BR")} online
-            </Badge>
-            <Badge variant="secondary">{worldDetail.pvpType}</Badge>
-            <Badge variant="secondary">
-              <MapPin className="h-3 w-3" /> {worldDetail.location}
-            </Badge>
-            <Badge variant="secondary">
-              <ArrowLeftRight className="h-3 w-3" /> Transfer: {worldDetail.transferType}
-            </Badge>
+            <span className="inline-flex items-center gap-1 text-foreground">
+              <Users className="h-3 w-3" />
+              {worldDetail.playersOnline.toLocaleString("pt-BR")} online
+            </span>
+            <Dot />
+            <span>{worldDetail.pvpType}</span>
+            <Dot />
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {worldDetail.location}
+            </span>
+            <Dot />
+            <span className="inline-flex items-center gap-1">
+              <ArrowLeftRight className="h-3 w-3" />
+              Transfer: {worldDetail.transferType}
+            </span>
             {worldDetail.battlEyeProtected && (
-              <Badge variant="gold">
-                <Shield className="h-3 w-3" /> BattlEye
-              </Badge>
+              <>
+                <Dot />
+                <span className="inline-flex items-center gap-1 text-gold">
+                  <Shield className="h-3 w-3" />
+                  BattlEye
+                </span>
+              </>
             )}
           </>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            Live world status unavailable right now — everything else below still works.
-          </p>
+          <span>Live world status unavailable right now — everything else below still works.</span>
         )}
       </div>
     </header>
+  );
+}
+
+function Dot() {
+  return (
+    <span aria-hidden="true" className="text-muted-foreground/40">
+      ·
+    </span>
   );
 }

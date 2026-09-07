@@ -65,10 +65,16 @@ export function parseGameText(rawText: string): CombinedParseResult {
   const inactiveMerchantIds: MerchantId[] = [];
 
   if (board.isCompleteReading) {
-    // Only the board's own listing licenses a negative, and only for changes the board
-    // itself reports. A Towncryer shout in the same paste can add a change but never
-    // subtract one, so `byChangeId` (not just board.signals) is the right exclusion set.
+    // Only the board's own listing licenses a negative, and even then only for changes the
+    // board is capable of reporting. A silent change (Beaver Breakout, Shipwrecked) is
+    // absent from every board reading ever printed, so its absence is not evidence — and an
+    // always-active one (Forsaken) is never "not running" at all. Treating either as
+    // inactive would be the app inventing certainty out of a source's silence.
+    //
+    // A Towncryer shout in the same paste can add a change but never subtract one, so
+    // `byChangeId` (not just board.signals) is the right exclusion set.
     for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
+      if (def.detection !== "announced") continue;
       if (!byChangeId.has(def.id)) inactiveMiniWorldChangeIds.push(def.id);
     }
 

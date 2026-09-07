@@ -246,6 +246,36 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "El río al sur del campamento de forajidos inunda una pequeña isla, ahora accesible.",
     pl: "Rzeka na południe od obozu banitów zalewa małą wyspę, teraz dostępną.",
   }),
+  "beaver-breakout": simple({
+    pt: "Os Giant Beavers estão soltos em Silvertides, Marapur — dá para domar a montaria.",
+    en: "The Giant Beavers are loose at Silvertides in Marapur — the mount can be tamed.",
+    es: "Los Giant Beavers están sueltos en Silvertides, Marapur — se puede domar la montura.",
+    pl: "Giant Beavery są na wolności w Silvertides w Marapur — można oswoić wierzchowca.",
+  }),
+  shipwrecked: simple({
+    pt: "Um navio pirata naufragou na costa norte de Krailos — o melhor respawn de Pirate Corsair do jogo.",
+    en: "A pirate ship has wrecked on Krailos' north coast — the game's best Pirate Corsair respawn.",
+    es: "Un barco pirata naufragó en la costa norte de Krailos — el mejor respawn de Pirate Corsair del juego.",
+    pl: "Statek piracki rozbił się na północnym wybrzeżu Krailos — najlepszy respawn Pirate Corsair w grze.",
+  }),
+  forsaken: byVariant({
+    pt: (set) =>
+      set
+        ? `A Forsaken Mine está tomada por: ${set}.`
+        : "A Forsaken Mine mudou de habitantes no server save — olhe do primeiro andar antes de descer.",
+    en: (set) =>
+      set
+        ? `The Forsaken Mine is inhabited by ${set.toLowerCase()} today.`
+        : "The Forsaken Mine's inhabitants rotated at server save — look down from the first floor before descending.",
+    es: (set) =>
+      set
+        ? `La Forsaken Mine está ocupada por: ${set.toLowerCase()}.`
+        : "La Forsaken Mine cambió de habitantes en el server save — mira desde el primer piso antes de bajar.",
+    pl: (set) =>
+      set
+        ? `Forsaken Mine zamieszkują dziś: ${set.toLowerCase()}.`
+        : "Mieszkańcy Forsaken Mine zmienili się po server save — zajrzyj z pierwszego piętra przed zejściem.",
+  }),
   chyllfroest: simple({
     pt: "Uma ponte de gelo liga Svargrond a uma ilha congelada onde monstros foram avistados.",
     en: "An ice bridge now connects Svargrond to a frosty island where monsters have been sighted.",

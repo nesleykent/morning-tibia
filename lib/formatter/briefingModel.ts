@@ -23,6 +23,7 @@ import {
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
 import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
+import { deriveAchievementOpportunities } from "@/lib/achievements/opportunities";
 
 export type { BriefingLanguage } from "./translations";
 
@@ -99,6 +100,12 @@ export interface BriefingModel {
    * has been checked yet" when achievementLines is empty. */
   miniWorldChangesVerified: boolean;
   worldChangeLines: WorldChangeLine[];
+  /**
+   * Achievements today's *confirmed* conditions make possible. Derived from the same
+   * evidence rules as everything else, so an unchecked change can never produce one.
+   * Capped, and kept to one line each — the briefing is a morning summary, not a wiki.
+   */
+  opportunityLines: { emoji: string; achievement: string; condition: string }[];
   /** Same idea as miniWorldChangesVerified, but for a Guide NPC chat log. */
   worldChangesVerified: boolean;
   upcomingEventLines: EventLine[];
@@ -137,7 +144,16 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     const value = overrides.miniWorldChanges[def.id];
     if (!value || value.status === "unchecked") continue;
 
-    miniWorldChangesVerified = true;
+    // An always-active change is running whether or not the player checked anything, so it
+    // must not count as evidence that a World Board reading happened — otherwise a fresh
+    // session would claim to have been verified.
+    if (def.detection !== "always-active") miniWorldChangesVerified = true;
+
+    // ...and with no variant known there is nothing specific to report about it. Saying
+    // "the mine rotated" every single day is noise, so it waits until the player has looked.
+    if (def.detection === "always-active" && value.variantId === null && !overrides.includeAllChanges) {
+      continue;
+    }
 
     if (value.status === "inactive") {
       if (!overrides.includeAllChanges) continue;
@@ -184,6 +200,19 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       extra: narrative?.extra ?? null,
     });
   }
+
+  const opportunityLines = deriveAchievementOpportunities({
+    miniWorldChanges: overrides.miniWorldChanges,
+    worldChanges: overrides.worldChanges,
+    merchants: overrides.merchants,
+  })
+    .filter((opportunity) => opportunity.definition.strength === "required")
+    .slice(0, 6)
+    .map((opportunity) => ({
+      emoji: opportunity.emoji,
+      achievement: opportunity.definition.achievement,
+      condition: opportunity.conditionName,
+    }));
 
   const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
   const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
@@ -270,6 +299,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     achievementLines,
     miniWorldChangesVerified,
     worldChangeLines,
+    opportunityLines,
     worldChangesVerified,
     upcomingEventLines,
     upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
