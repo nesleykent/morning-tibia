@@ -5,8 +5,6 @@ export interface WorldChangeNarrative {
   headline: string;
   /** A second sentence with extra context (mechanic consequence, what it unlocks). */
   body?: string;
-  /** A third, fact-only line — e.g. what creature/boss is reachable — with its own emoji. */
-  extra?: { emoji: string; text: string };
 }
 
 type Lang<T> = Record<BriefingLanguage, T>;
@@ -36,21 +34,24 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       pl: { headline: "Horestis śpi w swoim grobowcu w pobliżu Ankrahmun." },
     }),
     "risen": simple({
+      // Not "can be fought": reaching him needs a banked Ornate Canopic Jar break, and that
+      // condition belongs to the opportunity, where it is typed alongside the prerequisite.
+      // The section's job is to say what the world is doing.
       pt: {
-        headline: "Horestis despertou e está disponível para ser enfrentado.",
-        body: "O faraó saiu do túmulo perto de Ankrahmun e ataca quem se aproximar.",
+        headline: "Horestis despertou de seu sono perto de Ankrahmun.",
+        body: "O faraó saiu do túmulo e ataca quem se aproximar.",
       },
       en: {
-        headline: "Horestis has risen and can be fought.",
-        body: "The pharaoh has left his tomb near Ankrahmun and attacks anyone who gets close.",
+        headline: "Horestis has risen from his slumber near Ankrahmun.",
+        body: "The pharaoh has left his tomb and attacks anyone who gets close.",
       },
       es: {
-        headline: "Horestis ha despertado y puede ser enfrentado.",
-        body: "El faraón salió de su tumba cerca de Ankrahmun y ataca a quien se acerque.",
+        headline: "Horestis ha despertado de su sueño cerca de Ankrahmun.",
+        body: "El faraón salió de su tumba y ataca a quien se acerque.",
       },
       pl: {
-        headline: "Horestis obudził się i można z nim walczyć.",
-        body: "Faraon opuścił swój grobowiec w pobliżu Ankrahmun i atakuje każdego, kto się zbliży.",
+        headline: "Horestis obudził się ze snu w pobliżu Ankrahmun.",
+        body: "Faraon opuścił grobowiec i atakuje każdego, kto się zbliży.",
       },
     }),
     "desecrated": simple({
@@ -84,55 +85,59 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   "mage-tower": {
     "portal-open": simple({
       pt: {
-        headline: "O portal dimensional está aberto na torre em Zao.",
-        body: "O Raging Mage pode ser enfrentado por quem cumprir os requisitos da World Change.",
-        extra: { emoji: "👹", text: "Boss disponível: Raging Mage" },
+        headline: "O Raging Mage está em sua torre em Zao e mantém o portal dimensional aberto.",
+        body: "A outra dimensão pode ser visitada enquanto ele viver.",
       },
       en: {
-        headline: "The dimensional portal is open in the tower at Zao.",
-        body: "The Raging Mage can be fought by whoever meets the World Change's requirements.",
-        extra: { emoji: "👹", text: "Boss available: Raging Mage" },
+        headline: "The Raging Mage is at his tower in Zao, holding the dimensional portal open.",
+        body: "The other dimension can be visited for as long as he lives.",
       },
       es: {
-        headline: "El portal dimensional está abierto en la torre de Zao.",
-        body: "El Raging Mage puede ser enfrentado por quien cumpla los requisitos de la World Change.",
-        extra: { emoji: "👹", text: "Jefe disponible: Raging Mage" },
+        headline: "El Raging Mage está en su torre de Zao y mantiene abierto el portal dimensional.",
+        body: "La otra dimensión puede visitarse mientras él viva.",
       },
       pl: {
-        headline: "Wymiarowy portal w wieży w Zao jest otwarty.",
-        body: "Z Raging Mage może zmierzyć się każdy, kto spełnia wymagania tej World Change.",
-        extra: { emoji: "👹", text: "Dostępny boss: Raging Mage" },
+        headline: "Raging Mage jest w swojej wieży w Zao i trzyma wymiarowy portal otwarty.",
+        body: "Inny wymiar można odwiedzać, dopóki mag żyje.",
       },
     }),
     "mage-slain": simple({
-      pt: { headline: "O Raging Mage foi derrotado e o portal na torre em Zao está fechado." },
-      en: { headline: "The Raging Mage has been slain and the portal in the Zao tower is closed." },
-      es: { headline: "El Raging Mage fue derrotado y el portal en la torre de Zao está cerrado." },
-      pl: { headline: "Raging Mage został pokonany, a portal w wieży w Zao jest zamknięty." },
+      pt: {
+        headline: "O Raging Mage foi derrotado e o portal na torre em Zao está se fechando.",
+        body: "Ele só volta a abrir depois do próximo Server Save.",
+      },
+      en: {
+        headline: "The Raging Mage has been slain and the portal in the Zao tower is collapsing.",
+        body: "It only opens again after the next server save.",
+      },
+      es: {
+        headline: "El Raging Mage fue derrotado y el portal en la torre de Zao se está cerrando.",
+        body: "Solo vuelve a abrirse tras el próximo Server Save.",
+      },
+      pl: {
+        headline: "Raging Mage został pokonany, a portal w wieży w Zao się zamyka.",
+        body: "Otworzy się ponownie dopiero po następnym server save.",
+      },
     }),
   },
 
   "masters-voice": {
     "passable": simple({
       pt: {
-        headline: "A torre estranha com os servos em Edron está acessível.",
-        body: "A World Change está na fase dos Golden Servants — ainda é preciso avançar pelas invasões para liberar o Mad Mage.",
-        extra: { emoji: "👹", text: "Boss ao fim da invasão: Mad Mage" },
+        headline: "A torre dos servos em Edron está coberta de slime.",
+        body: "O fungo precisa ser limpo antes que as ondas de servos comecem.",
       },
       en: {
-        headline: "The strange tower with the servants in Edron is accessible.",
-        body: "The World Change is in the Golden Servants phase — the invasions still need clearing to reach the Mad Mage.",
-        extra: { emoji: "👹", text: "Boss at the end: Mad Mage" },
+        headline: "The servants' tower in Edron is covered in slime.",
+        body: "The fungus has to be cleared before the servant waves begin.",
       },
       es: {
-        headline: "La torre extraña con los sirvientes en Edron está accesible.",
-        body: "La World Change está en la fase de los Golden Servants — aún hay que superar las invasiones para liberar al Mad Mage.",
-        extra: { emoji: "👹", text: "Jefe al final: Mad Mage" },
+        headline: "La torre de los sirvientes en Edron está cubierta de slime.",
+        body: "Hay que limpiar el hongo antes de que empiecen las oleadas de sirvientes.",
       },
       pl: {
-        headline: "Dziwna wieża ze sługami w Edron jest dostępna.",
-        body: "World Change jest w fazie Golden Servants — trzeba jeszcze przejść przez inwazje, by dotrzeć do Mad Mage.",
-        extra: { emoji: "👹", text: "Boss na końcu: Mad Mage" },
+        headline: "Wieża sług w Edron jest pokryta slime'em.",
+        body: "Grzyb trzeba usunąć, zanim ruszą fale sług.",
       },
     }),
     "impassable": simple({
@@ -159,19 +164,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "under-control": simple({
       pt: {
         headline: "A febre do pântano em Venore está sob controle — há remédio suficiente para todos.",
-        extra: { emoji: "🤒", text: "Feverish Citizens disponíveis para entrega de Medicine Pouches" },
       },
       en: {
         headline: "The swamp fever in Venore is under control — there's enough medicine for everyone.",
-        extra: { emoji: "🤒", text: "Feverish Citizens available for Medicine Pouch deliveries" },
       },
       es: {
         headline: "La fiebre del pantano en Venore está bajo control — hay medicina suficiente para todos.",
-        extra: { emoji: "🤒", text: "Feverish Citizens disponibles para entregar Medicine Pouches" },
       },
       pl: {
         headline: "Gorączka bagienna w Venore jest pod kontrolą — leków starcza dla wszystkich.",
-        extra: { emoji: "🤒", text: "Feverish Citizens dostępni do dostarczania Medicine Pouch" },
       },
     }),
   },
@@ -192,19 +193,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
           {
             pt: {
               headline: "Shadowthorn ainda está em chamas, mas os Tibianos vêm conseguindo conter o fogo.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf disponível (pode virar Crystal Wolf para tentativa de tame)" },
             },
             en: {
               headline: "Shadowthorn still burns, but Tibians have been successfully fighting the fire back.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf available (can turn into a Crystal Wolf to attempt taming)" },
             },
             es: {
               headline: "Shadowthorn sigue en llamas, pero los tibianos han logrado contener el fuego.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf disponible (puede volverse Crystal Wolf para intentar domar)" },
             },
             pl: {
               headline: "Shadowthorn wciąż płonie, ale Tibianie skutecznie walczą z ogniem.",
-              extra: { emoji: "🐺", text: "Dostępny Thornfire Wolf (może zmienić się w Crystal Wolf do oswojenia)" },
             },
           },
           language,
@@ -239,19 +236,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
           {
             pt: {
               headline: "Shadowthorn ainda está em chamas, mas os Tibianos vêm conseguindo conter o fogo.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf disponível (pode virar Crystal Wolf para tentativa de tame)" },
             },
             en: {
               headline: "Shadowthorn still burns, but Tibians have been successfully fighting the fire back.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf available (can turn into a Crystal Wolf to attempt taming)" },
             },
             es: {
               headline: "Shadowthorn sigue en llamas, pero los tibianos han logrado contener el fuego.",
-              extra: { emoji: "🐺", text: "Thornfire Wolf disponible (puede volverse Crystal Wolf para intentar domar)" },
             },
             pl: {
               headline: "Shadowthorn wciąż płonie, ale Tibianie skutecznie walczą z ogniem.",
-              extra: { emoji: "🐺", text: "Dostępny Thornfire Wolf (może zmienić się w Crystal Wolf do oswojenia)" },
             },
           },
           language,
@@ -282,19 +275,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "burning": simple({
       pt: {
         headline: "Shadowthorn está em chamas!",
-        extra: { emoji: "🐺", text: "Thornfire Wolf disponível (pode virar Crystal Wolf para tentativa de tame)" },
       },
       en: {
         headline: "Shadowthorn burns!",
-        extra: { emoji: "🐺", text: "Thornfire Wolf available (can turn into a Crystal Wolf to attempt taming)" },
       },
       es: {
         headline: "¡Shadowthorn está en llamas!",
-        extra: { emoji: "🐺", text: "Thornfire Wolf disponible (puede volverse Crystal Wolf para intentar domar)" },
       },
       pl: {
         headline: "Shadowthorn płonie!",
-        extra: { emoji: "🐺", text: "Dostępny Thornfire Wolf (może zmienić się w Crystal Wolf do oswojenia)" },
       },
     }),
   },
@@ -317,19 +306,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "dirty-swimmers": simple({
       pt: {
         headline: "O Lago Equívoco está contaminado.",
-        extra: { emoji: "🎣", text: "Shimmer Swimmers disponíveis para pesca" },
       },
       en: {
         headline: "The lake near Port Hope is polluted.",
-        extra: { emoji: "🎣", text: "Shimmer Swimmers available to fish" },
       },
       es: {
         headline: "El lago cerca de Port Hope está contaminado.",
-        extra: { emoji: "🎣", text: "Shimmer Swimmers disponibles para pescar" },
       },
       pl: {
         headline: "Jezioro w pobliżu Port Hope jest zanieczyszczone.",
-        extra: { emoji: "🎣", text: "Dostępne Shimmer Swimmers do złowienia" },
       },
     }),
     "dirty-exhausted": simple({
@@ -355,70 +340,42 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       es: { headline: "Los túneles bajo Kazordoon siguen inundados, pero ya se entregó suficiente carbón para mantener las bombas funcionando." },
       pl: { headline: "Tunele pod Kazordoon są nadal zalane, ale dostarczono już wystarczająco węgla, by pompy działały." },
     }),
-    "drained-quota-met": (stateId, language) => {
-      const quotaMet = stateId.toLowerCase().includes("met") && !stateId.toLowerCase().includes("not");
-      return pick(
-        {
-          pt: {
-            headline: "A água das minas foi drenada — o acesso aos Deepling Scouts está liberado.",
-            body: quotaMet
-              ? "Deeplings suficientes já foram mortos hoje, então a mina continuará aberta após o próximo Server Save."
-              : "Ainda é preciso matar mais Deeplings hoje para a mina continuar aberta após o próximo Server Save.",
-          },
-          en: {
-            headline: "The mine water has been drained — Deepling Scouts are accessible.",
-            body: quotaMet
-              ? "Enough Deeplings have already been killed today, so the mine will stay open after the next server save."
-              : "More Deeplings still need to be killed today for the mine to stay open after the next server save.",
-          },
-          es: {
-            headline: "El agua de la mina fue drenada — hay acceso a los Deepling Scouts.",
-            body: quotaMet
-              ? "Ya se mataron suficientes Deeplings hoy, así que la mina seguirá abierta tras el próximo Server Save."
-              : "Aún hace falta matar más Deeplings hoy para que la mina siga abierta tras el próximo Server Save.",
-          },
-          pl: {
-            headline: "Woda w kopalni została odpompowana — dostępni są Deepling Scouts.",
-            body: quotaMet
-              ? "Dziś zabito już wystarczająco Deeplingów, więc kopalnia pozostanie otwarta po następnym server save."
-              : "Trzeba dziś zabić jeszcze więcej Deeplingów, by kopalnia została otwarta po następnym server save.",
-          },
-        },
-        language,
-      );
-    },
-    "drained-quota-open": (stateId, language) => {
-      const quotaMet = stateId.toLowerCase().includes("met") && !stateId.toLowerCase().includes("not");
-      return pick(
-        {
-          pt: {
-            headline: "A água das minas foi drenada — o acesso aos Deepling Scouts está liberado.",
-            body: quotaMet
-              ? "Deeplings suficientes já foram mortos hoje, então a mina continuará aberta após o próximo Server Save."
-              : "Ainda é preciso matar mais Deeplings hoje para a mina continuar aberta após o próximo Server Save.",
-          },
-          en: {
-            headline: "The mine water has been drained — Deepling Scouts are accessible.",
-            body: quotaMet
-              ? "Enough Deeplings have already been killed today, so the mine will stay open after the next server save."
-              : "More Deeplings still need to be killed today for the mine to stay open after the next server save.",
-          },
-          es: {
-            headline: "El agua de la mina fue drenada — hay acceso a los Deepling Scouts.",
-            body: quotaMet
-              ? "Ya se mataron suficientes Deeplings hoy, así que la mina seguirá abierta tras el próximo Server Save."
-              : "Aún hace falta matar más Deeplings hoy para que la mina siga abierta tras el próximo Server Save.",
-          },
-          pl: {
-            headline: "Woda w kopalni została odpompowana — dostępni są Deepling Scouts.",
-            body: quotaMet
-              ? "Dziś zabito już wystarczająco Deeplingów, więc kopalnia pozostanie otwarta po następnym server save."
-              : "Trzeba dziś zabić jeszcze więcej Deeplingów, by kopalnia została otwarta po następnym server save.",
-          },
-        },
-        language,
-      );
-    },
+    "drained-quota-met": simple({
+      pt: {
+        headline: "A água das minas foi drenada — o acesso aos Deepling Scouts está liberado.",
+        body: "Deeplings suficientes já foram mortos hoje, então a mina continuará aberta após o próximo Server Save.",
+      },
+      en: {
+        headline: "The mine water has been drained — Deepling Scouts are accessible.",
+        body: "Enough Deeplings have already been killed today, so the mine will stay open after the next server save.",
+      },
+      es: {
+        headline: "El agua de la mina fue drenada — hay acceso a los Deepling Scouts.",
+        body: "Ya se mataron suficientes Deeplings hoy, así que la mina seguirá abierta tras el próximo Server Save.",
+      },
+      pl: {
+        headline: "Woda w kopalni została odpompowana — dostępni są Deepling Scouts.",
+        body: "Dziś zabito już wystarczająco Deeplingów, więc kopalnia pozostanie otwarta po następnym server save.",
+      },
+    }),
+    "drained-quota-open": simple({
+      pt: {
+        headline: "A água das minas foi drenada — o acesso aos Deepling Scouts está liberado.",
+        body: "Ainda é preciso matar mais Deeplings hoje para a mina continuar aberta após o próximo Server Save.",
+      },
+      en: {
+        headline: "The mine water has been drained — Deepling Scouts are accessible.",
+        body: "More Deeplings still need to be killed today for the mine to stay open after the next server save.",
+      },
+      es: {
+        headline: "El agua de la mina fue drenada — hay acceso a los Deepling Scouts.",
+        body: "Aún hace falta matar más Deeplings hoy para que la mina siga abierta tras el próximo Server Save.",
+      },
+      pl: {
+        headline: "Woda w kopalni została odpompowana — dostępni są Deepling Scouts.",
+        body: "Trzeba dziś zabić jeszcze więcej Deeplingów, by kopalnia została otwarta po następnym server save.",
+      },
+    }),
     "overrun": simple({
       pt: { headline: "Deeplings demais sobreviveram nos últimos cinco dias — eles vão inundar os túneis novamente e nada pode impedir." },
       en: { headline: "Too many Deeplings survived over the last five days — they will flood the tunnels again and nothing can stop them." },
@@ -446,26 +403,34 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "escaped": simple({
       pt: {
         headline: "Os cavalos escaparam dos estábulos perto de Thais — o aluguel está suspenso enquanto não voltarem.",
-        extra: { emoji: "🐎", text: "Wild Horses disponíveis nos arredores de Thais para tentativa de tame" },
       },
       en: {
         headline: "Horses have escaped near Thais — rentals are on hold until enough are chased back.",
-        extra: { emoji: "🐎", text: "Wild Horses available around Thais to attempt taming" },
       },
       es: {
         headline: "Los caballos escaparon cerca de Thais — el alquiler está suspendido hasta que vuelvan.",
-        extra: { emoji: "🐎", text: "Wild Horses disponibles cerca de Thais para intentar domar" },
       },
       pl: {
         headline: "Konie uciekły w pobliżu Thais — wynajem jest wstrzymany, dopóki nie wrócą.",
-        extra: { emoji: "🐎", text: "Dostępne Wild Horses w okolicach Thais do oswojenia" },
       },
     }),
     "normal": simple({
-      pt: { headline: "Os cavalos estão nos estábulos perto de Thais e podem ser alugados normalmente." },
-      en: { headline: "The horses are back in their stables near Thais and can be rented normally." },
-      es: { headline: "Los caballos están en los establos cerca de Thais y pueden alquilarse con normalidad." },
-      pl: { headline: "Konie są w stajniach w pobliżu Thais i można je normalnie wynająć." },
+      pt: {
+        headline: "Os serviços de cavalo perto de Thais e Venore estão funcionando normalmente.",
+        body: "Com os cavalos no cercado, nenhum Wild Horse aparece para ser domado.",
+      },
+      en: {
+        headline: "The horse services near Thais and Venore are working normally.",
+        body: "With the horses penned, no Wild Horse spawns to be tamed.",
+      },
+      es: {
+        headline: "Los servicios de caballos cerca de Thais y Venore funcionan con normalidad.",
+        body: "Con los caballos en el corral, no aparece ningún Wild Horse para domar.",
+      },
+      pl: {
+        headline: "Usługi końskie przy Thais i Venore działają normalnie.",
+        body: "Przy koniach w zagrodzie żaden Wild Horse nie pojawia się do oswojenia.",
+      },
     }),
   },
 
@@ -489,7 +454,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       },
     }),
     "dwindling": (stateId, language) => {
-      const leaving = stateId.toLowerCase().includes("leav");
+      const leaving = stateId === "leaving";
       return pick(
         {
           pt: {
@@ -521,7 +486,7 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       );
     },
     "leaving": (stateId, language) => {
-      const leaving = stateId.toLowerCase().includes("leav");
+      const leaving = stateId === "leaving";
       return pick(
         {
           pt: {
@@ -553,117 +518,145 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       );
     },
     "wolves": simple({
-      pt: { headline: "Lobos famintos rondam a região de Ab'Dendriel — enquanto estiverem lá, nenhum White Deer vai voltar." },
-      en: { headline: "Starving wolves are roaming the Ab'Dendriel region — no White Deer will return while they're around." },
-      es: { headline: "Lobos hambrientos rondan la región de Ab'Dendriel — mientras estén ahí, ningún White Deer volverá." },
-      pl: { headline: "Głodne wilki krążą w okolicach Ab'Dendriel — dopóki tam są, żaden White Deer nie wróci." },
+      pt: {
+        headline: "Starving Wolves rondam a região de Ab'Dendriel.",
+        body: "Não há White Deer na região enquanto os lobos estiverem lá.",
+      },
+      en: {
+        headline: "Starving Wolves are roaming the Ab'Dendriel region.",
+        body: "No White Deer are in the region while the wolves are there.",
+      },
+      es: {
+        headline: "Los Starving Wolves rondan la región de Ab'Dendriel.",
+        body: "No hay White Deer en la región mientras los lobos estén ahí.",
+      },
+      pl: {
+        headline: "Starving Wolves krążą po okolicach Ab'Dendriel.",
+        body: "Dopóki wilki tam są, w regionie nie ma White Deer.",
+      },
     }),
   },
 
   "demon-war": {
     "stalemate": simple({
-      pt: { headline: "A guerra entre os demônios está em impasse — nenhuma facção domina a Demonwar Dungeon." },
-      en: { headline: "The demon war is in a stalemate — no faction controls the Demonwar Dungeon." },
-      es: { headline: "La guerra entre demonios está estancada — ninguna facción domina la Demonwar Dungeon." },
-      pl: { headline: "Wojna demonów utknęła w martwym punkcie — żadna frakcja nie kontroluje Demonwar Dungeon." },
+      pt: {
+        headline: "A guerra entre os demônios está em impasse — nenhuma facção tem vantagem.",
+        body: "Sem vantagem, nenhum Lord ou Prince nasce nas torres.",
+      },
+      en: {
+        headline: "The demon war is in a stalemate — neither faction has the advantage.",
+        body: "With no advantage, no Lords or Princes spawn in either tower.",
+      },
+      es: {
+        headline: "La guerra entre demonios está estancada — ninguna facción tiene ventaja.",
+        body: "Sin ventaja, no aparece ningún Lord ni Prince en las torres.",
+      },
+      pl: {
+        headline: "Wojna demonów utknęła w martwym punkcie — żadna frakcja nie ma przewagi.",
+        body: "Bez przewagi w wieżach nie pojawiają się żadni Lordowie ani Princes.",
+      },
     }),
     "shaburak-advantage": (stateId, language) => {
-      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const shaburak = stateId.startsWith("shaburak-");
       const winner = shaburak ? "Shaburak" : "Askarak";
       const loser = shaburak ? "Askarak" : "Shaburak";
+      const tower = shaburak ? { pt: "oeste", en: "western", es: "oeste", pl: "zachodniej" } : { pt: "leste", en: "eastern", es: "este", pl: "wschodniej" };
       return pick(
         {
           pt: {
-            headline: `Os ${winner} estão vencendo a guerra contra os ${loser}.`,
-            body: "A vantagem atual determina qual facção ocupa a Demonwar Dungeon e quais criaturas ficam disponíveis.",
+            headline: `Os ${winner} estão em vantagem sobre os ${loser}.`,
+            body: `${winner} Lords nascem nos andares superiores da torre ${tower.pt}; os Princes ainda não.`,
           },
           en: {
-            headline: `The ${winner} are winning the war against the ${loser}.`,
-            body: "The current advantage decides which faction holds the Demonwar Dungeon and which creatures are accessible.",
+            headline: `The ${winner} have the advantage over the ${loser}.`,
+            body: `${winner} Lords spawn on the upper floors of the ${tower.en} tower; the Princes do not yet.`,
           },
           es: {
-            headline: `Los ${winner} están ganando la guerra contra los ${loser}.`,
-            body: "La ventaja actual determina qué facción ocupa la Demonwar Dungeon y qué criaturas están disponibles.",
+            headline: `Los ${winner} tienen ventaja sobre los ${loser}.`,
+            body: `Los ${winner} Lords aparecen en los pisos superiores de la torre ${tower.es}; los Princes todavía no.`,
           },
           pl: {
-            headline: `${winner} wygrywają wojnę z ${loser}.`,
-            body: "Obecna przewaga decyduje, która frakcja zajmuje Demonwar Dungeon i jakie stworzenia są dostępne.",
+            headline: `${winner} mają przewagę nad ${loser}.`,
+            body: `${winner} Lordowie pojawiają się na górnych piętrach ${tower.pl} wieży; Princes jeszcze nie.`,
           },
         },
         language,
       );
     },
     "askarak-advantage": (stateId, language) => {
-      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const shaburak = stateId.startsWith("shaburak-");
       const winner = shaburak ? "Shaburak" : "Askarak";
       const loser = shaburak ? "Askarak" : "Shaburak";
+      const tower = shaburak ? { pt: "oeste", en: "western", es: "oeste", pl: "zachodniej" } : { pt: "leste", en: "eastern", es: "este", pl: "wschodniej" };
       return pick(
         {
           pt: {
-            headline: `Os ${winner} estão vencendo a guerra contra os ${loser}.`,
-            body: "A vantagem atual determina qual facção ocupa a Demonwar Dungeon e quais criaturas ficam disponíveis.",
+            headline: `Os ${winner} estão em vantagem sobre os ${loser}.`,
+            body: `${winner} Lords nascem nos andares superiores da torre ${tower.pt}; os Princes ainda não.`,
           },
           en: {
-            headline: `The ${winner} are winning the war against the ${loser}.`,
-            body: "The current advantage decides which faction holds the Demonwar Dungeon and which creatures are accessible.",
+            headline: `The ${winner} have the advantage over the ${loser}.`,
+            body: `${winner} Lords spawn on the upper floors of the ${tower.en} tower; the Princes do not yet.`,
           },
           es: {
-            headline: `Los ${winner} están ganando la guerra contra los ${loser}.`,
-            body: "La ventaja actual determina qué facción ocupa la Demonwar Dungeon y qué criaturas están disponibles.",
+            headline: `Los ${winner} tienen ventaja sobre los ${loser}.`,
+            body: `Los ${winner} Lords aparecen en los pisos superiores de la torre ${tower.es}; los Princes todavía no.`,
           },
           pl: {
-            headline: `${winner} wygrywają wojnę z ${loser}.`,
-            body: "Obecna przewaga decyduje, która frakcja zajmuje Demonwar Dungeon i jakie stworzenia są dostępne.",
+            headline: `${winner} mają przewagę nad ${loser}.`,
+            body: `${winner} Lordowie pojawiają się na górnych piętrach ${tower.pl} wieży; Princes jeszcze nie.`,
           },
         },
         language,
       );
     },
     "shaburak-dominant": (stateId, language) => {
-      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const shaburak = stateId.startsWith("shaburak-");
       const winner = shaburak ? "Shaburak" : "Askarak";
+      const tower = shaburak ? { pt: "oeste", en: "western", es: "oeste", pl: "zachodniej" } : { pt: "leste", en: "eastern", es: "este", pl: "wschodniej" };
       return pick(
         {
           pt: {
             headline: `Os ${winner} convocaram seus líderes e dominam o complexo.`,
-            body: "A Demonwar Dungeon está totalmente sob controle dessa facção por enquanto.",
+            body: `${winner} Lords e Princes nascem nos andares superiores da torre ${tower.pt}.`,
           },
           en: {
             headline: `The ${winner} have summoned their leaders and dominate the complex.`,
-            body: "The Demonwar Dungeon is fully under this faction's control for now.",
+            body: `${winner} Lords and Princes spawn on the upper floors of the ${tower.en} tower.`,
           },
           es: {
             headline: `Los ${winner} invocaron a sus líderes y dominan el complejo.`,
-            body: "La Demonwar Dungeon está totalmente bajo el control de esta facción por ahora.",
+            body: `Los ${winner} Lords y Princes aparecen en los pisos superiores de la torre ${tower.es}.`,
           },
           pl: {
             headline: `${winner} przywołali swoich przywódców i dominują w kompleksie.`,
-            body: "Demonwar Dungeon jest obecnie całkowicie pod kontrolą tej frakcji.",
+            body: `${winner} Lordowie i Princes pojawiają się na górnych piętrach ${tower.pl} wieży.`,
           },
         },
         language,
       );
     },
     "askarak-dominant": (stateId, language) => {
-      const shaburak = stateId.toLowerCase().includes("shaburak");
+      const shaburak = stateId.startsWith("shaburak-");
       const winner = shaburak ? "Shaburak" : "Askarak";
+      const tower = shaburak ? { pt: "oeste", en: "western", es: "oeste", pl: "zachodniej" } : { pt: "leste", en: "eastern", es: "este", pl: "wschodniej" };
       return pick(
         {
           pt: {
             headline: `Os ${winner} convocaram seus líderes e dominam o complexo.`,
-            body: "A Demonwar Dungeon está totalmente sob controle dessa facção por enquanto.",
+            body: `${winner} Lords e Princes nascem nos andares superiores da torre ${tower.pt}.`,
           },
           en: {
             headline: `The ${winner} have summoned their leaders and dominate the complex.`,
-            body: "The Demonwar Dungeon is fully under this faction's control for now.",
+            body: `${winner} Lords and Princes spawn on the upper floors of the ${tower.en} tower.`,
           },
           es: {
             headline: `Los ${winner} invocaron a sus líderes y dominan el complejo.`,
-            body: "La Demonwar Dungeon está totalmente bajo el control de esta facción por ahora.",
+            body: `Los ${winner} Lords y Princes aparecen en los pisos superiores de la torre ${tower.es}.`,
           },
           pl: {
             headline: `${winner} przywołali swoich przywódców i dominują w kompleksie.`,
-            body: "Demonwar Dungeon jest obecnie całkowicie pod kontrolą tej frakcji.",
+            body: `${winner} Lordowie i Princes pojawiają się na górnych piętrach ${tower.pl} wieży.`,
           },
         },
         language,
@@ -687,19 +680,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "awake": simple({
       pt: {
         headline: "A Serpent está desperta.",
-        extra: { emoji: "⚔️", text: "Renegade Quara dominam as regiões submersas de Oramond" },
       },
       en: {
         headline: "The Serpent is awake.",
-        extra: { emoji: "⚔️", text: "Renegade Quara control the sunken regions of Oramond" },
       },
       es: {
         headline: "La Serpent está despierta.",
-        extra: { emoji: "⚔️", text: "Los Renegade Quara dominan las regiones sumergidas de Oramond" },
       },
       pl: {
         headline: "Serpent się obudził.",
-        extra: { emoji: "⚔️", text: "Renegade Quara kontrolują zatopione regiony Oramond" },
       },
     }),
   },
@@ -722,19 +711,15 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "arcanum-breached": simple({
       pt: {
         headline: "O Inner Arcanum das profundezas foi rompido.",
-        extra: { emoji: "🐙", text: "Dark Guardians podem ser enfrentados" },
       },
       en: {
         headline: "The inner arcanum of the deep has been breached.",
-        extra: { emoji: "🐙", text: "Dark Guardians can be fought" },
       },
       es: {
         headline: "El Inner Arcanum de las profundidades ha sido violado.",
-        extra: { emoji: "🐙", text: "Los Dark Guardians pueden ser enfrentados" },
       },
       pl: {
         headline: "Inner Arcanum głębin zostało przełamane.",
-        extra: { emoji: "🐙", text: "Można zmierzyć się z Dark Guardians" },
       },
     }),
   },
@@ -756,20 +741,20 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
     "fallen": simple({
       pt: {
-        headline: "Todas as estruturas da Hive estão abertas.",
-        body: "As defesas caíram e os exércitos estão em polvorosa — leste e oeste, bosses da Hive, Ladybugs e reward rooms acessíveis.",
+        headline: "As defesas da Hive caíram e todas as estruturas estão abertas.",
+        body: "Os exércitos estão em polvorosa; leste e oeste da Hive interna podem ser percorridos.",
       },
       en: {
-        headline: "Every Hive structure is open.",
-        body: "Defences have fallen and the armies are in disarray — east and west, Hive bosses, Ladybugs, and reward rooms are all accessible.",
+        headline: "The hive's defences have fallen and every structure is open.",
+        body: "The armies are in disarray; both the eastern and western inner Hive can be walked.",
       },
       es: {
-        headline: "Todas las estructuras de la Hive están abiertas.",
-        body: "Las defensas cayeron y los ejércitos están en desorden — este y oeste, jefes de la Hive, Ladybugs y reward rooms accesibles.",
+        headline: "Las defensas de la Hive cayeron y todas las estructuras están abiertas.",
+        body: "Los ejércitos están en desorden; el este y el oeste de la Hive interna pueden recorrerse.",
       },
       pl: {
-        headline: "Wszystkie struktury Hive są otwarte.",
-        body: "Obrona upadła, a armie są w rozsypce — wschód i zachód, bossowie Hive, Ladybugs i reward roomy są dostępne.",
+        headline: "Obrona Hive upadła i wszystkie struktury są otwarte.",
+        body: "Armie są w rozsypce; wschodnią i zachodnią część wewnętrznego Hive da się przejść.",
       },
     }),
   },

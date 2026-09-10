@@ -73,6 +73,76 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
     }
   });
 
+  it("reads a reply that carries on past the wording the catalog quotes", () => {
+    // TibiaWiki's transcript stops at "…dominate the complex."; the live reply keeps going. The
+    // parser used to require the catalog string verbatim, full stop included, so this whole
+    // World Change came back as never checked.
+    const result = parseGuideLog(
+      "Guide Luke: The Shaburak have summoned their leaders and dominate the complex, while the Askarak are weakened.",
+    );
+    expect(result.signals[0]).toMatchObject({
+      changeId: "demon-war",
+      stateId: "shaburak-dominant",
+    });
+  });
+
+  it("accepts either spelling of a reply the wiki and the client disagree about", () => {
+    for (const spelling of ["below", "bellow"]) {
+      const result = parseGuideLog(
+        `Guide Elena: Countless firestarters are in their cells ${spelling} Shadowthorn, but right now they are safely guarded.`,
+      );
+      expect(result.signals[0], spelling).toMatchObject({
+        changeId: "thornfire",
+        stateId: "guarded",
+      });
+    }
+  });
+
+  it("still tells apart two replies that share a first sentence", () => {
+    // Only the *trailing* punctuation is ignored, never an interior full stop — these two
+    // Horestis replies differ solely in what follows "has been desecrated.".
+    const desecrated = parseGuideLog(
+      "Guide: Horestis's body has been desecrated. His curse now hangs over Ankrahmun like the shadow of the vulture and his tomb is almost empty.",
+    );
+    expect(desecrated.signals[0]?.stateId).toBe("desecrated");
+
+    const ended = parseGuideLog(
+      "Guide: Horestis's body has been desecrated. By now, his curse has ended though. His minions are recovering slowly.",
+    );
+    expect(ended.signals[0]?.stateId).toBe("curse-ended");
+  });
+
+  describe("replies the catalog cannot read", () => {
+    it("reports them instead of dropping them", () => {
+      const result = parseGuideLog("Guide Tiko: Something entirely new is happening in Zao.");
+      expect(result.signals).toEqual([]);
+      expect(result.unrecognisedReplies).toEqual([
+        "Something entirely new is happening in Zao.",
+      ]);
+    });
+
+    it("does not flag a reply it did understand", () => {
+      const result = parseGuideLog("Guide Luke: The great lake near Port Hope is clean.");
+      expect(result.signals).toHaveLength(1);
+      expect(result.unrecognisedReplies).toEqual([]);
+    });
+
+    it("does not flag ordinary chat that is not a Guide speaking", () => {
+      const result = parseGuideLog("Someone: hey, is the hive open today?");
+      expect(result.unrecognisedReplies).toEqual([]);
+    });
+
+    it("reports the same unreadable reply once, however often it was repeated", () => {
+      const result = parseGuideLog(
+        [
+          "Guide Tiko: Something entirely new is happening in Zao.",
+          "Guide Tiko: Something entirely new is happening in Zao.",
+        ].join("\n"),
+      );
+      expect(result.unrecognisedReplies).toHaveLength(1);
+    });
+  });
+
   it("covers every one of the 14 official Guide keywords", () => {
     const covered = new Set(GUIDE_MESSAGES.map((entry) => entry.changeId));
     for (const [id] of WORLD_CHANGES_BY_ID) {

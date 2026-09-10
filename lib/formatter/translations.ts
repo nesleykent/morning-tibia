@@ -31,12 +31,16 @@ export interface BriefingTranslation {
   miniWorldChangesNoneActive: string;
   /** Nothing has been checked via a Guide NPC this session — every entry is still "unknown". */
   worldChangesNotVerified: string;
-  /** Heading for the achievement chances today's confirmed conditions create. */
+  /**
+   * The World Change keywords nobody asked a Guide about. Printed as its own small line so
+   * UNKNOWN reads as unknown rather than as "nothing is happening there" — the distinction the
+   * whole evidence model exists to keep.
+   */
+  worldChangesUnchecked: (labels: string[]) => string;
+  /** Heading for what today's confirmed states make worth doing. */
   sectionOpportunities: string;
-  /** Connector for "<Achievement> — thanks to <condition>". Keeps the briefing localized
-   * without translating ~26 achievement task descriptions into four languages. */
-  opportunityBecause: (condition: string) => string;
-  noWorldChanges: string;
+  /** "and 4 more" — the tail of a capped opportunity list. */
+  opportunitiesHidden: (count: number) => string;
   noActiveEvents: string;
   noUpcomingEvents: string;
 }
@@ -61,9 +65,10 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     miniWorldChangesNotVerified: "Nenhuma Mini World Change foi verificada ainda hoje — cole o texto do World Board para conferir.",
     miniWorldChangesNoneActive: "World Board conferido — nenhuma Mini World Change ativa no momento.",
     worldChangesNotVerified: "Nenhuma World Change foi consultada ainda hoje — pergunte a um Guide NPC para conferir.",
-    sectionOpportunities: "Oportunidades de hoje",
-    opportunityBecause: (condition) => `graças a ${condition}`,
-    noWorldChanges: "Nenhuma World Change ativa identificada hoje.",
+    worldChangesUnchecked: (labels) =>
+      `Ainda não consultadas hoje: ${labels.join(", ")}.`,
+    sectionOpportunities: "OPORTUNIDADES DE HOJE",
+    opportunitiesHidden: (count) => `E mais ${count} ${count === 1 ? "oportunidade" : "oportunidades"} hoje.`,
     noActiveEvents: "Nenhum evento ativo no momento.",
     noUpcomingEvents: "Nenhum evento programado no momento.",
   },
@@ -86,9 +91,9 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     miniWorldChangesNotVerified: "No Mini World Changes have been checked yet today — paste the World Board text to check them.",
     miniWorldChangesNoneActive: "World Board checked — no Mini World Changes are active right now.",
     worldChangesNotVerified: "No World Changes have been checked yet today — ask a Guide NPC to check them.",
-    sectionOpportunities: "Today's opportunities",
-    opportunityBecause: (condition) => `thanks to ${condition}`,
-    noWorldChanges: "No active World Changes identified today.",
+    worldChangesUnchecked: (labels) => `Not checked yet today: ${labels.join(", ")}.`,
+    sectionOpportunities: "TODAY'S OPPORTUNITIES",
+    opportunitiesHidden: (count) => `And ${count} more ${count === 1 ? "opportunity" : "opportunities"} today.`,
     noActiveEvents: "No active events right now.",
     noUpcomingEvents: "No events scheduled right now.",
   },
@@ -111,9 +116,9 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     miniWorldChangesNotVerified: "Aún no se verificó ninguna Mini World Change hoy — pega el texto del World Board para comprobarlas.",
     miniWorldChangesNoneActive: "World Board revisado — ninguna Mini World Change está activa en este momento.",
     worldChangesNotVerified: "Aún no se consultó ninguna World Change hoy — pregúntale a un Guide NPC para comprobarlas.",
-    sectionOpportunities: "Oportunidades de hoy",
-    opportunityBecause: (condition) => `gracias a ${condition}`,
-    noWorldChanges: "No se identificaron World Changes activas hoy.",
+    worldChangesUnchecked: (labels) => `Sin consultar hoy: ${labels.join(", ")}.`,
+    sectionOpportunities: "OPORTUNIDADES DE HOY",
+    opportunitiesHidden: (count) => `Y ${count} ${count === 1 ? "oportunidad más" : "oportunidades más"} hoy.`,
     noActiveEvents: "No hay eventos activos ahora mismo.",
     noUpcomingEvents: "No hay eventos programados por ahora.",
   },
@@ -136,9 +141,9 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     miniWorldChangesNotVerified: "Żadna Mini World Change nie została dziś jeszcze sprawdzona — wklej tekst z World Board, aby to zrobić.",
     miniWorldChangesNoneActive: "Sprawdzono World Board — obecnie żadna Mini World Change nie jest aktywna.",
     worldChangesNotVerified: "Żadna World Change nie została dziś jeszcze sprawdzona — zapytaj Guide NPC, aby to zrobić.",
-    sectionOpportunities: "Dzisiejsze okazje",
-    opportunityBecause: (condition) => `dzięki ${condition}`,
-    noWorldChanges: "Dziś nie zidentyfikowano żadnych aktywnych World Changes.",
+    worldChangesUnchecked: (labels) => `Dziś jeszcze niesprawdzone: ${labels.join(", ")}.`,
+    sectionOpportunities: "DZISIEJSZE OKAZJE",
+    opportunitiesHidden: (count) => `I jeszcze ${count} okazji dziś.`,
     noActiveEvents: "Obecnie brak aktywnych wydarzeń.",
     noUpcomingEvents: "Obecnie brak zaplanowanych wydarzeń.",
   },

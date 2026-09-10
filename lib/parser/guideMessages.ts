@@ -12,9 +12,13 @@
  *   (the per-city Guide transcripts under data/npcs/text), which captures whole
  *   conversations as they happened.
  * - The remaining states of each cycle come from TibiaWiki's per-change articles.
- * - Two replies quoted on the wiki trail off mid-sentence, because they end with a varying
- *   "N actions have been taken" counter (Deeplings, Hive Born). Those entries match on the
- *   stable leading sentence, which is already unique enough to identify the state.
+ * - Several replies quoted on the wiki trail off mid-sentence, because the live reply
+ *   continues with a varying counter (Deeplings, Hive Born: "N actions have been taken") or a
+ *   trailing clause the wiki omits (Demon War: "…dominate the complex, while the Askarak are
+ *   weakened"). Those entries are the stable leading sentence, which is already unique enough
+ *   to identify the state, and parseGuideLog matches them as a prefix — so a reply that
+ *   continues past the catalog text still resolves. Matching the full string including its
+ *   final full stop, as this used to, silently lost every reply with a continuation.
  * - `unverifiedWording: true` marks text that is plausible and sourced from a secondary fan
  *   site but that could not be confirmed verbatim anywhere primary. If such wording is
  *   slightly off the parser simply never matches it — it fails silently and safely rather
@@ -27,6 +31,13 @@ export interface GuideMessageEntry {
   text: string;
   changeId: string;
   stateId: string;
+  /**
+   * Other wordings of the same reply that must also match. Two things make this necessary:
+   * TibiaWiki transcribes some replies with typos the live client does not have (and vice
+   * versa), and CipSoft has reworded a few over the years. Listing the variants is safer than
+   * loosening the matcher, because each variant is still an exact, reviewable string.
+   */
+  alsoMatches?: readonly string[];
   /** Wording sourced from a secondary fan reference and not confirmed verbatim. */
   unverifiedWording?: boolean;
 }
@@ -249,10 +260,14 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
 
   // ── Thornfire ───────────────────────────────────────────────────────────────
   {
-    text: "Countless firestarters are in their cells bellow Shadowthorn, but right now they are safely guarded.",
+    // Verified against a live Guide reply (Ustebra, 2026-09-10). TibiaWiki's transcript of the
+    // same line spells it "bellow", which is kept as a variant so either source parses.
+    text: "Countless firestarters are in their cells below Shadowthorn, but right now they are safely guarded.",
+    alsoMatches: [
+      "Countless firestarters are in their cells bellow Shadowthorn, but right now they are safely guarded.",
+    ],
     changeId: "thornfire",
     stateId: "guarded",
-    unverifiedWording: true,
   },
   {
     text: "Most guards and elves preventing the firestarters from breaking out have been slain. Shadowthorn is in danger of being set ablaze.",

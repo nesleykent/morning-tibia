@@ -20,7 +20,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils/cn";
 import { buildDailyDigest } from "@/lib/dashboard/dailyDigest";
-import { deriveAchievementOpportunities } from "@/lib/achievements/opportunities";
+import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 import { composeDispatch } from "@/lib/dispatch/composeDispatch";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { toBriefingDate, toTibiaDayKey } from "@/lib/utils/date";
@@ -53,7 +53,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
 
   const opportunities = useMemo(
     () =>
-      deriveAchievementOpportunities({
+      deriveOpportunities({
         miniWorldChanges: state.overrides.miniWorldChanges,
         worldChanges: state.overrides.worldChanges,
         merchants: state.overrides.merchants,

@@ -1,4 +1,5 @@
 import type { MerchantId } from "./merchant";
+import type { BoardCompletenessBasis } from "./evidence";
 
 /**
  * One Mini World Change the pasted text proves is currently running.
@@ -32,19 +33,19 @@ export interface ParsedMerchantHint {
 export interface ParsedBoardResult {
   signals: ParsedMiniWorldChangeSignal[];
   merchantHints: ParsedMerchantHint[];
+  /** Board messages (and merchant hints) recognised in the paste, for the receipt. */
+  recognisedCount: number;
   /**
-   * True only when the paste contains the World Board's own fixed opening line
-   * ("This board will notify you of currently active mini world changes all over Tibia."),
-   * which is the one thing that identifies the text as a whole board reading rather than a
-   * fragment someone copied a couple of lines out of.
+   * Why this counts as a whole board reading, or `"none"` for a fragment. See
+   * `BoardCompletenessBasis`: either the board's own opening line is present, or the reader
+   * declared the paste complete.
    *
-   * This is the ONLY thing that licenses marking unmentioned changes inactive, and it is
-   * never inferred from the presence of some recognised message — a player who pastes a
-   * single line has told us nothing about the other 23 changes. It is deliberately a
-   * conservative test: a genuine full reading whose first line was trimmed off is treated
-   * as a fragment, which loses a little convenience but cannot wrongly clear a change the
-   * player would then miss.
+   * Completeness is the ONLY thing that licenses marking unmentioned changes inactive, and it
+   * is never inferred from the presence of some recognised message — a player who pastes a
+   * single line has told us nothing about the other changes.
    */
+  completenessBasis: BoardCompletenessBasis;
+  /** Convenience for `completenessBasis !== "none"`. */
   isCompleteReading: boolean;
 }
 
@@ -55,4 +56,11 @@ export interface ParsedTowncryerResult {
 
 export interface ParsedGuideResult {
   signals: ParsedWorldChangeSignal[];
+  /**
+   * Lines that are unmistakably a Guide NPC speaking but whose wording is not in the catalog.
+   * Kept so a reply the app cannot read is reported as unread rather than vanishing — the
+   * difference between "the Guide said nothing about this" and "we could not parse what the
+   * Guide said" matters to anyone deciding whether to trust the briefing.
+   */
+  unrecognisedReplies: string[];
 }

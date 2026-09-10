@@ -11,14 +11,29 @@ describe("getMiniWorldChangeNarrative", () => {
   });
 
   it("names the location when a source supplied one", () => {
-    expect(getMiniWorldChangeNarrative("spirit-grounds", "Vengoth", "en")).toContain("Vengoth");
+    expect(getMiniWorldChangeNarrative("spirit-grounds", "vengoth", "en")).toContain("Vengoth");
+  });
+
+  it("writes the variant's name in the briefing's own language", () => {
+    // The bug this replaces: the English variant label was interpolated straight into the
+    // Portuguese sentence and lower-cased, giving "acessíveis por darama's northernmost coast".
+    const pt = getMiniWorldChangeNarrative("nightmare-isles", "daramas-northernmost-coast", "pt");
+    expect(pt).toBe("O portal para as Nightmare Isles está na costa mais ao norte de Darama.");
+    expect(pt).not.toMatch(/northernmost/i);
+
+    expect(getMiniWorldChangeNarrative("nomads", "south-of-the-tarpit-tomb", "pt")).toContain(
+      "ao sul do Tarpit Tomb",
+    );
+    expect(getMiniWorldChangeNarrative("warpath", "north-of-carlin", "es")).toContain(
+      "al norte de Carlin",
+    );
   });
 
   it("says plainly that the spot is unknown when no source named one", () => {
     // Fury Gates is the clearest case: the board and the Towncryer both confirm a gate is
     // open and neither ever says which of the ten cities it is.
     const pending = getMiniWorldChangeNarrative("fury-gates", null, "en");
-    const known = getMiniWorldChangeNarrative("fury-gates", "Thais", "en");
+    const known = getMiniWorldChangeNarrative("fury-gates", "thais", "en");
 
     expect(pending).toMatch(/isn't known yet/i);
     expect(known).toContain("Thais");
@@ -26,13 +41,9 @@ describe("getMiniWorldChangeNarrative", () => {
   });
 
   it("distinguishes each Poacher Caves phase by what it means, not by a number", () => {
-    const game = getMiniWorldChangeNarrative("poacher-caves", "Wild animals dominate", "en");
-    const poachers = getMiniWorldChangeNarrative("poacher-caves", "Poachers dominate", "en");
-    const wolves = getMiniWorldChangeNarrative(
-      "poacher-caves",
-      "Vengeful ghost wolves dominate",
-      "en",
-    );
+    const game = getMiniWorldChangeNarrative("poacher-caves", "game", "en");
+    const poachers = getMiniWorldChangeNarrative("poacher-caves", "poachers", "en");
+    const wolves = getMiniWorldChangeNarrative("poacher-caves", "ghost-wolves", "en");
 
     expect(game).toMatch(/wild animals dominate/i);
     expect(poachers).toMatch(/poachers are ravaging/i);
@@ -40,11 +51,13 @@ describe("getMiniWorldChangeNarrative", () => {
     expect(new Set([game, poachers, wolves]).size).toBe(3);
   });
 
-  it("names the Jungle Camp boss that follows from the winning faction", () => {
-    expect(getMiniWorldChangeNarrative("jungle-camp", "Hunters dominate", "en")).toMatch(/Arthom/);
-    expect(getMiniWorldChangeNarrative("jungle-camp", "Dworcs dominate", "en")).toMatch(/Oodok/);
-    // With no faction known, it must not pick one.
+  it("says which faction holds Trapwood, and never guesses when the source didn't say", () => {
+    // The boss each faction brings is a state-specific opportunity now, not narration — the
+    // narrative's job is the state itself.
+    expect(getMiniWorldChangeNarrative("jungle-camp", "hunters", "en")).toMatch(/hunters hold/i);
+    expect(getMiniWorldChangeNarrative("jungle-camp", "dworcs", "en")).toMatch(/dworcs hold/i);
     const unknown = getMiniWorldChangeNarrative("jungle-camp", null, "en");
+    expect(unknown).toMatch(/doesn't say who's winning/i);
     expect(unknown).not.toMatch(/Arthom|Oodok/);
   });
 
@@ -72,10 +85,15 @@ describe("getMiniWorldChangeNarrative", () => {
     for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
       for (const variant of def.variants) {
         for (const language of LANGUAGES) {
+          const named = getMiniWorldChangeNarrative(def.id, variant.id, language);
+          expect(named, `${def.id}/${variant.id}/${language}`).not.toBeNull();
+          // A variant id with no name behind it falls through to the "we don't know which"
+          // wording, which would be the app claiming ignorance it does not have. Comparing
+          // against the unknown-variant sentence catches exactly that.
           expect(
-            getMiniWorldChangeNarrative(def.id, variant.label, language),
-            `${def.id}/${variant.id}/${language}`,
-          ).not.toBeNull();
+            named,
+            `${def.id}/${variant.id}/${language} fell through to the unknown-variant wording`,
+          ).not.toBe(getMiniWorldChangeNarrative(def.id, null, language));
         }
       }
     }

@@ -61,3 +61,68 @@ describe("getWorldChangeNarrative", () => {
     }
   });
 });
+
+describe("no claim stronger than the researched state", () => {
+  // The four changes whose narratives had drifted furthest from their sources. Each assertion
+  // below is the sourced consequence of that stage; the phrasing that used to be here was the
+  // formatter's own reading of the NPC line.
+  const en = (changeId: string, stateId: string) => {
+    const narrative = getWorldChangeNarrative(changeId, stateId, "en")!;
+    return `${narrative.headline} ${narrative.body ?? ""}`;
+  };
+
+  it("Demon War reports the spawn each stage actually causes, not who 'controls' the dungeon", () => {
+    // TibiaWiki, Demon Wars spoiler: advantage spawns that faction's Lords on its tower's upper
+    // floors; dominance adds the Princes. Neither faction ever holds the whole complex.
+    expect(en("demon-war", "stalemate")).toMatch(/neither faction has the advantage/i);
+    expect(en("demon-war", "stalemate")).toMatch(/no Lords or Princes spawn/i);
+
+    expect(en("demon-war", "shaburak-advantage")).toMatch(/Shaburak Lords spawn.*western tower/i);
+    expect(en("demon-war", "shaburak-advantage")).toMatch(/Princes do not yet/i);
+    expect(en("demon-war", "askarak-advantage")).toMatch(/Askarak Lords spawn.*eastern tower/i);
+
+    expect(en("demon-war", "shaburak-dominant")).toMatch(/Shaburak Lords and Princes spawn.*western tower/i);
+    expect(en("demon-war", "askarak-dominant")).toMatch(/Askarak Lords and Princes spawn.*eastern tower/i);
+
+    for (const stateId of ["stalemate", "shaburak-advantage", "shaburak-dominant"]) {
+      expect(en("demon-war", stateId), stateId).not.toMatch(/control|occup|holds the/i);
+    }
+  });
+
+  it("Mage Tower never says the boss is available, and closes the portal only as the source does", () => {
+    // The Energized Raging Mage stands there whenever the portal is open and still cannot be
+    // fought until the world has killed 2000 Yielothaxes. The section reports the world state;
+    // the boss, with its real conditions, is an opportunity.
+    expect(en("mage-tower", "portal-open")).not.toMatch(/can be fought|available|boss/i);
+    expect(en("mage-tower", "portal-open")).toMatch(/holding the dimensional portal open/i);
+    // Killing him collapses the portal five minutes later, until the next server save.
+    expect(en("mage-tower", "mage-slain")).toMatch(/collapsing/i);
+    expect(en("mage-tower", "mage-slain")).toMatch(/after the next server save/i);
+  });
+
+  it("Master's Voice reports the slime and nothing it infers from the other state", () => {
+    // No source says the "covered in slime" state is passable; that was read off the *other*
+    // state's reply. And there is no documented "Golden Servants phase" at all.
+    expect(en("masters-voice", "passable")).toMatch(/covered in slime/i);
+    expect(en("masters-voice", "passable")).not.toMatch(/can be walked|passable/i);
+    expect(en("masters-voice", "passable")).not.toMatch(/Golden Servants phase/i);
+    expect(en("masters-voice", "passable")).toMatch(/cleared before the servant waves/i);
+  });
+
+  it("Awash tells the two drained states apart from the state itself, not from its name", () => {
+    expect(en("awash", "drained-quota-met")).toMatch(/Enough Deeplings have already been killed/i);
+    expect(en("awash", "drained-quota-open")).toMatch(/More Deeplings still need to be killed/i);
+    expect(en("awash", "drained-quota-met")).not.toBe(en("awash", "drained-quota-open"));
+  });
+
+  it("never promises a boss, a portal or an area in the World Changes section", () => {
+    // Those are availability claims, and availability belongs to the opportunity catalog where
+    // it is typed and can be checked. Prose here may describe the world, never offer it.
+    for (const def of WORLD_CHANGE_DEFINITIONS) {
+      for (const state of def.states) {
+        const text = en(def.id, state.id);
+        expect(text, `${def.id}/${state.id}`).not.toMatch(/boss available|available: |can be fought/i);
+      }
+    }
+  });
+});

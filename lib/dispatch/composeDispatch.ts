@@ -221,11 +221,17 @@ export function composeDispatch(
   }
 
   // ── What the guides report ───────────────────────────────────────────────
-  const guideLines = digest.world.noteworthy.map((entry) => [
-    t(`${entry.definition.name}: `),
-    em(entry.stateLabel ?? ""),
-    t("."),
-  ]);
+  // Every answer, not just the interesting ones. A Guide saying the hive is holding or the
+  // steamship is out of coal has answered the question; filtering those out left the page
+  // silent about six of the fourteen keywords on a day they had all been asked, which reads
+  // as "nobody checked" rather than as the report it is.
+  const guideLines = [...digest.world.noteworthy, ...digest.world.quiet]
+    .sort((a, b) => a.definition.name.localeCompare(b.definition.name))
+    .map((entry) => [
+      t(`${entry.definition.name}: `),
+      em(entry.stateLabel ?? ""),
+      t("."),
+    ]);
   if (guideLines.length > 0) {
     stanzas.push({ id: "guides", heading: "The guides report", lines: guideLines });
   }

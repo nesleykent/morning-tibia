@@ -23,7 +23,8 @@ import {
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
 import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
-import { deriveAchievementOpportunities } from "@/lib/achievements/opportunities";
+import { groupOpportunities, type OpportunityGroup } from "./opportunityPhrases";
+import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 
 export type { BriefingLanguage } from "./translations";
 
@@ -60,7 +61,7 @@ export interface BriefingInput {
   };
 }
 
-export interface AchievementLine {
+export interface MiniWorldChangeLine {
   emoji: string;
   label: string;
   valueLabel: string;
@@ -86,7 +87,6 @@ export interface WorldChangeLine {
   label: string;
   headline: string;
   body: string | null;
-  extra: { emoji: string; text: string } | null;
 }
 
 export interface BriefingModel {
@@ -106,20 +106,26 @@ export interface BriefingModel {
   yasirLabel: string;
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
-  achievementLines: AchievementLine[];
+  miniWorldChangeLines: MiniWorldChangeLine[];
   /** True once at least one Mini World Change has left "unknown" this session (a World
    * Board paste was actually applied) — distinguishes "checked, none active" from "nothing
-   * has been checked yet" when achievementLines is empty. */
+   * has been checked yet" when miniWorldChangeLines is empty. */
   miniWorldChangesVerified: boolean;
   worldChangeLines: WorldChangeLine[];
   /**
-   * Achievements today's *confirmed* conditions make possible. Derived from the same
-   * evidence rules as everything else, so an unchecked change can never produce one.
-   * Capped, and kept to one line each — the briefing is a morning summary, not a wiki.
+   * World Changes no Guide has been asked about, by short label. UNKNOWN is a distinct state
+   * from every recognised one, so it gets a distinct — and deliberately tiny — line rather
+   * than being indistinguishable from "nothing is happening there".
    */
-  opportunityLines: { emoji: string; achievement: string; condition: string }[];
-  /** Same idea as miniWorldChangesVerified, but for a Guide NPC chat log. */
-  worldChangesVerified: boolean;
+  worldChangesUnchecked: string[];
+  /**
+   * What today's *confirmed* states make worth doing, grouped by the change that created
+   * them. Derived from the same evidence rules as everything else, so an unchecked change can
+   * never produce one. Capped — the briefing is a morning summary, not a wiki.
+   */
+  opportunityGroups: OpportunityGroup[];
+  /** Opportunities the cap left out, so the briefing can say there are more. */
+  opportunitiesHiddenCount: number;
   upcomingEventLines: EventLine[];
   upcomingEventsHiddenCount: number;
 }
@@ -141,6 +147,17 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
   return TREND_SYMBOL[trend];
 }
 
+/**
+ * How many opportunity lines the briefing will print before it starts saying "and N more".
+ *
+ * A full Guide sweep plus a busy board can establish forty-odd opportunities, and a message
+ * that long stops being a morning briefing and becomes a wiki dump. The budget is spent one
+ * round at a time across the changes that have something to offer (see groupOpportunities), so
+ * sixteen lines means a dozen different states heard from rather than three heard from at
+ * length, with a small reserve so the deadline-bound tiers cannot be crowded out entirely. "Include everything" lifts it entirely.
+ */
+const OPPORTUNITY_LINE_LIMIT = 16;
+
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const { overrides } = input;
   const t = getTranslation(input.language);
@@ -150,7 +167,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   // something: it is running (with the variant if a source named one), or a complete board
   // reading proved it is not. "Not checked" produces nothing at all — the briefing must
   // never present an unasked question as an answer.
-  const achievementLines: AchievementLine[] = [];
+  const miniWorldChangeLines: MiniWorldChangeLine[] = [];
   let miniWorldChangesVerified = false;
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
@@ -169,7 +186,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
     if (value.status === "inactive") {
       if (!overrides.includeAllChanges) continue;
-      achievementLines.push({
+      miniWorldChangeLines.push({
         emoji: def.emoji,
         label: def.name.toUpperCase(),
         valueLabel: t.notRunning,
@@ -179,29 +196,37 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
     const variantLabel =
       def.variants.find((variant) => variant.id === value.variantId)?.label ?? null;
-    const narrative = getMiniWorldChangeNarrative(def.id, variantLabel, input.language);
+    const narrative = getMiniWorldChangeNarrative(def.id, value.variantId, input.language);
 
-    achievementLines.push({
+    miniWorldChangeLines.push({
       emoji: def.emoji,
       label: def.name.toUpperCase(),
       valueLabel: narrative ?? variantLabel ?? t.running,
     });
   }
 
-  // World Changes. Same rule: a change the player never asked a Guide about contributes
-  // nothing, and a "quiet" state (Horestis asleep, the lake clean) is real knowledge but
-  // only worth printing when the user asks for everything.
+  // World Changes. The rule is only that the player asked: **every recognised state gets a
+  // line**, because the section is a report of today's world state and a state the Guide
+  // actually named is exactly that report.
+  //
+  // This used to drop any state marked `quiet` unless the reader turned on "include
+  // everything", which silently deleted six of the fourteen answers from a full Guide sweep —
+  // the steamship being out of service, the horse stables running, the hive holding, the swamp
+  // fever contained, the firestarters guarded and the lake clean. Every one of those is a fact
+  // about today that changes what a player can do, and several of them are the *reason*
+  // something else is impossible. `quiet` now only affects ordering-adjacent presentation
+  // decisions elsewhere; it can no longer make a checked change disappear.
   const worldChangeLines: WorldChangeLine[] = [];
-  let worldChangesVerified = false;
+  const worldChangesUnchecked: string[] = [];
   for (const def of WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.worldChanges[def.id];
-    if (!value || !value.stateId) continue;
+    const state = value?.stateId ? def.states.find((option) => option.id === value.stateId) : undefined;
 
-    const state = def.states.find((option) => option.id === value.stateId);
-    if (!state) continue;
-
-    worldChangesVerified = true;
-    if (state.quiet && !overrides.includeAllChanges) continue;
+    if (!state) {
+      // UNKNOWN, and kept as such: never asked is not the same as nothing happening.
+      worldChangesUnchecked.push(def.shortLabel);
+      continue;
+    }
 
     const narrative = getWorldChangeNarrative(def.id, state.id, input.language);
     worldChangeLines.push({
@@ -209,22 +234,18 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       label: def.shortLabel.toUpperCase(),
       headline: narrative?.headline ?? state.label,
       body: narrative?.body ?? null,
-      extra: narrative?.extra ?? null,
     });
   }
 
-  const opportunityLines = deriveAchievementOpportunities({
-    miniWorldChanges: overrides.miniWorldChanges,
-    worldChanges: overrides.worldChanges,
-    merchants: overrides.merchants,
-  })
-    .filter((opportunity) => opportunity.definition.strength === "required")
-    .slice(0, 6)
-    .map((opportunity) => ({
-      emoji: opportunity.emoji,
-      achievement: opportunity.definition.achievement,
-      condition: opportunity.conditionName,
-    }));
+  const { groups: opportunityGroups, hiddenCount: opportunitiesHiddenCount } = groupOpportunities(
+    deriveOpportunities({
+      miniWorldChanges: overrides.miniWorldChanges,
+      worldChanges: overrides.worldChanges,
+      merchants: overrides.merchants,
+    }),
+    input.language,
+    overrides.includeAllChanges ? Number.MAX_SAFE_INTEGER : OPPORTUNITY_LINE_LIMIT,
+  );
 
   const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
   const marketPriceLines: MarketPriceLine[] = (
@@ -314,11 +335,12 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       : notAvailableText(input.language),
     rashidLabel: rashidLocation || notAvailableText(input.language),
     marketPriceLines,
-    achievementLines,
+    miniWorldChangeLines,
     miniWorldChangesVerified,
     worldChangeLines,
-    opportunityLines,
-    worldChangesVerified,
+    worldChangesUnchecked,
+    opportunityGroups,
+    opportunitiesHiddenCount,
     upcomingEventLines,
     upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
   };

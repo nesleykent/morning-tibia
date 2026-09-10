@@ -198,10 +198,10 @@ export function renderRichBriefing(
     ...marketBlocks(model, true),
   ]);
 
-  const achievementBody =
-    model.achievementLines.length > 0
+  const miniWorldChangeBody =
+    model.miniWorldChangeLines.length > 0
       ? joinNonEmpty(
-          model.achievementLines.map(
+          model.miniWorldChangeLines.map(
             (line) =>
               `${line.emoji} ${line.label}: ${line.valueLabel}`,
           ),
@@ -212,54 +212,51 @@ export function renderRichBriefing(
             : t.miniWorldChangesNotVerified
         }_`;
 
-  const achievementSection = joinNonEmpty([
+  const miniWorldChangeSection = joinNonEmpty([
     `*🎎 ${t.sectionMiniWorldChanges}*`,
-    achievementBody,
+    miniWorldChangeBody,
   ]);
 
   const worldChangeBody =
     model.worldChangeLines.length > 0
       ? model.worldChangeLines
-          .map((line) => {
-            const parts = [
-              `${line.emoji} ${line.label}`,
-              line.headline,
-            ];
-
-            if (line.body) {
-              parts.push(line.body);
-            }
-
-            if (line.extra) {
-              parts.push(
-                `${line.extra.emoji} ${line.extra.text}`,
-              );
-            }
-
-            return parts.join("\n");
-          })
+          .map((line) =>
+            joinNonEmpty([`${line.emoji} ${line.label}`, line.headline, line.body]),
+          )
           .join("\n\n")
-      : `_${
-          model.worldChangesVerified
-            ? t.noWorldChanges
-            : t.worldChangesNotVerified
-        }_`;
+      : `_${t.worldChangesNotVerified}_`;
 
-  const worldChangeSection = joinNonEmpty([
-    `*🌍 ${t.sectionWorldChanges}*`,
-    worldChangeBody,
+  // One quiet line for the keywords nobody asked about. It exists so "unknown" cannot be read
+  // as "nothing is happening there" — the two are different answers and the briefing owes the
+  // reader the difference.
+  const uncheckedNote =
+    model.worldChangeLines.length > 0 && model.worldChangesUnchecked.length > 0
+      ? `_${t.worldChangesUnchecked(model.worldChangesUnchecked)}_`
+      : null;
+
+  const worldChangeSection = joinBlocks([
+    `*🌍 ${t.sectionWorldChanges}*\n${worldChangeBody}`,
+    uncheckedNote,
   ]);
 
   // Only rendered when today's state actually created one — never an empty heading.
+  //
+  // Grouped under the enabling change rather than tagged with "thanks to X" per line: the
+  // connector was what produced "Fire from the Earth — graças a Fire from the Earth" whenever
+  // an achievement shares its name with the change that unlocks it.
   const opportunitySection =
-    model.opportunityLines.length > 0
-      ? joinNonEmpty([
-          `*🏆 ${t.sectionOpportunities}*`,
-          joinNonEmpty(
-            model.opportunityLines.map(
-              (line) => `${line.emoji} ${line.achievement} — ${t.opportunityBecause(line.condition)}`,
-            ),
+    model.opportunityGroups.length > 0
+      ? joinBlocks([
+          ...model.opportunityGroups.map((group, index) =>
+            joinNonEmpty([
+              index === 0 ? `*🏆 ${t.sectionOpportunities}*` : null,
+              `${group.emoji} ${group.label}`,
+              ...group.lines.flatMap((line) => [line.headline, line.detail, line.advisory]),
+            ]),
           ),
+          model.opportunitiesHiddenCount > 0
+            ? `_${t.opportunitiesHidden(model.opportunitiesHiddenCount)}_`
+            : null,
         ])
       : "";
 
@@ -284,7 +281,7 @@ export function renderRichBriefing(
     header,
     statusSection,
     marketSection,
-    achievementSection,
+    miniWorldChangeSection,
     worldChangeSection,
     opportunitySection,
     upcomingSection,
@@ -354,10 +351,10 @@ export function renderPlainBriefing(
     ...marketBlocks(model, false),
   ]);
 
-  const achievementBody =
-    model.achievementLines.length > 0
+  const miniWorldChangeBody =
+    model.miniWorldChangeLines.length > 0
       ? joinNonEmpty(
-          model.achievementLines.map(
+          model.miniWorldChangeLines.map(
             (line) =>
               `${line.label}: ${line.valueLabel}`,
           ),
@@ -366,49 +363,41 @@ export function renderPlainBriefing(
         ? t.miniWorldChangesNoneActive
         : t.miniWorldChangesNotVerified;
 
-  const achievementSection = joinNonEmpty([
+  const miniWorldChangeSection = joinNonEmpty([
     `${t.sectionMiniWorldChanges}:`,
-    achievementBody,
+    miniWorldChangeBody,
   ]);
 
   const worldChangeBody =
     model.worldChangeLines.length > 0
       ? model.worldChangeLines
-          .map((line) => {
-            const parts = [
-              line.label,
-              line.headline,
-            ];
-
-            if (line.body) {
-              parts.push(line.body);
-            }
-
-            if (line.extra) {
-              parts.push(line.extra.text);
-            }
-
-            return parts.join("\n");
-          })
+          .map((line) => joinNonEmpty([line.label, line.headline, line.body]))
           .join("\n\n")
-      : model.worldChangesVerified
-        ? t.noWorldChanges
-        : t.worldChangesNotVerified;
+      : t.worldChangesNotVerified;
 
-  const worldChangeSection = joinNonEmpty([
-    `${t.sectionWorldChanges}:`,
-    worldChangeBody,
+  const uncheckedNote =
+    model.worldChangeLines.length > 0 && model.worldChangesUnchecked.length > 0
+      ? t.worldChangesUnchecked(model.worldChangesUnchecked)
+      : null;
+
+  const worldChangeSection = joinBlocks([
+    `${t.sectionWorldChanges}:\n${worldChangeBody}`,
+    uncheckedNote,
   ]);
 
   const plainOpportunitySection =
-    model.opportunityLines.length > 0
-      ? joinNonEmpty([
-          t.sectionOpportunities.toUpperCase(),
-          joinNonEmpty(
-            model.opportunityLines.map(
-              (line) => `${line.achievement} - ${t.opportunityBecause(line.condition)}`,
-            ),
+    model.opportunityGroups.length > 0
+      ? joinBlocks([
+          ...model.opportunityGroups.map((group, index) =>
+            joinNonEmpty([
+              index === 0 ? t.sectionOpportunities.toUpperCase() : null,
+              group.label,
+              ...group.lines.flatMap((line) => [line.headline, line.detail, line.advisory]),
+            ]),
           ),
+          model.opportunitiesHiddenCount > 0
+            ? t.opportunitiesHidden(model.opportunitiesHiddenCount)
+            : null,
         ])
       : "";
 
@@ -431,7 +420,7 @@ export function renderPlainBriefing(
     header,
     statusSection,
     marketSection,
-    achievementSection,
+    miniWorldChangeSection,
     worldChangeSection,
     plainOpportunitySection,
     upcomingSection,

@@ -109,6 +109,40 @@ describe("parseBoardLog", () => {
       expect(result.isCompleteReading).toBe(false);
     });
 
+    it("takes the reader's word that a paste is the whole board", () => {
+      // The board prints its messages into the Server Log without the opening line, so a real
+      // complete reading arrives looking exactly like a fragment. Requiring the preamble meant
+      // nothing could ever be ruled out in practice.
+      const lines = "A fiery fury gate has opened near one of the major cities somewhere in Tibia.";
+
+      expect(parseBoardLog(lines).completenessBasis).toBe("none");
+      expect(parseBoardLog(lines, { declaredComplete: true }).completenessBasis).toBe("declared");
+      expect(parseBoardLog(lines, { declaredComplete: true }).isCompleteReading).toBe(true);
+    });
+
+    it("records the preamble as the basis when it is there, declaration or not", () => {
+      expect(parseBoardLog(PREAMBLE, { declaredComplete: true }).completenessBasis).toBe(
+        "preamble",
+      );
+    });
+
+    it("accepts a declared board that printed nothing at all", () => {
+      // The board legitimately prints no messages on a day when nothing is running, and that
+      // reading is exactly when ruling changes out is worth most.
+      const result = parseBoardLog("", { declaredComplete: true });
+      expect(result.isCompleteReading).toBe(true);
+      expect(result.signals).toEqual([]);
+      expect(result.recognisedCount).toBe(0);
+    });
+
+    it("counts what it recognised, for the paste receipt", () => {
+      const result = parseBoardLog(`
+        A fiery fury gate has opened near one of the major cities somewhere in Tibia.
+        Oriental ships sighted! A trader for exotic creature products may currently be visiting Carlin, Ankrahmun or Liberty Bay.
+      `);
+      expect(result.recognisedCount).toBe(2);
+    });
+
     it("survives client timestamps and line wrapping", () => {
       const result = parseBoardLog(`
         19:21:20 You see the world board. ${WORLD_BOARD_PREAMBLE}

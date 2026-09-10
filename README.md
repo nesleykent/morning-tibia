@@ -116,25 +116,40 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    and he wanders the whole Thaian peninsula; his known server-save spawn areas are shown as
    a hint, never as something the app claims to know.
 
-5. **Today's achievement opportunities** — Morning Tibia doesn't just report the world
-   state, it says what that state makes possible before it disappears. Every relationship in
-   [`lib/defaults/achievements.ts`](lib/defaults/achievements.ts) is researched and sourced,
-   never inferred from a shared theme or location. The bar is an authoritative statement:
-   usually TibiaWiki's own achievement spoiler naming the enabling change ("Obtainable for
-   killing 50 water elementals … during Down the Drain Mini World Change"), otherwise a
-   creature page stating the creature only exists under that condition ("Terrified Elephant:
-   only appears during the Stampede Mini World Change"; "Askarak Prince: these creatures will
-   only spawn when their side is on the winning hand in the Arak War").
+5. **Today's opportunities** — Morning Tibia doesn't just report the world state, it says
+   what that state makes possible before it disappears. The model that matters is
+   **change → state → opportunity**, not change → opportunity: Overhunting offers White Deer
+   kills and the Kingly Deer mount in its deer states, and *none of that* in the starving-wolf
+   state, where it offers the Starving Wolf bestiary entry and the Magic Wolf Traps instead.
+   A catalog keyed only on the change would be wrong half the time.
 
-   An opportunity is only ever derived from a condition the app has actually *established* —
-   `active`, or a Guide-reported World Change state. Unchecked produces nothing, and neither
-   does "not running", so a fresh session shows no opportunities at all and the section
-   simply isn't rendered. Faction- and stage-specific links are honoured: Askarak Nemesis
-   appears only while the Askarak are winning, Biodegradable only while the lake actually has
-   shimmer swimmers in it. Deliberately excluded, to show where the line is: Fury Gates,
-   Spirit Grounds and Hive Outpost have no achievement whose requirement names them, and
-   Shipwrecked's excellent Pirate Corsair respawn isn't tied to any achievement — so those
-   stay described on the change itself rather than promoted to opportunities.
+   Opportunities are not only achievements. [`lib/defaults/opportunities.ts`](lib/defaults/opportunities.ts)
+   covers bestiary entries and Charm Points, bosses, mounts and taming, quests and quest
+   missions, items, access, NPC services, hunting grounds and World Change progress. The most
+   valuable thing on some days isn't an achievement at all — Their Master's Voice puts three
+   Very Rare bestiary entries in reach that complete at 5 kills each for 130 Charm Points
+   between them.
+
+   Every entry is researched and sourced, never inferred from a shared theme or location: a
+   TibiaWiki spoiler naming the enabling change, a creature page stating the creature only
+   exists under that condition, or a mount's own `taming_method`. Bestiary kill counts and
+   Charm Points are *derived* from the creature's published difficulty and occurrence via
+   [`lib/defaults/bestiary.ts`](lib/defaults/bestiary.ts), so they cannot be mistyped.
+
+   Facts and opinions are kept in different fields. `detail` and `caveat` are things the game
+   does; community judgement — a recommended level, "the best respawn in the game" — lives in
+   `advisory` and renders behind a "Tip:" marker, so a reader can always tell which half of a
+   line CipSoft actually guarantees. A test enforces the split.
+
+   Each entry carries an **availability**, which is what stops the section overselling:
+   *available today*, *progressable today* (real progress now, finishing needs more days), or
+   *unlocks a future state* (today changes what exists after the next server save). The Raging
+   Mage is standing at his tower whenever the portal is open and still cannot be fought until
+   the world has killed 2000 Yielothaxes — so he is progressable, never available.
+
+   An opportunity is only ever derived from a condition the app has actually *established*.
+   Unchecked produces nothing, and neither does "not running", so a fresh session shows no
+   opportunities at all and the section simply isn't rendered.
 
 6. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
@@ -203,12 +218,12 @@ defaults and stay manually editable.
 | Tibia Coin, Gold Token, Silver Token sell/buy offers | [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule) (published `data/market/world/{World}/{world}_{item}.json`, one file per item per world) | CORS-open, re-fetched every 15 minutes while the dashboard is open (`lib/data/marketHistoryMapping.ts` + `worldProvider.ts`). Fully read-only — no manual override. Real day-by-day history (years of `day_average_sell`/`day_average_buy` entries, refreshed upstream about once a day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
-| All 14 World Changes | Guide NPC chat log, pasted by the user, parsed against [verbatim reply text](lib/parser/guideMessages.ts) | One keyword per change (`guideKeyword`), shown on the card. A reply establishes one documented state; silence about a keyword only ever means "not asked". Each card also has a picker limited to that change's documented states, for a player who read the reply but didn't copy it. |
-| The 23 Mini World Changes | World Board server log **and/or** Towncryer shouts, parsed against [board text](lib/parser/boardMessages.ts) and [Towncryer text](lib/parser/towncryerMessages.ts) | A recognised line proves the change is running, plus its variant where the wording names one. Only a **complete** board reading — identified by the board's own preamble, see [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts) — records unmentioned changes as not running; a fragment, a Guide log or a Towncryer shout never does. |
+| All 14 World Changes | Guide NPC chat log, pasted by the user, parsed against [verbatim reply text](lib/parser/guideMessages.ts) | One keyword per change (`guideKeyword`), shown on the card. A reply establishes one documented state, matched as a *prefix* so a live reply that continues past the transcript still resolves; silence about a keyword only ever means "not asked". A line that is unmistakably a Guide speaking but whose wording isn't in the catalog is reported as unread rather than dropped. Each card also has a picker limited to that change's documented states, for a player who read the reply but didn't copy it. |
+| The 23 Mini World Changes | World Board server log **and/or** Towncryer shouts, parsed against [board text](lib/parser/boardMessages.ts) and [Towncryer text](lib/parser/towncryerMessages.ts) | A recognised line proves the change is running, plus its variant where the wording names one. Only a **complete** board reading records unmentioned changes as not running; a fragment, a Guide log or a Towncryer shout never does. Completeness comes from the board's own preamble *or* from the reader ticking "this is the whole world board" — the board prints its messages into the Server Log without that opening line, so for a real paste the reader is the only witness. See [`parseBoardLog.ts`](lib/parser/parseBoardLog.ts) and [`types/evidence.ts`](types/evidence.ts). |
 | Which variant a running change has (7 of the 23) | Board/Towncryer wording where it names one; otherwise the player | Closed pick list of the real possibilities, enabled only once a source has confirmed the change is running — a picker can never manufacture activity. Fury Gates (10 cities), Nomads (4 camps) and Warpath (3 spots) are normally player-supplied, since no in-game source names them. |
 | Yasir's location (3 possible cities) | The "Oriental Trader" message on the board, or the Towncryer's version of it | Trading with the city pending until one is picked — closed pick list, no free text. A complete board reading that omits it marks him confirmed not trading, rather than merely unverified. |
 | The 3 Mini World Changes no source announces (Beaver Breakout, Shipwrecked, Forsaken) | The player, after looking in game | Never inferred from a paste in either direction. A complete board reading leaves them untouched, because the board has no line for them — see `detection` in [`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts). |
-| Today's achievement opportunities | Derived from confirmed conditions via [`lib/achievements/opportunities.ts`](lib/achievements/opportunities.ts) | Never from an unchecked or ruled-out condition. Each relationship is sourced in [`lib/defaults/achievements.ts`](lib/defaults/achievements.ts); catalog/parser drift is caught by tests. |
+| Today's opportunities | Derived from confirmed **states** via [`lib/opportunities/deriveOpportunities.ts`](lib/opportunities/deriveOpportunities.ts) | Never from an unchecked or ruled-out condition, and never from a state that blocks the thing. Each entry is sourced in [`lib/defaults/opportunities.ts`](lib/defaults/opportunities.ts) and carries an availability tier; bestiary numbers are derived, not typed. Catalog drift is caught by tests. |
 | Boosted region | Manual, local | No source of any kind — multi-select from a curated location list. |
 
 ## Architecture
@@ -253,13 +268,13 @@ lib/
                    TibiaWiki fetcher, unit tested)
   parser/        — boardMessages.ts / towncryerMessages.ts / guideMessages.ts (verbatim
                    catalogs, one per in-game source) + parseBoardLog.ts (which alone can
-                   report a complete reading, via the board's own preamble) /
+                   report a complete reading — preamble or reader's declaration) /
                    parseTowncryerLog.ts / parseGuideLog.ts (positives only), combined into
                    parseGameText.ts so one paste is checked against all three at once and
                    only the board can ever conclude something is not running — all unit
                    tested
-  achievements/  — opportunities.ts (turns confirmed conditions into today's achievement
-                   chances; returns nothing from unchecked state, by design)
+  opportunities/ — deriveOpportunities.ts (turns confirmed *states* into what today makes
+                   possible; returns nothing from unchecked state, by design)
   dashboard/     — dailyDigest.ts (groups raw state into what's running / needs you /
                    can't be checked / ruled out, so the page can be laid out by meaning)
   formatter/     — generateBriefing.ts (pure, no React import) + translations.ts
@@ -269,8 +284,11 @@ lib/
   storage/       — BriefingRepository interface + LocalStorageBriefingRepository
   rashid/        — the weekday rotation calculator, unit tested
   defaults/      — the Mini World Change / World Change catalogs (names, locations,
-                   variants, Guide keywords, documented states), tibiaLocations.ts (the
-                   curated location list used for boosted region), plus
+                   variants, Guide keywords, documented states), opportunities.ts (the
+                   researched state → opportunity catalog) + bestiary.ts (TibiaWiki's own
+                   kills/Charm Points table, so those numbers are derived not typed),
+                   tibiaLocations.ts (the curated location list used for boosted
+                   region), plus
                    mergeOverridesWithDefaults for safely loading an older localStorage
                    save (migrating the old single boostedRegion string into
                    boostedRegions: string[], an old market price's previousValue into a
@@ -344,9 +362,14 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 - Beaver Breakout and Shipwrecked can only ever be settled by going to look; Forsaken's
   daily creature rotation likewise. That is the game, not a gap in the app — but it does mean
   those three never resolve from a paste alone.
-- Achievement opportunities cover the relationships that survive a documented-source check.
-  Content with no achievement tied to it (Fury Gates, Spirit Grounds, Hive Outpost,
-  Shipwrecked's Pirate Corsair respawn) deliberately produces none rather than a padded list.
+- Opportunities cover the relationships that survive a documented-source check, in whatever
+  form they take — bestiary, boss, mount, quest, item, access, service, hunt or World Change
+  progress. Where research found nothing verifiable for a state, that state produces nothing
+  rather than a padded list.
+- The briefing prints at most 16 opportunity lines, spent breadth-first across the changes
+  that have something to offer, with a small reserve so the deadline-bound "do this before the
+  next server save" tier cannot be crowded out by a busy morning. The full list is on the
+  catalog view.
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
@@ -438,9 +461,10 @@ and message files agree.
 ```
 
 Both grids and `createDefaultMiniWorldChangeValues()` / `createDefaultWorldChangeValues()`
-pick new entries up automatically — no other file needs to change. A `quiet` World Change
-state is still real, confirmed knowledge, but it's only printed in the briefing when
-"Include everything" is on (see `lib/formatter/briefingModel.ts`).
+pick new entries up automatically — no other file needs to change. `quiet` marks the
+uneventful end of a cycle for ordering and grouping; it does **not** hide anything. Every
+World Change state a Guide actually reported is printed in the briefing, because the section
+is a report of today's world state and a quiet answer is still an answer.
 
 ## How to change the generated briefing format
 

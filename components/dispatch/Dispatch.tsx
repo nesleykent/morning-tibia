@@ -2,7 +2,7 @@
 
 import { Blank } from "./Blank";
 import type { DispatchStanza, Segment } from "@/lib/dispatch/composeDispatch";
-import type { AchievementOpportunity } from "@/types/achievement";
+import type { Opportunity } from "@/types/opportunity";
 import type { MarketPrice, MarketPriceId, MarketTrendBasis } from "@/types/market";
 import { computeTrendForBasis, ENTRIES_BY_BASIS, averageOfLastEntries } from "@/lib/utils/priceTrend";
 import { MARKET_TREND_BASIS_OPTIONS } from "@/lib/storage/briefingRepository";
@@ -32,7 +32,7 @@ export function Dispatch({
   invitation,
 }: {
   stanzas: DispatchStanza[];
-  opportunities: AchievementOpportunity[];
+  opportunities: Opportunity[];
   numbers: NumbersProps;
   onPick: (target: string, optionId: string) => void;
   /** Rendered above everything when the reader has told the app nothing yet. */
@@ -76,26 +76,25 @@ export function Dispatch({
             Worth doing before it ends
           </h2>
           <ul className="flex flex-col gap-3.5">
-            {opportunities.map(({ definition, evidence }) => (
+            {opportunities.map(({ definition, conditionName, conditionState }) => (
               <li key={definition.id}>
                 <p className="prose-serif text-[18px] leading-snug text-[hsl(var(--ink))]">
                   <a
-                    href={definition.source}
+                    href={definition.sources[0]}
                     target="_blank"
                     rel="noreferrer"
                     className="underline decoration-[hsl(var(--ink-faint))]/40 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--ink))]"
                   >
-                    {definition.achievement}
+                    {definition.subject}
                   </a>
-                  <Meta>
-                    Grade {definition.grade} · {definition.points}{" "}
-                    {definition.points === 1 ? "pt" : "pts"}
-                    {definition.premium && " · Premium"}
-                  </Meta>
+                  <Meta>{opportunityMeta(definition)}</Meta>
                 </p>
                 <p className="mt-1 text-[13.5px] leading-relaxed text-[hsl(var(--ink-soft))]">
-                  {definition.task}{" "}
-                  <span className="text-[hsl(var(--ink-faint))]">Because {evidence}.</span>
+                  {definition.detail.en}{" "}
+                  <span className="text-[hsl(var(--ink-faint))]">
+                    Because {conditionName}
+                    {conditionState ? `: ${conditionState}` : " is running"}.
+                  </span>
                   {definition.prerequisites?.length ? (
                     <span className="text-[hsl(var(--ink-faint))]">
                       {" "}Needs first: {definition.prerequisites.join(", ")}.
@@ -107,7 +106,14 @@ export function Dispatch({
                     opportunity gets oversold. */}
                 {definition.caveat && (
                   <p className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--ink-faint))]">
-                    Note: {definition.caveat}
+                    Note: {definition.caveat.en}
+                  </p>
+                )}
+                {/* Marked as a tip, never folded into the facts above: a recommended level is
+                    somebody's judgement, and the reader is entitled to know which is which. */}
+                {definition.advisory && (
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--ink-faint))]">
+                    Tip: {definition.advisory.en}
                   </p>
                 )}
               </li>
@@ -119,6 +125,30 @@ export function Dispatch({
       <Numbers {...numbers} />
     </article>
   );
+}
+
+/**
+ * The typed facts behind an opportunity, in the order a player weighs them: what kind of thing
+ * it is, what it costs, and — always — when they can actually have it. `available-today` is the
+ * only case with no availability chip, because an unqualified line already means today.
+ */
+function opportunityMeta(definition: Opportunity["definition"]): string {
+  const parts: string[] = [definition.kind];
+  if (definition.bestiary) {
+    parts.push(`${definition.bestiary.kills} kills`, `${definition.bestiary.charmPoints} charm`);
+  }
+  if (definition.achievement) {
+    const { name, points, premium } = definition.achievement;
+    // Name it unless the subject already is the achievement — a bare "1 pt" hanging off
+    // "Mamma Longlegs" tells the reader a point exists without saying what earns it.
+    const label = definition.kind === "achievement" ? "" : `${name}, `;
+    parts.push(`${label}${points} ${points === 1 ? "pt" : "pts"}${premium ? " · Premium" : ""}`);
+  }
+  if (definition.bosstiary) parts.push(definition.bosstiary);
+  if (definition.exclusive) parts.push("only in this state");
+  if (definition.availability === "progressable-today") parts.push("progress only");
+  if (definition.availability === "unlocks-future") parts.push("after server save");
+  return parts.join(" · ");
 }
 
 /** Small trailing metadata on a line of prose — present, precise, visually subordinate. */

@@ -7,13 +7,33 @@ function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
 
 /**
  * A change's narrative depends on the variant that is running, so resolvers take the
- * variant's label (or null when the source confirmed the change without naming one).
+ * variant's *id* (or null when the source confirmed the change without naming one).
+ *
+ * The id, not the label. Passing the English label and interpolating it — sometimes through
+ * `.toLowerCase()` — produced sentences like "As Nightmare Isles estão acessíveis por darama's
+ * northernmost coast": half Portuguese, half an English catalog string with its capitals
+ * stripped. A variant is a closed set, so each language can simply name every member.
  */
-type Resolver = (variantLabel: string | null, language: BriefingLanguage) => string;
+type Resolver = (variantId: string | null, language: BriefingLanguage) => string;
 
 /** Wording that doesn't change with the variant. */
 function simple(map: Lang<string>): Resolver {
-  return (_variantLabel, language) => pick(map, language);
+  return (_variantId, language) => pick(map, language);
+}
+
+/**
+ * A change whose sentence names the variant, with the variant's own name written out in each
+ * language. `null` is the normal case for Fury Gates and Nomads, not a fallback: those sources
+ * confirm the change without ever saying where.
+ */
+function byNamedVariant(
+  names: Lang<Record<string, string>>,
+  sentence: Lang<(name: string | null) => string>,
+): Resolver {
+  return (variantId, language) => {
+    const name = variantId ? (pick(names, language)[variantId] ?? null) : null;
+    return pick(sentence, language)(name);
+  };
 }
 
 /**
@@ -21,12 +41,141 @@ function simple(map: Lang<string>): Resolver {
  * source never says which". The second is not a fallback — for Fury Gates and Nomads it is
  * the normal case, and saying it plainly is the whole point.
  */
-function byVariant(map: Lang<(variantLabel: string | null) => string>): Resolver {
-  return (variantLabel, language) => pick(map, language)(variantLabel);
+function byVariant(map: Lang<(variantId: string | null) => string>): Resolver {
+  return (variantId, language) => pick(map, language)(variantId);
 }
 
+/**
+ * Variant names, per language, keyed by the variant id from lib/defaults/miniWorldChanges.ts.
+ *
+ * Place and creature names that are official Tibia nouns stay identical in every language —
+ * that is the product rule, and it is why these tables repeat themselves for cities. What does
+ * get translated is everything around them: "Darama's northernmost coast" is a description, not
+ * a name, and leaving it in English produced the half-and-half prose this replaced.
+ */
+const CITY_NAMES: Record<string, string> = {
+  abdendriel: "Ab'Dendriel",
+  ankrahmun: "Ankrahmun",
+  carlin: "Carlin",
+  darashia: "Darashia",
+  edron: "Edron",
+  kazordoon: "Kazordoon",
+  "liberty-bay": "Liberty Bay",
+  "port-hope": "Port Hope",
+  thais: "Thais",
+  venore: "Venore",
+};
+
+const REGION_NAMES: Record<string, string> = {
+  darama: "Darama",
+  ghostlands: "Ghostlands",
+  vengoth: "Vengoth",
+};
+
+const everyLanguage = <T,>(value: T): Lang<T> => ({ pt: value, en: value, es: value, pl: value });
+
+const NIGHTMARE_PORTALS: Lang<Record<string, string>> = {
+  pt: {
+    "daramas-northernmost-coast": "na costa mais ao norte de Darama",
+    "the-river-near-drefia": "no rio perto de Drefia",
+    "the-ankrahmun-tar-pits": "nos poços de piche de Ankrahmun",
+  },
+  en: {
+    "daramas-northernmost-coast": "on Darama's northernmost coast",
+    "the-river-near-drefia": "by the river near Drefia",
+    "the-ankrahmun-tar-pits": "in the Ankrahmun tar pits",
+  },
+  es: {
+    "daramas-northernmost-coast": "en la costa más al norte de Darama",
+    "the-river-near-drefia": "junto al río cerca de Drefia",
+    "the-ankrahmun-tar-pits": "en los pozos de alquitrán de Ankrahmun",
+  },
+  pl: {
+    "daramas-northernmost-coast": "na najbardziej wysuniętym na północ wybrzeżu Daramy",
+    "the-river-near-drefia": "przy rzece koło Drefii",
+    "the-ankrahmun-tar-pits": "w smolistych dołach Ankrahmun",
+  },
+};
+
+const NOMAD_CAMPS: Lang<Record<string, string>> = {
+  pt: {
+    "northeast-of-the-shadow-tomb": "a nordeste do Shadow Tomb",
+    "south-of-the-tarpit-tomb": "ao sul do Tarpit Tomb",
+    "south-of-the-ancient-ruins-tomb": "ao sul do Ancient Ruins Tomb",
+    "northeast-of-the-ancient-ruins-tomb": "a nordeste do Ancient Ruins Tomb",
+  },
+  en: {
+    "northeast-of-the-shadow-tomb": "north-east of the Shadow Tomb",
+    "south-of-the-tarpit-tomb": "south of the Tarpit Tomb",
+    "south-of-the-ancient-ruins-tomb": "south of the Ancient Ruins Tomb",
+    "northeast-of-the-ancient-ruins-tomb": "north-east of the Ancient Ruins Tomb",
+  },
+  es: {
+    "northeast-of-the-shadow-tomb": "al noreste del Shadow Tomb",
+    "south-of-the-tarpit-tomb": "al sur del Tarpit Tomb",
+    "south-of-the-ancient-ruins-tomb": "al sur del Ancient Ruins Tomb",
+    "northeast-of-the-ancient-ruins-tomb": "al noreste del Ancient Ruins Tomb",
+  },
+  pl: {
+    "northeast-of-the-shadow-tomb": "na północny wschód od Shadow Tomb",
+    "south-of-the-tarpit-tomb": "na południe od Tarpit Tomb",
+    "south-of-the-ancient-ruins-tomb": "na południe od Ancient Ruins Tomb",
+    "northeast-of-the-ancient-ruins-tomb": "na północny wschód od Ancient Ruins Tomb",
+  },
+};
+
+const WARPATH_CAMPS: Lang<Record<string, string>> = {
+  pt: {
+    "north-of-the-jakundaf-desert": "ao norte do Jakundaf Desert",
+    "north-of-carlin": "ao norte de Carlin",
+    "east-of-the-femor-hills": "a leste das Femor Hills",
+  },
+  en: {
+    "north-of-the-jakundaf-desert": "north of the Jakundaf Desert",
+    "north-of-carlin": "north of Carlin",
+    "east-of-the-femor-hills": "east of the Femor Hills",
+  },
+  es: {
+    "north-of-the-jakundaf-desert": "al norte del Jakundaf Desert",
+    "north-of-carlin": "al norte de Carlin",
+    "east-of-the-femor-hills": "al este de las Femor Hills",
+  },
+  pl: {
+    "north-of-the-jakundaf-desert": "na północ od Jakundaf Desert",
+    "north-of-carlin": "na północ od Carlin",
+    "east-of-the-femor-hills": "na wschód od Femor Hills",
+  },
+};
+
+const FORSAKEN_SETS: Lang<Record<string, string>> = {
+  pt: {
+    rorcs: "Rorcs",
+    "leaf-golems": "Leaf Golems e Forest Furies",
+    cyclopes: "Cyclopes",
+    "lost-dwarves": "Drillworms e Lost Dwarves",
+  },
+  en: {
+    rorcs: "Rorcs",
+    "leaf-golems": "Leaf Golems and Forest Furies",
+    cyclopes: "Cyclopes",
+    "lost-dwarves": "Drillworms and Lost Dwarves",
+  },
+  es: {
+    rorcs: "Rorcs",
+    "leaf-golems": "Leaf Golems y Forest Furies",
+    cyclopes: "Cyclopes",
+    "lost-dwarves": "Drillworms y Lost Dwarves",
+  },
+  pl: {
+    rorcs: "Rorki",
+    "leaf-golems": "Leaf Golemy i Forest Furie",
+    cyclopes: "Cyklopy",
+    "lost-dwarves": "Drillwormy i Lost Dwarves",
+  },
+};
+
 const NARRATIVES: Record<string, Resolver> = {
-  "fury-gates": byVariant({
+  "fury-gates": byNamedVariant(everyLanguage(CITY_NAMES), {
     pt: (city) =>
       city
         ? `Um fiery fury gate se abriu perto de ${city}.`
@@ -50,22 +199,22 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "Se avistó una infestación de la Hive al suroeste de Liberty Bay.",
     pl: "Na południowy zachód od Liberty Bay zaobserwowano inwazję Hive.",
   }),
-  warpath: byVariant({
+  warpath: byNamedVariant(WARPATH_CAMPS, {
     pt: (place) =>
       place
-        ? `Bibby Bloodbath e sua tripulação estão acampadas: ${place}.`
+        ? `Bibby Bloodbath e sua tripulação estão acampadas ${place}.`
         : "Bibby Bloodbath e sua tripulação estão em marcha — o acampamento pode estar em um de três lugares.",
     en: (place) =>
       place
-        ? `Bibby Bloodbath and her crew are camped ${place.toLowerCase()}.`
+        ? `Bibby Bloodbath and her crew are camped ${place}.`
         : "Bibby Bloodbath and her crew are on the warpath — the camp could be at any of three places.",
     es: (place) =>
       place
-        ? `Bibby Bloodbath y su tripulación acampan: ${place.toLowerCase()}.`
+        ? `Bibby Bloodbath y su tripulación acampan ${place}.`
         : "Bibby Bloodbath y su tripulación están en marcha — el campamento puede estar en uno de tres lugares.",
     pl: (place) =>
       place
-        ? `Bibby Bloodbath i jej załoga obozują: ${place.toLowerCase()}.`
+        ? `Bibby Bloodbath i jej załoga obozują ${place}.`
         : "Bibby Bloodbath i jej załoga są na wojennej ścieżce — obóz może być w jednym z trzech miejsc.",
   }),
   "devovorgas-essence": simple({
@@ -80,29 +229,29 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "Un gran iceberg encalló en la costa al norte de Port Hope, habitado por extrañas criaturas peludas.",
     pl: "Wielka góra lodowa osiadła na wybrzeżu na północ od Port Hope, zamieszkana przez dziwne włochate stwory.",
   }),
-  "spirit-grounds": byVariant({
+  "spirit-grounds": byNamedVariant(everyLanguage(REGION_NAMES), {
     pt: (region) => `Um Spirit Gate está aberto em ${region ?? "uma das três regiões"}.`,
     en: (region) => `A Spirit Gate is open in ${region ?? "one of the three regions"}.`,
     es: (region) => `Hay un Spirit Gate abierto en ${region ?? "una de las tres regiones"}.`,
     pl: (region) => `Spirit Gate jest otwarta w ${region ?? "jednym z trzech regionów"}.`,
   }),
-  "nightmare-isles": byVariant({
+  "nightmare-isles": byNamedVariant(NIGHTMARE_PORTALS, {
     pt: (place) =>
       place
-        ? `As Nightmare Isles estão acessíveis por ${place.toLowerCase()}.`
-        : "As Nightmare Isles estão acessíveis em algum ponto de Darama.",
+        ? `O portal para as Nightmare Isles está ${place}.`
+        : "O portal para as Nightmare Isles está em algum ponto de Darama.",
     en: (place) =>
       place
-        ? `The Nightmare Isles are reachable via ${place.toLowerCase()}.`
-        : "The Nightmare Isles are reachable somewhere in Darama.",
+        ? `The portal to the Nightmare Isles is ${place}.`
+        : "The portal to the Nightmare Isles is somewhere in Darama.",
     es: (place) =>
       place
-        ? `Las Nightmare Isles son accesibles por ${place.toLowerCase()}.`
-        : "Las Nightmare Isles son accesibles en algún punto de Darama.",
+        ? `El portal a las Nightmare Isles está ${place}.`
+        : "El portal a las Nightmare Isles está en algún punto de Darama.",
     pl: (place) =>
       place
-        ? `Nightmare Isles są dostępne przez ${place.toLowerCase()}.`
-        : "Nightmare Isles są dostępne gdzieś w Daramie.",
+        ? `Portal do Nightmare Isles jest ${place}.`
+        : "Portal do Nightmare Isles jest gdzieś w Daramie.",
   }),
   "fire-from-the-earth": simple({
     pt: "O vulcão Hellgore em Goroma está em erupção, trazendo criaturas mais fortes junto com a lava.",
@@ -110,22 +259,22 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "El volcán Hellgore en Goroma está en erupción, trayendo criaturas más fuertes junto con la lava.",
     pl: "Wulkan Hellgore na Goroma wybucha, sprowadzając silniejsze stworzenia razem z lawą.",
   }),
-  nomads: byVariant({
+  nomads: byNamedVariant(NOMAD_CAMPS, {
     pt: (camp) =>
       camp
-        ? `Os nômades acamparam em Kha'labal: ${camp.toLowerCase()}.`
+        ? `Os nômades acamparam em Kha'labal, ${camp}.`
         : "Os nômades acamparam em algum lugar de Kha'labal — um dos quatro acampamentos possíveis.",
     en: (camp) =>
       camp
-        ? `The nomads have camped in Kha'labal — ${camp.toLowerCase()}.`
+        ? `The nomads have camped in Kha'labal, ${camp}.`
         : "The nomads have camped somewhere in Kha'labal — one of the four possible camps.",
     es: (camp) =>
       camp
-        ? `Los nómadas acamparon en Kha'labal: ${camp.toLowerCase()}.`
+        ? `Los nómadas acamparon en Kha'labal, ${camp}.`
         : "Los nómadas acamparon en algún lugar de Kha'labal — uno de los cuatro campamentos posibles.",
     pl: (camp) =>
       camp
-        ? `Nomadzi rozbili obóz w Kha'labal: ${camp.toLowerCase()}.`
+        ? `Nomadzi rozbili obóz w Kha'labal, ${camp}.`
         : "Nomadzi rozbili obóz gdzieś w Kha'labal — w jednym z czterech możliwych miejsc.",
   }),
   bored: simple({
@@ -160,54 +309,62 @@ const NARRATIVES: Record<string, Resolver> = {
   }),
   "poacher-caves": byVariant({
     pt: (phase) =>
-      phase === "Poachers dominate"
-        ? "Caçadores furtivos estão devastando a vida selvagem ao norte do Green Claw Swamp."
-        : phase === "Vengeful ghost wolves dominate"
-          ? "Espíritos vingativos tomaram o lugar dos animais ao norte do Green Claw Swamp."
-          : "Os animais selvagens dominam a área ao norte do Green Claw Swamp.",
+      phase === "game"
+        ? "Os animais selvagens dominam a área ao norte do Green Claw Swamp."
+        : phase === "poachers"
+          ? "Caçadores furtivos estão devastando a vida selvagem ao norte do Green Claw Swamp."
+          : phase === "ghost-wolves"
+            ? "Ghost Wolves e Gloom Wolves tomaram o lugar dos animais ao norte do Green Claw Swamp."
+            : "Há uma disputa nas cavernas ao norte do Green Claw Swamp — ainda não se sabe quem domina.",
     en: (phase) =>
-      phase === "Poachers dominate"
-        ? "Poachers are ravaging the wildlife north of the Green Claw Swamp."
-        : phase === "Vengeful ghost wolves dominate"
-          ? "Vengeful ghost wolves have taken over north of the Green Claw Swamp."
-          : "Wild animals dominate the area north of the Green Claw Swamp.",
+      phase === "game"
+        ? "Wild animals dominate the area north of the Green Claw Swamp."
+        : phase === "poachers"
+          ? "Poachers are ravaging the wildlife north of the Green Claw Swamp."
+          : phase === "ghost-wolves"
+            ? "Ghost Wolves and Gloom Wolves have taken over north of the Green Claw Swamp."
+            : "The caves north of the Green Claw Swamp are contested — who holds them isn't known yet.",
     es: (phase) =>
-      phase === "Poachers dominate"
-        ? "Los cazadores furtivos devastan la fauna al norte del Green Claw Swamp."
-        : phase === "Vengeful ghost wolves dominate"
-          ? "Espíritus vengativos han tomado el control al norte del Green Claw Swamp."
-          : "Los animales salvajes dominan la zona al norte del Green Claw Swamp.",
+      phase === "game"
+        ? "Los animales salvajes dominan la zona al norte del Green Claw Swamp."
+        : phase === "poachers"
+          ? "Los cazadores furtivos devastan la fauna al norte del Green Claw Swamp."
+          : phase === "ghost-wolves"
+            ? "Los Ghost Wolves y Gloom Wolves han tomado el control al norte del Green Claw Swamp."
+            : "Las cuevas al norte del Green Claw Swamp están en disputa — todavía no se sabe quién domina.",
     pl: (phase) =>
-      phase === "Poachers dominate"
-        ? "Kłusownicy dziesiątkują dziką przyrodę na północ od Green Claw Swamp."
-        : phase === "Vengeful ghost wolves dominate"
-          ? "Mściwe duchy przejęły teren na północ od Green Claw Swamp."
-          : "Dzikie zwierzęta dominują na terenie na północ od Green Claw Swamp.",
+      phase === "game"
+        ? "Dzikie zwierzęta dominują na terenie na północ od Green Claw Swamp."
+        : phase === "poachers"
+          ? "Kłusownicy dziesiątkują dziką przyrodę na północ od Green Claw Swamp."
+          : phase === "ghost-wolves"
+            ? "Ghost Wolves i Gloom Wolves przejęły teren na północ od Green Claw Swamp."
+            : "Jaskinie na północ od Green Claw Swamp są sporne — nie wiadomo jeszcze, kto je trzyma.",
   }),
   "jungle-camp": byVariant({
     pt: (side) =>
-      side === "Hunters dominate"
-        ? "Os caçadores dominam as terras sagradas de Trapwood — Arthom the Hunter pode aparecer."
-        : side === "Dworcs dominate"
-          ? "Os dworcs dominam as terras sagradas de Trapwood — Oodok Witchmaster pode aparecer."
+      side === "hunters"
+        ? "Os caçadores dominam as terras sagradas de Trapwood."
+        : side === "dworcs"
+          ? "Os dworcs dominam as terras sagradas de Trapwood."
           : "Caçadores e dworcs disputam as terras sagradas de Trapwood — o World Board não diz quem está ganhando.",
     en: (side) =>
-      side === "Hunters dominate"
-        ? "The hunters hold Trapwood's holy grounds — Arthom the Hunter may show up."
-        : side === "Dworcs dominate"
-          ? "The dworcs hold Trapwood's holy grounds — Oodok Witchmaster may show up."
+      side === "hunters"
+        ? "The hunters hold Trapwood's holy grounds."
+        : side === "dworcs"
+          ? "The dworcs hold Trapwood's holy grounds."
           : "Hunters and dworcs are fighting over Trapwood's holy grounds — the World Board doesn't say who's winning.",
     es: (side) =>
-      side === "Hunters dominate"
-        ? "Los cazadores dominan las tierras sagradas de Trapwood — puede aparecer Arthom the Hunter."
-        : side === "Dworcs dominate"
-          ? "Los dworcs dominan las tierras sagradas de Trapwood — puede aparecer Oodok Witchmaster."
+      side === "hunters"
+        ? "Los cazadores dominan las tierras sagradas de Trapwood."
+        : side === "dworcs"
+          ? "Los dworcs dominan las tierras sagradas de Trapwood."
           : "Cazadores y dworcs luchan por las tierras sagradas de Trapwood — el World Board no dice quién gana.",
     pl: (side) =>
-      side === "Hunters dominate"
-        ? "Myśliwi kontrolują święte ziemie Trapwood — może pojawić się Arthom the Hunter."
-        : side === "Dworcs dominate"
-          ? "Dworcowie kontrolują święte ziemie Trapwood — może pojawić się Oodok Witchmaster."
+      side === "hunters"
+        ? "Myśliwi kontrolują święte ziemie Trapwood."
+        : side === "dworcs"
+          ? "Dworcowie kontrolują święte ziemie Trapwood."
           : "Myśliwi i dworcowie walczą o święte ziemie Trapwood — World Board nie mówi, kto wygrywa.",
   }),
   grimvale: simple({
@@ -258,22 +415,22 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "Un barco pirata naufragó en la costa norte de Krailos — el mejor respawn de Pirate Corsair del juego.",
     pl: "Statek piracki rozbił się na północnym wybrzeżu Krailos — najlepszy respawn Pirate Corsair w grze.",
   }),
-  forsaken: byVariant({
+  forsaken: byNamedVariant(FORSAKEN_SETS, {
     pt: (set) =>
       set
-        ? `A Forsaken Mine está tomada por: ${set}.`
+        ? `A Forsaken Mine está tomada por ${set}.`
         : "A Forsaken Mine mudou de habitantes no server save — olhe do primeiro andar antes de descer.",
     en: (set) =>
       set
-        ? `The Forsaken Mine is inhabited by ${set.toLowerCase()} today.`
+        ? `The Forsaken Mine is inhabited by ${set} today.`
         : "The Forsaken Mine's inhabitants rotated at server save — look down from the first floor before descending.",
     es: (set) =>
       set
-        ? `La Forsaken Mine está ocupada por: ${set.toLowerCase()}.`
+        ? `La Forsaken Mine está ocupada por ${set}.`
         : "La Forsaken Mine cambió de habitantes en el server save — mira desde el primer piso antes de bajar.",
     pl: (set) =>
       set
-        ? `Forsaken Mine zamieszkują dziś: ${set.toLowerCase()}.`
+        ? `Forsaken Mine zamieszkują dziś ${set}.`
         : "Mieszkańcy Forsaken Mine zmienili się po server save — zajrzyj z pierwszego piętra przed zejściem.",
   }),
   chyllfroest: simple({
@@ -285,18 +442,18 @@ const NARRATIVES: Record<string, Resolver> = {
 };
 
 /**
- * Returns the sentence for a Mini World Change that is confirmed running. `variantLabel` is
- * the running variant's label, or null when the source proved it is running without saying
- * which form it took. Returns null when nothing has been authored for this change.
+ * Returns the sentence for a Mini World Change that is confirmed running. `variantId` is the
+ * running variant's id, or null when the source proved it is running without saying which form
+ * it took. Returns null when nothing has been authored for this change.
  *
  * Not-running and not-checked changes never reach here — the briefing decides how (and
  * whether) to word those, and must never describe them as if something were happening.
  */
 export function getMiniWorldChangeNarrative(
   changeId: string,
-  variantLabel: string | null,
+  variantId: string | null,
   language: BriefingLanguage,
 ): string | null {
   const resolver = NARRATIVES[changeId];
-  return resolver ? resolver(variantLabel, language) : null;
+  return resolver ? resolver(variantId, language) : null;
 }

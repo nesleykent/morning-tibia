@@ -70,11 +70,11 @@ describe("generateBriefingMessage", () => {
     expect(message).toContain("🔥 FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
     expect(message).toContain("*🌍 WORLD CHANGES*");
     expect(message).toContain("🐝 HIVE BORN");
-    expect(message).toContain("Todas as estruturas da Hive estão abertas.");
+    expect(message).toContain("As defesas da Hive caíram e todas as estruturas estão abertas.");
     expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
   });
 
-  it("renders a rich narrative for World Changes, with detail-driven variants and a fixed extra fact", () => {
+  it("renders a rich narrative for World Changes, with detail-driven variants", () => {
     const input = makeInput();
     input.overrides.worldChanges["demon-war"] = {
       id: "demon-war",
@@ -89,7 +89,10 @@ describe("generateBriefingMessage", () => {
     const message = generateBriefingMessage(input);
     expect(message).toContain("Os Shaburak convocaram seus líderes e dominam o complexo.");
     expect(message).toContain("A Serpent está desperta.");
-    expect(message).toContain("⚔️ Renegade Quara dominam as regiões submersas de Oramond");
+    // What the state makes possible is an opportunity, not narration: the Renegade Quara are
+    // reported once, as a structured fact, instead of twice in two catalogs that can disagree.
+    expect(message).toContain("Renegade Quara");
+    expect(message).not.toContain("⚔️ Renegade Quara dominam as regiões submersas de Oramond");
   });
 
   it("falls back to the compact form for a World Change state with no authored narrative", () => {
@@ -263,7 +266,9 @@ describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
     };
     const message = generateBriefingMessage(input);
     expect(message).toContain("World Board conferido — nenhuma Mini World Change ativa no momento.");
-    expect(message).toContain("Nenhuma World Change ativa identificada hoje.");
+    // A quiet state is an answer, and answers are reported. This one used to be deleted.
+    expect(message).toContain("🐝 HIVE BORN");
+    expect(message).toContain("A Hive está bem defendida e preparada para a guerra.");
   });
 });
 
@@ -273,7 +278,7 @@ describe("language support", () => {
     expect(message).toContain("🌞 Good morning, Ustebra!");
     expect(message).not.toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
     expect(message).toContain("👾 BOOSTED CREATURE\nGore Horn");
-    expect(message).toContain("Every Hive structure is open.");
+    expect(message).toContain("The hive's defences have fallen and every structure is open.");
     expect(message).toContain("*📅 NEXT EVENTS*");
   });
 
@@ -303,7 +308,7 @@ describe("generatePlainTextBriefing", () => {
     expect(plain).toContain("CRIATURA BOOSTADA\nGore Horn");
     expect(plain).toContain("FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
     expect(plain).toContain("HIVE BORN");
-    expect(plain).toContain("Todas as estruturas da Hive estão abertas.");
+    expect(plain).toContain("As defesas da Hive caíram e todas as estruturas estão abertas.");
   });
 });
 
@@ -537,10 +542,38 @@ describe("approved briefing hierarchy in rich and plain formats", () => {
   });
 });
 
-describe("achievement opportunities in the briefing", () => {
+describe("UNKNOWN vs a reported state in the World Changes section", () => {
+  it("reports every state a Guide gave, and names what is still unasked", () => {
+    const input = cleanInput();
+    input.overrides.worldChanges["twisted-waters"] = {
+      id: "twisted-waters",
+      stateId: "clean",
+      updatedAt: null,
+    };
+    const message = generateBriefingMessage(input);
+
+    // A "quiet" answer is still an answer, and it is now reported like any other.
+    expect(message).toContain("💧 TWISTED WATERS");
+    expect(message).toContain("O grande lago perto de Port Hope está limpo.");
+    // …and the thirteen keywords nobody asked about are named as unasked, not left to be read
+    // as "nothing is happening there".
+    expect(message).toContain("Ainda não consultadas hoje:");
+    expect(message).toContain("Steamship");
+    expect(message).not.toContain("🚢 STEAMSHIP");
+  });
+
+  it("says only that nothing was checked when no Guide was asked at all", () => {
+    const message = generateBriefingMessage(cleanInput());
+    expect(message).toContain("Nenhuma World Change foi consultada ainda hoje");
+    // The "still unasked" list would be all fourteen, which is the same statement twice.
+    expect(message).not.toContain("Ainda não consultadas hoje:");
+  });
+});
+
+describe("opportunities in the briefing", () => {
   it("says nothing about opportunities when nothing is confirmed", () => {
     const message = generateBriefingMessage(cleanInput());
-    expect(message).not.toContain("Oportunidades");
+    expect(message).not.toContain("OPORTUNIDADES");
     expect(message).not.toContain("Trail of the Ape God");
   });
 
@@ -553,10 +586,15 @@ describe("achievement opportunities in the briefing", () => {
       updatedAt: null,
     };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("Oportunidades de hoje");
+    expect(message).toContain("OPORTUNIDADES DE HOJE");
+    // Grouped under the change, so the subject and the achievement it grants both survive.
+    expect(message).toContain("🐘 STAMPEDE");
+    expect(message).toContain("Terrified Elephant");
     expect(message).toContain("Trail of the Ape God");
     // The line must be localized, not an English task description dropped into a PT briefing.
-    expect(message).toContain("graças a Stampede");
+    expect(message).toContain("Elephant Tusks");
+    // …and the old per-line connector, which produced "X — graças a X", must be gone.
+    expect(message).not.toContain("graças a Stampede");
   });
 
   it("never lists one from a change that was ruled out", () => {
@@ -579,15 +617,20 @@ describe("achievement opportunities in the briefing", () => {
       updatedAt: null,
     };
     const plain = generatePlainTextBriefing(input);
-    expect(plain).toContain("Loyal Subject");
+    // Kingsday's most state-specific offer is the arena raid rotation, not the greeting
+    // achievement, so that is the line the briefing spends on it. Both are in the catalog.
+    expect(plain).toContain("KINGSDAY");
+    expect(plain).toContain("Knights' Guild arena");
     expect(plain).not.toContain("*");
   });
   it("localizes the opportunity line in every supported language", () => {
+    // The typed facts around the official names are what must be translated; the names
+    // themselves (Terrified Elephant, Trail of the Ape God) stay official everywhere.
     const expected: Record<string, string> = {
-      pt: "graças a Stampede",
-      en: "thanks to Stampede",
-      es: "gracias a Stampede",
-      pl: "dzięki Stampede",
+      pt: "500 mortes",
+      en: "500 kills",
+      es: "500 muertes",
+      pl: "500 zabójstw",
     };
     for (const [language, phrase] of Object.entries(expected)) {
       const input = cleanInput();

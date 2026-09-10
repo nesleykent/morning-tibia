@@ -12,6 +12,7 @@ interface Receipt {
   running: number;
   ruledOut: number;
   guideAnswers: number;
+  unreadableGuideReplies: number;
   merchant: boolean;
 }
 
@@ -21,6 +22,7 @@ function buildReceipt(parsed: CombinedParseResult): Receipt {
     running: parsed.miniWorldChangeSignals.length,
     ruledOut: parsed.inactiveMiniWorldChangeIds.length,
     guideAnswers: parsed.worldChangeSignals.length,
+    unreadableGuideReplies: parsed.guide.unrecognisedReplies.length,
     merchant: parsed.merchantHints.length > 0 || parsed.inactiveMerchantIds.length > 0,
   };
 }
@@ -35,6 +37,11 @@ function summarise(receipt: Receipt): string {
   if (receipt.running > 0) parts.push(`${countPhrase(receipt.running, "change")} running`);
   if (receipt.ruledOut > 0) parts.push(`${receipt.ruledOut} ruled out`);
   if (receipt.guideAnswers > 0) parts.push(countPhrase(receipt.guideAnswers, "guide answer"));
+  // A Guide reply the catalog cannot read is reported, not swallowed: silence here would hide
+  // the one signal that the app's own message list has fallen behind the game.
+  if (receipt.unreadableGuideReplies > 0) {
+    parts.push(`${countPhrase(receipt.unreadableGuideReplies, "guide reply")} not recognised`);
+  }
   if (receipt.merchant) parts.push("Yasir");
   if (parts.length === 0) return "nothing new";
   if (parts.length === 1) return parts[0]!;
@@ -71,19 +78,26 @@ export function EvidenceBar({
   onJumpToUnresolved: () => void;
 }) {
   const [text, setText] = useState("");
+  const [wholeBoard, setWholeBoard] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [pasteError, setPasteError] = useState<string | null>(null);
   const fieldId = useId();
   const hintId = useId();
+  const wholeBoardId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const apply = () => {
     if (!text.trim()) return;
-    const parsed = parseGameText(text);
+    const parsed = parseGameText(text, { declaredComplete: wholeBoard });
     setReceipt(buildReceipt(parsed));
     setPasteError(null);
     onApply(parsed);
-    if (!parsed.isEmpty) setText("");
+    if (!parsed.isEmpty) {
+      setText("");
+      // The declaration describes one paste, so it cannot be allowed to carry into the next.
+      // A tick left standing would silently rule out twenty-odd changes off a later fragment.
+      setWholeBoard(false);
+    }
   };
 
   /** The real flow is alt-tab from the game with the log already copied, so offer the
@@ -118,8 +132,8 @@ export function EvidenceBar({
       </h2>
       <p id={hintId} className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]">
         The world board at the Adventurer&apos;s Guild, a guide&apos;s reply, or a towncryer
-        shout — in any combination. Only a full board reading, opening line included, can rule
-        anything out.
+        shout — in any combination. Only a whole board reading can rule anything out, so say
+        below when that is what you pasted.
       </p>
 
       <Textarea
@@ -142,6 +156,30 @@ export function EvidenceBar({
         placeholder="This board will notify you of currently active mini world changes all over Tibia…"
         className="mt-2.5 resize-y border-white/10 bg-white/[0.03] font-mono text-[13px] leading-relaxed text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]/70"
       />
+
+      {/* The board prints its messages into the Server Log without the opening line you see
+          when you look at it, so a real, complete reading pasted from the log carries no
+          evidence of its own completeness. The reader is the only witness to what they copied,
+          and this is where they say so — without it, nothing could ever be ruled out and Yasir
+          stayed "not verified" on days the board had plainly settled the question. */}
+      <label
+        htmlFor={wholeBoardId}
+        className="mt-2.5 flex cursor-pointer items-start gap-2 text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]"
+      >
+        <input
+          id={wholeBoardId}
+          type="checkbox"
+          checked={wholeBoard}
+          onChange={(e) => setWholeBoard(e.target.checked)}
+          className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[hsl(var(--gold))]"
+        />
+        <span>
+          This is the whole world board
+          <span className="text-[hsl(var(--muted-foreground))]/70">
+            {" "}— everything it printed, so anything it did not mention is not running.
+          </span>
+        </span>
+      </label>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <Button type="button" onClick={apply} disabled={!text.trim()}>
@@ -173,10 +211,10 @@ export function EvidenceBar({
             {receipt.parsed.isEmpty ? (
               "Nothing recognised in that text — check you copied the message itself, not just the timestamp."
             ) : receipt.parsed.isCompleteBoardReading ? (
-              <>Full board reading — {summarise(receipt)}.</>
+              <>Whole board reading — {summarise(receipt)}.</>
             ) : (
               <>
-                Added {summarise(receipt)}. Nothing was ruled out — only a full board reading
+                Added {summarise(receipt)}. Nothing was ruled out — only a whole board reading
                 can prove that.
               </>
             )}

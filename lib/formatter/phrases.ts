@@ -355,7 +355,18 @@ export function formatYasirLabel(
     );
   }
   if (activityState === "inactive") {
-    return "No Sir!";
+    // A plain statement of the confirmed fact, in the briefing's own language. This used to be
+    // the pun "No Sir!" in all four languages, which reads as a joke rather than as the
+    // settled answer it is — and left a Portuguese briefing with an English line in it.
+    return pick(
+      {
+        pt: "não está comerciando hoje",
+        en: "not trading today",
+        es: "no está comerciando hoy",
+        pl: "dziś nie handluje",
+      },
+      language,
+    );
   }
   return pick(
     { pt: "ainda não verificado", en: "not yet checked", es: "aún no verificado", pl: "jeszcze nie sprawdzono" },
