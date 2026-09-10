@@ -34,6 +34,10 @@
 
   --live: 158 58% 36%;
   --danger: 358 62% 48%;
+  /* The same two signals as they must appear on the lit page, where the field's values are
+     too pale to read: the market trend arrows sit on parchment, not on the night field. */
+  --live-ink: 158 62% 26%;
+  --danger-ink: 358 64% 38%;
 
   --foreground: 40 26% 92%;
   --muted-foreground: 232 12% 70%;

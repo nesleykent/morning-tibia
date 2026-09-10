@@ -3,7 +3,7 @@ import type { MarketPrice } from "@/types/market";
 import type { Merchant, MerchantActivityState } from "@/types/merchant";
 import type { MiniWorldChangeValue } from "@/types/miniWorldChange";
 import type { WorldChangeValue } from "@/types/worldChange";
-import { toDateKey } from "@/lib/utils/date";
+import { toTibiaDayKey } from "@/lib/utils/date";
 import { createDefaultMiniWorldChangeValues, MINI_WORLD_CHANGES_BY_ID } from "./miniWorldChanges";
 import { createDefaultWorldChangeValues, WORLD_CHANGES_BY_ID } from "./worldChanges";
 import { createDefaultMerchants } from "./merchants";
@@ -197,7 +197,9 @@ function migrateMarketPrices(
 export function createDefaultOverrides(world: string, referenceDate: Date): BriefingOverrides {
   return {
     world,
-    date: toDateKey(referenceDate),
+    // This field IS the storage key — briefingRepository.setOverrides writes under it,
+    // while every reader looks up by the Tibia day. They have to be the same function.
+    date: toTibiaDayKey(referenceDate),
     miniWorldChanges: createDefaultMiniWorldChangeValues(),
     worldChanges: createDefaultWorldChangeValues(),
     merchants: createDefaultMerchants(referenceDate),

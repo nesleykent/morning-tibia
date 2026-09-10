@@ -47,6 +47,17 @@ export interface BriefingInput {
   /** Window (entry count) the market lines' displayed price and trend arrow are computed
    * over — see lib/utils/priceTrend.ts. */
   marketTrendBasis: MarketTrendBasis;
+  /**
+   * Live feeds that failed to load for this render. A failed section is omitted from the
+   * briefing rather than printed with a "not available" placeholder: the briefing is pasted
+   * into a chat as a statement of fact, so a line the app could not verify should not appear
+   * at all. Absent means nothing failed.
+   */
+  unavailable?: {
+    boosted?: boolean;
+    warzone?: boolean;
+    market?: boolean;
+  };
 }
 
 export interface AchievementLine {
@@ -84,8 +95,9 @@ export interface BriefingModel {
   dateLabel: string;
   worldName: string;
   greetingText: string;
-  boostedCreatureLabel: string;
-  boostedBossLabel: string;
+  /** null when the feed failed — the renderers drop the whole block. */
+  boostedCreatureLabel: string | null;
+  boostedBossLabel: string | null;
   /** null means the field is genuinely not applicable today and the line is omitted. */
   boostedRegionValue: string | null;
   activeEventLines: EventLine[];
@@ -215,7 +227,9 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     }));
 
   const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
-  const marketPriceLines: MarketPriceLine[] = Object.entries(overrides.marketPrices)
+  const marketPriceLines: MarketPriceLine[] = (
+    input.unavailable?.market ? [] : Object.entries(overrides.marketPrices)
+  )
     .filter(([, price]) => price.value !== null)
     .map(([id, price]) => {
       const latestEntry = price.history[price.history.length - 1];
@@ -233,7 +247,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       };
     });
 
-  const warzone = input.warzoneSchedule;
+  const warzone = input.unavailable?.warzone ? null : input.warzoneSchedule;
   const warzoneLine =
     warzone && warzone.executions.length > 0
       ? warzone.executions
@@ -285,8 +299,12 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     dateLabel: toBriefingDate(input.referenceDate),
     worldName: input.world,
     greetingText: t.greeting(input.world),
-    boostedCreatureLabel: input.boostedCreature?.name ?? notAvailableText(input.language),
-    boostedBossLabel: input.boostedBoss?.name ?? notAvailableText(input.language),
+    boostedCreatureLabel: input.unavailable?.boosted
+      ? null
+      : (input.boostedCreature?.name ?? notAvailableText(input.language)),
+    boostedBossLabel: input.unavailable?.boosted
+      ? null
+      : (input.boostedBoss?.name ?? notAvailableText(input.language)),
     boostedRegionValue: overrides.boostedRegions.length > 0 ? overrides.boostedRegions.join(", ") : null,
     activeEventLines,
     dromeLine,

@@ -423,6 +423,8 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "beaver-breakout",
     name: "Beaver Breakout",
+    // No English TibiaWiki article — only TibiaWiki BR documents this silent change.
+    wikiTitle: null,
     shortLabel: "Beaver Breakout",
     emoji: "🦫",
     location: "Silvertides, Marapur",
@@ -439,6 +441,8 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "shipwrecked",
     name: "Shipwrecked",
+    // No English TibiaWiki article — only TibiaWiki BR documents this silent change.
+    wikiTitle: null,
     shortLabel: "Shipwrecked",
     emoji: "🏝️",
     location: "North coast of Krailos",
@@ -455,6 +459,8 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "forsaken",
     name: "Forsaken",
+    // Not documented as a Mini World Change; the mine itself is the article.
+    wikiTitle: "Forsaken Mine",
     shortLabel: "Forsaken",
     emoji: "⛏️",
     location: "Forsaken Mine, south of Ab'Dendriel",

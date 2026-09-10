@@ -68,6 +68,12 @@ export interface MiniWorldChangeDefinition {
   id: string;
   /** Canonical TibiaWiki Mini World Change name. */
   name: string;
+  /**
+   * Override for the TibiaWiki article title, when it isn't `<name> Mini World Change`.
+   * Explicit `null` means no English article exists and the UI must show no link — see
+   * lib/utils/tibiaWiki.ts for why this is never derived from `name` alone.
+   */
+  wikiTitle?: string | null;
   shortLabel: string;
   emoji: string;
   /** Where it happens, per TibiaWiki's own Location field. */

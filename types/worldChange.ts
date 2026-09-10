@@ -33,6 +33,9 @@ export interface WorldChangeDefinition {
   id: string;
   /** Canonical TibiaWiki World Change name. */
   name: string;
+  /** Override for the TibiaWiki article title, when it isn't `<name> World Change`;
+   * explicit `null` means no article exists. See lib/utils/tibiaWiki.ts. */
+  wikiTitle?: string | null;
   shortLabel: string;
   emoji: string;
   /** The exact keyword to say to a Guide NPC, verbatim from the official list. */

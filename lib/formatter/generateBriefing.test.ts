@@ -604,3 +604,67 @@ describe("achievement opportunities in the briefing", () => {
     }
   });
 });
+
+describe("unavailable live data", () => {
+  it("never leaves a doubled blank line where a section was empty", () => {
+    // The briefing is pasted straight into WhatsApp, where a stray gap is visible. The
+    // opportunities section renders as "" whenever today's state created none — so the
+    // fixture has to be a state that genuinely creates none, which makeInput() is not.
+    const referenceDate = new Date(2026, 7, 17);
+    const quiet: BriefingInput = {
+      world: "Ustebra",
+      referenceDate,
+      overrides: createDefaultOverrides("Ustebra", referenceDate),
+      boostedCreature: { kind: "creature", name: "Gore Horn", imageUrl: null },
+      boostedBoss: { kind: "boss", name: "Ratmiral", imageUrl: null },
+      warzoneSchedule: null,
+      activeEvents: [],
+      upcomingEvents: [],
+      drome: null,
+      language: "pt",
+      viewerTimeZone: "America/Sao_Paulo",
+      upcomingEventsWindowDays: 14,
+      marketTrendBasis: "last",
+    };
+
+    const rich = generateBriefingMessage(quiet);
+    const plain = generatePlainTextBriefing(quiet);
+
+    // Guard the guard: this fixture must actually hit the empty-section path.
+    expect(rich).not.toContain("Oportunidades de hoje");
+    expect(rich).not.toContain("\n\n\n");
+    expect(plain).not.toContain("\n\n\n");
+  });
+
+  it("omits the boosted blocks entirely when the feed failed", () => {
+    const input = makeInput();
+    input.unavailable = { boosted: true };
+    const rich = generateBriefingMessage(input);
+
+    // A line the app could not verify must not appear at all — a "not available"
+    // placeholder is noise dressed as a reading in a message shared as fact.
+    expect(rich).not.toContain("CRIATURA BOOSTADA");
+    expect(rich).not.toContain("BOSS BOOSTADO");
+    expect(rich).not.toContain("não disponível");
+    // Everything else survives.
+    expect(rich).toContain("REGIÃO BOOSTADA");
+    expect(rich).not.toContain("\n\n\n");
+  });
+
+  it("still prints the boosted blocks when nothing failed", () => {
+    const rich = generateBriefingMessage(makeInput());
+    expect(rich).toContain("Gore Horn");
+    expect(rich).toContain("Ratmiral");
+  });
+
+  it("omits market lines when the market feed failed", () => {
+    const input = makeInput();
+    input.unavailable = { market: true };
+    const rich = generateBriefingMessage(input);
+
+    expect(rich).not.toContain("TIBIAMARKET.TOP");
+    expect(rich).not.toContain("TIBIA COIN");
+    // Merchants are recorded by the player, not the feed, so they stay.
+    expect(rich).toContain("RASHID");
+  });
+});

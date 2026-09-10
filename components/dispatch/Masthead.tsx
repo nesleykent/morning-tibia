@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WorldDetail } from "@/types/world";
+import { creatureWikiUrl } from "@/lib/utils/tibiaWiki";
 
 /**
  * What is special today, at the size that claim deserves.
@@ -11,6 +12,10 @@ import type { WorldDetail } from "@/types/world";
  * owns; it was previously two 44px thumbnails weighted identically to a market price. Here the
  * creatures are the masthead — they sit above the fold at a size you actually look at, and the
  * date and world read as a publication line beneath them.
+ *
+ * The two tiles sit side by side at every width. Stacked, they pushed the dispatch's first
+ * sentence past the bottom of a phone screen, so the reader scrolled a full viewport before
+ * the page told them anything about their world.
  */
 export function Masthead({
   dateLabel,
@@ -19,6 +24,8 @@ export function Masthead({
   creature,
   boss,
   loading,
+  boostedFailed,
+  worldDetailFailed,
 }: {
   dateLabel: string;
   world: string;
@@ -26,6 +33,8 @@ export function Masthead({
   creature: BoostedEntity | null;
   boss: BoostedEntity | null;
   loading: boolean;
+  boostedFailed: boolean;
+  worldDetailFailed: boolean;
 }) {
   return (
     <header className="relative">
@@ -34,11 +43,11 @@ export function Masthead({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))]">
             {dateLabel}
           </p>
-          <h1 className="prose-serif mt-2 text-[38px] font-normal leading-[1.05] tracking-[-0.02em] text-[hsl(var(--foreground))] sm:text-[52px]">
+          <h1 className="prose-serif mt-1.5 text-[34px] font-normal leading-[1.05] tracking-[-0.02em] text-[hsl(var(--foreground))] sm:mt-2 sm:text-[52px]">
             {world || "…"}
           </h1>
-          {detail && (
-            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 text-[12.5px] text-[hsl(var(--muted-foreground))]">
+          {detail ? (
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[12.5px] text-[hsl(var(--muted-foreground))]">
               <span className="tnum text-[hsl(var(--foreground))]">
                 {detail.playersOnline.toLocaleString("pt-BR")}
               </span>
@@ -51,13 +60,21 @@ export function Masthead({
                 </>
               )}
             </p>
+          ) : (
+            // Silence here used to be indistinguishable from a world with no players: the
+            // whole line simply vanished when the fetch failed.
+            worldDetailFailed && (
+              <p className="mt-2 text-[12.5px] text-[hsl(var(--muted-foreground))]">
+                World status unavailable
+              </p>
+            )
           )}
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:mt-7 sm:grid-cols-2 sm:gap-5">
-        <Boosted label="Boosted creature" entity={creature} loading={loading} />
-        <Boosted label="Boosted boss" entity={boss} loading={loading} />
+      <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-5">
+        <Boosted label="Boosted creature" entity={creature} loading={loading} failed={boostedFailed} />
+        <Boosted label="Boosted boss" entity={boss} loading={loading} failed={boostedFailed} />
       </div>
     </header>
   );
@@ -67,14 +84,18 @@ function Boosted({
   label,
   entity,
   loading,
+  failed,
 }: {
   label: string;
   entity: BoostedEntity | null;
   loading: boolean;
+  failed: boolean;
 }) {
+  const href = creatureWikiUrl(entity?.name);
+
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3.5 py-4 ring-1 ring-inset ring-white/[0.06] sm:gap-4 sm:px-5 sm:py-5">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center sm:h-[72px] sm:w-[72px]">
+    <div className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-3 py-3.5 ring-1 ring-inset ring-white/[0.06] sm:gap-4 sm:px-5 sm:py-5">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center sm:h-[72px] sm:w-[72px]">
         {loading ? (
           <div className="skeleton h-full w-full" />
         ) : entity?.imageUrl ? (
@@ -88,18 +109,37 @@ function Boosted({
             className="h-full w-full object-contain drop-shadow-[0_6px_14px_hsl(38_60%_10%/0.6)]"
           />
         ) : (
-          <span className="text-2xl text-[hsl(var(--muted-foreground))]">?</span>
+          <span className="text-2xl text-[hsl(var(--muted-foreground))]" aria-hidden="true">
+            {failed ? "—" : "?"}
+          </span>
         )}
       </div>
       <div className="min-w-0">
-        <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--muted-foreground))]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[hsl(var(--muted-foreground))] sm:text-[10.5px] sm:tracking-[0.14em]">
           {label}
         </p>
         {loading ? (
-          <div className="skeleton mt-2 h-5 w-28" />
+          <div className="skeleton mt-2 h-5 w-24" />
         ) : (
-          <p className="prose-serif mt-0.5 text-pretty text-[17px] leading-tight text-[hsl(var(--foreground))] sm:text-[20px]">
-            {entity?.name || "—"}
+          <p className="prose-serif mt-0.5 text-pretty text-[15px] leading-tight text-[hsl(var(--foreground))] sm:text-[20px]">
+            {entity?.name ? (
+              href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline decoration-[hsl(var(--muted-foreground))]/40 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--gold))]"
+                >
+                  {entity.name}
+                </a>
+              ) : (
+                entity.name
+              )
+            ) : (
+              <span className="text-[hsl(var(--muted-foreground))]">
+                {failed ? "Couldn't load" : "—"}
+              </span>
+            )}
           </p>
         )}
       </div>

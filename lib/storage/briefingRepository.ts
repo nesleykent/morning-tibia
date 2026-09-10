@@ -8,7 +8,9 @@ export type BriefingFormat = "rich" | "plain";
 const VALID_LANGUAGES: BriefingLanguage[] = ["pt", "en", "es", "pl"];
 export const UPCOMING_EVENTS_WINDOW_OPTIONS = [5, 7, 14] as const;
 const DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS = 7;
-const VALID_MARKET_TREND_BASES: MarketTrendBasis[] = ["last", "avg3", "avg7", "avg14"];
+/** Every basis the market controls offer, in the order they're shown. */
+export const MARKET_TREND_BASIS_OPTIONS = ["last", "avg3", "avg7", "avg14"] as const;
+const VALID_MARKET_TREND_BASES: MarketTrendBasis[] = [...MARKET_TREND_BASIS_OPTIONS];
 const DEFAULT_MARKET_TREND_BASIS: MarketTrendBasis = "last";
 
 /**

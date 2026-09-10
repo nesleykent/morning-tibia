@@ -1,5 +1,8 @@
 import type { DailyDigest, MiniWorldChangeEntry } from "@/lib/dashboard/dailyDigest";
 import type { Merchant } from "@/types/merchant";
+import { TIBIA_LOCATIONS } from "@/lib/defaults/tibiaLocations";
+import { YASIR_CITIES } from "@/lib/defaults/merchants";
+import { miniWorldChangeWikiUrl } from "@/lib/utils/tibiaWiki";
 
 /**
  * Turns today's world state into sentences a person can read, with holes where the app is
@@ -22,6 +25,8 @@ import type { Merchant } from "@/types/merchant";
 export type Segment =
   | { kind: "text"; text: string }
   | { kind: "em"; text: string }
+  /** A name that has a verified TibiaWiki article behind it. */
+  | { kind: "link"; text: string; href: string }
   | {
       kind: "blank";
       /** `mwc:<changeId>` — what the picker writes back to. */
@@ -33,6 +38,13 @@ export type Segment =
       options: { id: string; label: string }[];
       /** Locations get a spatial picker; everything else gets a plain list. */
       spatial: boolean;
+      /**
+       * Several answers can be true at once (boosted regions). The picker toggles instead
+       * of replacing, and stays open between choices.
+       */
+      multi?: boolean;
+      /** Chosen option ids — the multi-select counterpart of `value`. */
+      selected?: string[];
     };
 
 export interface DispatchStanza {
@@ -56,6 +68,14 @@ const ASKS: Record<string, string> = {
 
 const t = (text: string): Segment => ({ kind: "text", text });
 const em = (text: string): Segment => ({ kind: "em", text });
+const link = (text: string, href: string | null): Segment =>
+  href ? { kind: "link", text, href } : { kind: "em", text };
+
+/** "Thais", "Thais and Edron", "Thais, Edron and Carlin" — a list a sentence can hold. */
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
 
 function blankFor(entry: MiniWorldChangeEntry): Segment {
   const { definition, value } = entry;
@@ -139,16 +159,54 @@ function clauseFor(entry: MiniWorldChangeEntry): Segment[] | null {
   }
 }
 
+/**
+ * A change that never stops (the Forsaken Mine) but whose current form nobody has looked at
+ * yet. It is not news — the mine rotates every save whether or not anyone checked — so it
+ * belongs with the other "go and look" facts rather than leading the dispatch.
+ *
+ * Without this rule it was the *only* thing a brand-new visitor saw: a gold blank asking
+ * which creatures were down a mine, before the page had said what it was for. The briefing
+ * has always applied this rule (see buildBriefingModel); now the page agrees with it.
+ */
+function isUnresolvedAlwaysActive(entry: MiniWorldChangeEntry): boolean {
+  return entry.definition.detection === "always-active" && entry.value.variantId === null;
+}
+
 export function composeDispatch(
   digest: DailyDigest,
   merchants: Record<string, Merchant>,
+  boostedRegions: string[] = [],
 ): DispatchStanza[] {
   const stanzas: DispatchStanza[] = [];
 
+  // ── Today's boosted region ───────────────────────────────────────────────
+  // No in-game source exists for this, so the player is the only one who can say. It opens
+  // the dispatch because it is a fact about the whole day rather than about one change.
+  stanzas.push({
+    id: "boosted-region",
+    heading: null,
+    lines: [
+      [
+        t("Today's boosted region is "),
+        {
+          kind: "blank",
+          target: "region",
+          ask: "which regions",
+          value: boostedRegions.length > 0 ? formatList(boostedRegions) : null,
+          options: TIBIA_LOCATIONS.map((name) => ({ id: name, label: name })),
+          spatial: true,
+          multi: true,
+          selected: boostedRegions,
+        },
+        t("."),
+      ],
+    ],
+  });
+
   // ── What is happening ────────────────────────────────────────────────────
-  const running = [...digest.mini.needsVariant, ...digest.mini.running].filter(
-    (e, i, all) => all.findIndex((x) => x.definition.id === e.definition.id) === i,
-  );
+  const running = [...digest.mini.needsVariant, ...digest.mini.running]
+    .filter((e, i, all) => all.findIndex((x) => x.definition.id === e.definition.id) === i)
+    .filter((entry) => !isUnresolvedAlwaysActive(entry));
 
   const happeningLines = running.map(clauseFor).filter((l): l is Segment[] => l !== null);
 
@@ -185,11 +243,7 @@ export function composeDispatch(
         target: "merchant:yasir",
         ask: "which city",
         value: yasir.location || null,
-        options: [
-          { id: "Carlin", label: "Carlin" },
-          { id: "Liberty Bay", label: "Liberty Bay" },
-          { id: "Ankrahmun", label: "Ankrahmun" },
-        ],
+        options: YASIR_CITIES.map((city) => ({ id: city, label: city })),
         spatial: true,
       },
       t("."),
@@ -204,14 +258,30 @@ export function composeDispatch(
   // ── Things no source can report ──────────────────────────────────────────
   // These get their own stanza because the reason they are unresolved is different in kind:
   // no paste will ever settle them, so the ask is "go and look", not "paste more".
-  if (digest.mini.silent.length > 0) {
+  const goAndLook = [
+    ...digest.mini.silent,
+    // Forsaken lives here too until the player has looked — see isUnresolvedAlwaysActive.
+    ...[...digest.mini.needsVariant, ...digest.mini.running].filter(isUnresolvedAlwaysActive),
+  ].filter((e, i, all) => all.findIndex((x) => x.definition.id === e.definition.id) === i);
+
+  if (goAndLook.length > 0) {
     stanzas.push({
       id: "silent",
       heading: "Nothing announces these",
-      lines: digest.mini.silent.map((entry) => [
-        t(`${entry.definition.name} — `),
-        em(entry.definition.howToCheck ?? ""),
-      ]),
+      lines: goAndLook.map((entry) => {
+        const line: Segment[] = [
+          link(entry.definition.name, miniWorldChangeWikiUrl(entry.definition)),
+          t(" — "),
+          em(entry.definition.howToCheck ?? ""),
+        ];
+        // Forsaken keeps its picker here rather than losing it: looking is the only way to
+        // settle which creature set is down the mine, so the answer belongs beside the
+        // instruction to go and look — not in a clause claiming it as news.
+        if (entry.definition.variants.length > 0) {
+          line.push(t(" "), blankFor(entry));
+        }
+        return line;
+      }),
     });
   }
 
@@ -226,7 +296,12 @@ export function composeDispatch(
           t(
             `${digest.mini.notRunning.length} other changes were on the board and are not running: `,
           ),
-          em(digest.mini.notRunning.map((e) => e.definition.name).join(", ") + "."),
+          // Each name links to its own article: individually of no interest today, but this
+          // is the one place the full catalog is named, so it is worth being able to follow.
+          ...digest.mini.notRunning.flatMap((entry, index) => [
+            link(entry.definition.name, miniWorldChangeWikiUrl(entry.definition)),
+            t(index === digest.mini.notRunning.length - 1 ? "." : ", "),
+          ]),
         ],
       ],
     });

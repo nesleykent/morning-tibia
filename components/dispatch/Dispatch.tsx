@@ -4,8 +4,16 @@ import { Blank } from "./Blank";
 import type { DispatchStanza, Segment } from "@/lib/dispatch/composeDispatch";
 import type { AchievementOpportunity } from "@/types/achievement";
 import type { MarketPrice, MarketPriceId, MarketTrendBasis } from "@/types/market";
-import { computeTrendForBasis, ENTRIES_BY_BASIS } from "@/lib/utils/priceTrend";
+import { computeTrendForBasis, ENTRIES_BY_BASIS, averageOfLastEntries } from "@/lib/utils/priceTrend";
+import { MARKET_TREND_BASIS_OPTIONS } from "@/lib/storage/briefingRepository";
+import { formatTimeAgo } from "@/lib/utils/timeAgo";
+import { getNextServerSave } from "@/lib/utils/serverSave";
+import { formatCountdownClock } from "@/lib/formatter/dateFormat";
+import { useNowMs } from "@/lib/utils/clock";
 import { cn } from "@/lib/utils/cn";
+
+/** Older than this and a "current" market price is not current enough to show plainly. */
+const STALE_PRICE_MS = 2 * 24 * 60 * 60 * 1000;
 
 /**
  * The dispatch: the product, rendered as the thing the reader came for.
@@ -21,23 +29,18 @@ export function Dispatch({
   opportunities,
   numbers,
   onPick,
-  emptyInvitation,
+  invitation,
 }: {
   stanzas: DispatchStanza[];
   opportunities: AchievementOpportunity[];
   numbers: NumbersProps;
   onPick: (target: string, optionId: string) => void;
-  emptyInvitation: boolean;
+  /** Rendered above everything when the reader has told the app nothing yet. */
+  invitation: React.ReactNode;
 }) {
   return (
     <article className="page-sheet rounded-xl px-6 py-8 sm:px-12 sm:py-12">
-      {emptyInvitation && (
-        <p className="prose-serif text-[19px] leading-[1.65] text-[hsl(var(--ink-soft))]">
-          Nothing has been checked yet today. Read the world board at the Adventurer&apos;s Guild,
-          ask a guide about a world change, then paste what they told you below — this page will
-          write itself.
-        </p>
-      )}
+      {invitation}
 
       {stanzas.map((stanza) => (
         <section key={stanza.id} className="settle mb-8 last:mb-0">
@@ -84,11 +87,11 @@ export function Dispatch({
                   >
                     {definition.achievement}
                   </a>
-                  {definition.premium && (
-                    <span className="ml-2 align-[0.15em] text-[10px] font-semibold uppercase tracking-[0.1em] text-[hsl(var(--ink-faint))]">
-                      Premium
-                    </span>
-                  )}
+                  <Meta>
+                    Grade {definition.grade} · {definition.points}{" "}
+                    {definition.points === 1 ? "pt" : "pts"}
+                    {definition.premium && " · Premium"}
+                  </Meta>
                 </p>
                 <p className="mt-1 text-[13.5px] leading-relaxed text-[hsl(var(--ink-soft))]">
                   {definition.task}{" "}
@@ -99,6 +102,14 @@ export function Dispatch({
                     </span>
                   ) : null}
                 </p>
+                {/* Never omitted. A caveat is the difference between "you can finish this
+                    today" and "today moves this one step of five" — leaving it out is how an
+                    opportunity gets oversold. */}
+                {definition.caveat && (
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--ink-faint))]">
+                    Note: {definition.caveat}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
@@ -107,6 +118,15 @@ export function Dispatch({
 
       <Numbers {...numbers} />
     </article>
+  );
+}
+
+/** Small trailing metadata on a line of prose — present, precise, visually subordinate. */
+function Meta({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ml-2 align-[0.15em] text-[10px] font-semibold uppercase tracking-[0.1em] text-[hsl(var(--ink-faint))]">
+      {children}
+    </span>
   );
 }
 
@@ -120,31 +140,68 @@ function SegmentView({
   if (segment.kind === "text") return <>{segment.text}</>;
   if (segment.kind === "em")
     return <span className="text-[hsl(var(--ink-soft))]">{segment.text}</span>;
+  if (segment.kind === "link")
+    return (
+      <a
+        href={segment.href}
+        target="_blank"
+        rel="noreferrer"
+        className="underline decoration-[hsl(var(--ink-faint))]/35 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--ink))]"
+      >
+        {segment.text}
+      </a>
+    );
   return <Blank segment={segment} onPick={onPick} />;
 }
 
 export interface NumbersProps {
-  rashid: string | null;
   warzones: { id: string; time: string; sequence?: string | null }[];
   prices: Record<string, MarketPrice>;
   marketBasis: MarketTrendBasis;
-  serverSaveLabel: string | null;
+  onMarketBasisChange: (basis: MarketTrendBasis) => void;
+  /** True when the market feed itself failed — the block says so rather than showing nothing. */
+  marketUnavailable: boolean;
 }
 
 const TREND = {
-  up: { glyph: "↑", tone: "text-[hsl(var(--live))]" },
-  down: { glyph: "↓", tone: "text-[hsl(var(--danger))]" },
+  up: { glyph: "↑", tone: "text-[hsl(var(--live-ink))]" },
+  down: { glyph: "↓", tone: "text-[hsl(var(--danger-ink))]" },
   unchanged: { glyph: "→", tone: "text-[hsl(var(--ink-faint))]" },
 } as const;
+
+const BASIS_LABEL: Record<MarketTrendBasis, string> = {
+  last: "Last",
+  avg3: "3",
+  avg7: "7",
+  avg14: "14",
+};
 
 /**
  * Numbers do not want to be prose. Times and prices are a small tabular footer to the
  * dispatch — present, precise, and visually subordinate to the sentences above them.
  */
-function Numbers({ warzones, prices, marketBasis, serverSaveLabel }: NumbersProps) {
+function Numbers({
+  warzones,
+  prices,
+  marketBasis,
+  onMarketBasisChange,
+  marketUnavailable,
+}: NumbersProps) {
+  const nowMs = useNowMs();
   const priceEntries = (Object.entries(prices) as [MarketPriceId, MarketPrice][]).filter(
     ([, p]) => p.value !== null,
   );
+  const entryCount = ENTRIES_BY_BASIS[marketBasis];
+
+  // Freshness of the feed as a whole: the newest observation across the tracked prices.
+  const newestTimestamp = priceEntries.reduce<number | null>((newest, [, price]) => {
+    const stamp = price.sourceTimestamp ?? price.history[price.history.length - 1]?.timestamp ?? null;
+    if (stamp === null) return newest;
+    return newest === null || stamp > newest ? stamp : newest;
+  }, null);
+  const ageLabel =
+    newestTimestamp !== null && nowMs > 0 ? formatTimeAgo(newestTimestamp, nowMs) : null;
+  const isStale = newestTimestamp !== null && nowMs > 0 && nowMs - newestTimestamp > STALE_PRICE_MS;
 
   return (
     <footer className="mt-8 grid grid-cols-1 gap-x-10 gap-y-5 border-t border-[hsl(var(--page-edge))] pt-6 sm:grid-cols-2">
@@ -166,36 +223,103 @@ function Numbers({ warzones, prices, marketBasis, serverSaveLabel }: NumbersProp
         </div>
       )}
 
-      {priceEntries.length > 0 && (
+      {(priceEntries.length > 0 || marketUnavailable) && (
         <div>
-          <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--ink-faint))]">
-            Market
-          </h3>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-1">
-            {priceEntries.map(([id, price]) => {
-              const trend = TREND[computeTrendForBasis(price.history, ENTRIES_BY_BASIS[marketBasis])];
-              return (
-                <div key={id} className="flex items-baseline justify-between gap-2">
-                  <dt className="truncate text-[12.5px] text-[hsl(var(--ink-soft))]">
-                    {shortPriceLabel(id)}
-                  </dt>
-                  <dd className="tnum shrink-0 text-[13.5px] text-[hsl(var(--ink))]">
-                    {Math.round(price.value!).toLocaleString("en-US")}
-                    <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
+          <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--ink-faint))]">
+              Market
+            </h3>
+            {priceEntries.length > 0 && (
+              <div
+                className="flex items-center gap-0.5"
+                role="group"
+                aria-label="Market average basis"
+              >
+                {MARKET_TREND_BASIS_OPTIONS.map((basis) => (
+                  <button
+                    key={basis}
+                    type="button"
+                    onClick={() => onMarketBasisChange(basis)}
+                    aria-pressed={marketBasis === basis}
+                    title={
+                      basis === "last"
+                        ? "Show the latest entry"
+                        : `Average the last ${ENTRIES_BY_BASIS[basis]} entries`
+                    }
+                    className={cn(
+                      "rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors",
+                      marketBasis === basis
+                        ? "bg-[hsl(var(--gold)/0.28)] text-[hsl(var(--ink))]"
+                        : "text-[hsl(var(--ink-faint))] hover:bg-[hsl(var(--gold)/0.14)] hover:text-[hsl(var(--ink))]",
+                    )}
+                  >
+                    {BASIS_LABEL[basis]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {marketUnavailable && priceEntries.length === 0 ? (
+            <p className="text-[12.5px] text-[hsl(var(--ink-soft))]">
+              Market data couldn&apos;t be loaded.
+            </p>
+          ) : (
+            <>
+              <dl className={cn("grid grid-cols-2 gap-x-6 gap-y-1", isStale && "opacity-60")}>
+                {priceEntries.map(([id, price]) => {
+                  const trend = TREND[computeTrendForBasis(price.history, entryCount)];
+                  // The shown figure follows the selected basis, so "Avg 7" reads the
+                  // 7-entry average rather than the newest tick with a 7-entry arrow.
+                  const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
+                  return (
+                    <div key={id} className="flex items-baseline justify-between gap-2">
+                      <dt className="truncate text-[12.5px] text-[hsl(var(--ink-soft))]">
+                        {shortPriceLabel(id)}
+                      </dt>
+                      <dd className="tnum shrink-0 text-[13.5px] text-[hsl(var(--ink))]">
+                        {Math.round(shown).toLocaleString("en-US")}
+                        <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+              {ageLabel && (
+                <p className="mt-1.5 text-[11px] text-[hsl(var(--ink-faint))]">
+                  tibiamarket.top · {ageLabel}
+                  {isStale && (
+                    <span className="ml-1.5 font-semibold uppercase tracking-[0.08em]">
+                      · stale
+                    </span>
+                  )}
+                </p>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {serverSaveLabel && (
-        <p className="text-[12.5px] text-[hsl(var(--ink-faint))] sm:col-span-2">
-          Everything here resets at server save, in {serverSaveLabel}.
-        </p>
-      )}
+      <ServerSaveLine />
     </footer>
+  );
+}
+
+/**
+ * Its own component, subscribing to the shared clock directly, for two reasons: it stays in
+ * step with the top bar's countdown to the same instant (they used to disagree by minutes,
+ * because this one was frozen at page load), and only this line re-renders each second
+ * instead of the whole dispatch.
+ */
+function ServerSaveLine() {
+  const nowMs = useNowMs();
+  if (nowMs === 0) return null;
+  const msLeft = getNextServerSave(new Date(nowMs)).getTime() - nowMs;
+  return (
+    <p className="text-[12.5px] text-[hsl(var(--ink-faint))] sm:col-span-2">
+      Everything here resets at server save, in{" "}
+      <span className="tnum">{formatCountdownClock(msLeft)}</span>.
+    </p>
   );
 }
 

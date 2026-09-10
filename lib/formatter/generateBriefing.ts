@@ -144,9 +144,11 @@ export function renderRichBriefing(
   ]);
 
   const statusSection = joinBlocks([
-    `👾 ${t.boostedCreature}\n${model.boostedCreatureLabel}`,
+    model.boostedCreatureLabel
+      ? `👾 ${t.boostedCreature}\n${model.boostedCreatureLabel}`
+      : null,
 
-    `👹 ${t.boostedBoss}\n${model.boostedBossLabel}`,
+    model.boostedBossLabel ? `👹 ${t.boostedBoss}\n${model.boostedBossLabel}` : null,
 
     model.boostedRegionValue
       ? `🗺️ ${t.boostedRegion.toUpperCase()}\n${model.boostedRegionValue}`
@@ -275,7 +277,10 @@ export function renderRichBriefing(
     upcomingBody,
   ]);
 
-  return [
+  // joinBlocks, not a bare join: `opportunitySection` is "" whenever today's state created
+  // no opportunities, and including it left a doubled blank line in the middle of a message
+  // that gets pasted straight into WhatsApp.
+  return joinBlocks([
     header,
     statusSection,
     marketSection,
@@ -283,7 +288,7 @@ export function renderRichBriefing(
     worldChangeSection,
     opportunitySection,
     upcomingSection,
-  ].join("\n\n");
+  ]);
 }
 
 export function renderPlainBriefing(
@@ -297,9 +302,9 @@ export function renderPlainBriefing(
   ]);
 
   const statusSection = joinBlocks([
-    `${t.boostedCreature}\n${model.boostedCreatureLabel}`,
+    model.boostedCreatureLabel ? `${t.boostedCreature}\n${model.boostedCreatureLabel}` : null,
 
-    `${t.boostedBoss}\n${model.boostedBossLabel}`,
+    model.boostedBossLabel ? `${t.boostedBoss}\n${model.boostedBossLabel}` : null,
 
     model.boostedRegionValue
       ? `${t.boostedRegion.toUpperCase()}\n${model.boostedRegionValue}`
@@ -422,7 +427,7 @@ export function renderPlainBriefing(
     upcomingBody,
   ]);
 
-  return [
+  return joinBlocks([
     header,
     statusSection,
     marketSection,
@@ -430,7 +435,7 @@ export function renderPlainBriefing(
     worldChangeSection,
     plainOpportunitySection,
     upcomingSection,
-  ].join("\n\n");
+  ]);
 }
 
 export function generateBriefingMessage(
