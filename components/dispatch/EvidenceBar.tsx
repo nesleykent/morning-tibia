@@ -57,9 +57,13 @@ function summarise(receipt: Receipt): string {
  * first keystroke: a reader who does not already know what the World Board is could not
  * previously find out from this screen.
  *
- * The receipt says what changed, and — because a complete board reading rules out twenty-one
- * changes in one click — it comes with an undo. Applying the paste is a single atomic update
- * owned by useBriefingState, so "before" is a real snapshot rather than a replayed diff.
+ * The receipt says what changed, and it comes with an undo, because a board reading rules out
+ * twenty-odd changes in one click. Applying the paste is a single atomic update owned by
+ * useBriefingState, so "before" is a real snapshot rather than a replayed diff.
+ *
+ * Nothing here asks the reader whether their paste is a whole board. Using the board writes
+ * the whole listing to the Server Log in one action, so a recognised board message already
+ * implies the reading it came from; the question had no answer the reader could get wrong.
  */
 export function EvidenceBar({
   onApply,
@@ -78,26 +82,19 @@ export function EvidenceBar({
   onJumpToUnresolved: () => void;
 }) {
   const [text, setText] = useState("");
-  const [wholeBoard, setWholeBoard] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [pasteError, setPasteError] = useState<string | null>(null);
   const fieldId = useId();
   const hintId = useId();
-  const wholeBoardId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const apply = () => {
     if (!text.trim()) return;
-    const parsed = parseGameText(text, { declaredComplete: wholeBoard });
+    const parsed = parseGameText(text);
     setReceipt(buildReceipt(parsed));
     setPasteError(null);
     onApply(parsed);
-    if (!parsed.isEmpty) {
-      setText("");
-      // The declaration describes one paste, so it cannot be allowed to carry into the next.
-      // A tick left standing would silently rule out twenty-odd changes off a later fragment.
-      setWholeBoard(false);
-    }
+    if (!parsed.isEmpty) setText("");
   };
 
   /** The real flow is alt-tab from the game with the log already copied, so offer the
@@ -132,8 +129,7 @@ export function EvidenceBar({
       </h2>
       <p id={hintId} className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]">
         The world board at the Adventurer&apos;s Guild, a guide&apos;s reply, or a towncryer
-        shout, in any combination. Only a whole board reading can rule anything out, so say
-        below when that is what you pasted.
+        shout, in any combination.
       </p>
 
       <Textarea
@@ -156,30 +152,6 @@ export function EvidenceBar({
         placeholder="This board will notify you of currently active mini world changes all over Tibia…"
         className="mt-2.5 resize-y border-white/10 bg-white/[0.03] font-mono text-[13px] leading-relaxed text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]/70"
       />
-
-      {/* The board prints its messages into the Server Log without the opening line you see
-          when you look at it, so a real, complete reading pasted from the log carries no
-          evidence of its own completeness. The reader is the only witness to what they copied,
-          and this is where they say so — without it, nothing could ever be ruled out and Yasir
-          stayed "not verified" on days the board had plainly settled the question. */}
-      <label
-        htmlFor={wholeBoardId}
-        className="mt-2.5 flex cursor-pointer items-start gap-2 text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]"
-      >
-        <input
-          id={wholeBoardId}
-          type="checkbox"
-          checked={wholeBoard}
-          onChange={(e) => setWholeBoard(e.target.checked)}
-          className="mt-[3px] h-3.5 w-3.5 shrink-0 accent-[hsl(var(--gold))]"
-        />
-        <span>
-          This is the whole world board
-          <span className="text-[hsl(var(--muted-foreground))]/70">
-            {": "}everything it printed, so anything it did not mention is not running.
-          </span>
-        </span>
-      </label>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <Button type="button" onClick={apply} disabled={!text.trim()}>
@@ -214,8 +186,8 @@ export function EvidenceBar({
               <>Whole board reading: {summarise(receipt)}.</>
             ) : (
               <>
-                Added {summarise(receipt)}. Nothing was ruled out, because only a whole board
-                reading can prove that.
+                Added {summarise(receipt)}. Nothing was ruled out: no world board reading in
+                that text, and only the board lists what is not running.
               </>
             )}
           </p>

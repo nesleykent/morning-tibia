@@ -23,16 +23,19 @@ describe("parseGameText", () => {
     });
   });
 
-  describe("what a partial paste may conclude", () => {
-    it("marks nothing inactive without the board preamble", () => {
+  describe("what a paste that is not a board reading may conclude", () => {
+    it("rules changes out from a board message, because the board lists everything at once", () => {
+      // Using the board writes its whole current listing into the Server Log in one action, so
+      // one message in the log implies the listing it came from.
       const result = parseGameText(
         "A fiery fury gate has opened near one of the major cities somewhere in Tibia.",
       );
 
-      expect(result.isCompleteBoardReading).toBe(false);
-      expect(result.inactiveMiniWorldChangeIds).toEqual([]);
-      expect(result.inactiveMerchantIds).toEqual([]);
+      expect(result.isCompleteBoardReading).toBe(true);
+      expect(result.board.basis).toBe("recognised");
       expect(result.miniWorldChangeSignals).toHaveLength(1);
+      expect(result.inactiveMiniWorldChangeIds).toContain("kingsday");
+      expect(result.inactiveMerchantIds).toEqual(["yasir"]);
     });
 
     it("marks nothing inactive from a Guide log, however long", () => {

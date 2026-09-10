@@ -90,49 +90,52 @@ describe("parseBoardLog", () => {
       expect(result.signals).toHaveLength(0);
     });
 
-    it("does NOT treat a recognised line as a complete reading", () => {
-      // The regression this whole model exists for: pasting one interesting line used to
-      // mark the other 22 Mini World Changes inactive, silently telling the player that
-      // things they never checked were not happening.
+    it("treats a recognised board message as a complete reading on its own", () => {
+      // Using the board writes its whole current listing into the Server Log in one action,
+      // and the game offers no way to produce a partial one. So a message in the log implies
+      // the listing it came from, and the reading can settle absences.
+      //
+      // This replaced a rule that required the board's opening line, which is the object's
+      // *look* text and does not travel with the messages: both real logs kept as fixtures in
+      // this repo lack it, so in practice nothing could ever be ruled out.
       const result = parseBoardLog(
         "A fiery fury gate has opened near one of the major cities somewhere in Tibia.",
       );
 
-      expect(result.isCompleteReading).toBe(false);
+      expect(result.isCompleteReading).toBe(true);
+      expect(result.completenessBasis).toBe("recognised");
     });
 
-    it("does NOT treat the Oriental Trader line alone as a complete reading", () => {
+    it("treats the Oriental Trader line as a board reading too", () => {
+      // It reaches the Server Log by the same action as every other board message.
       const result = parseBoardLog(
         "Oriental ships sighted! A trader for exotic creature products may currently be visiting Carlin, Ankrahmun or Liberty Bay.",
       );
 
-      expect(result.isCompleteReading).toBe(false);
-    });
-
-    it("takes the reader's word that a paste is the whole board", () => {
-      // The board prints its messages into the Server Log without the opening line, so a real
-      // complete reading arrives looking exactly like a fragment. Requiring the preamble meant
-      // nothing could ever be ruled out in practice.
-      const lines = "A fiery fury gate has opened near one of the major cities somewhere in Tibia.";
-
-      expect(parseBoardLog(lines).completenessBasis).toBe("none");
-      expect(parseBoardLog(lines, { declaredComplete: true }).completenessBasis).toBe("declared");
-      expect(parseBoardLog(lines, { declaredComplete: true }).isCompleteReading).toBe(true);
-    });
-
-    it("records the preamble as the basis when it is there, declaration or not", () => {
-      expect(parseBoardLog(PREAMBLE, { declaredComplete: true }).completenessBasis).toBe(
-        "preamble",
-      );
-    });
-
-    it("accepts a declared board that printed nothing at all", () => {
-      // The board legitimately prints no messages on a day when nothing is running, and that
-      // reading is exactly when ruling changes out is worth most.
-      const result = parseBoardLog("", { declaredComplete: true });
       expect(result.isCompleteReading).toBe(true);
-      expect(result.signals).toEqual([]);
-      expect(result.recognisedCount).toBe(0);
+      expect(result.completenessBasis).toBe("recognised");
+    });
+
+    it("prefers the preamble as the basis when both are present", () => {
+      const result = parseBoardLog(
+        `${PREAMBLE}\nA fiery fury gate has opened near one of the major cities somewhere in Tibia.`,
+      );
+      expect(result.completenessBasis).toBe("preamble");
+    });
+
+    it("concludes nothing from text that is not a board reading", () => {
+      // A Guide reply answers one keyword; a Towncryer shout announces one change as he walks
+      // his route. Neither is a listing, so neither may mark anything absent.
+      for (const text of [
+        "Guide Luke: The great lake near Port Hope is clean.",
+        "Hear ye! Hear ye! It is Kingsday, people, let us celebrate and sing!",
+        "just chatting with a friend about the weather",
+        "",
+      ]) {
+        const result = parseBoardLog(text);
+        expect(result.isCompleteReading, text).toBe(false);
+        expect(result.completenessBasis, text).toBe("none");
+      }
     });
 
     it("counts what it recognised, for the paste receipt", () => {

@@ -22,7 +22,8 @@ import type { CombinedParseResult } from "./parseGameText";
  *    things are impossible.
  * 3. The board reading settled that Yasir is not trading, and the briefing said "not yet
  *    checked" anyway, because completeness was only ever recognised from an opening line the
- *    board does not print into the Server Log.
+ *    board does not print into the Server Log. A recognised board message now establishes the
+ *    reading on its own, since the one action that writes any of them writes all of them.
  */
 
 const BOARD = `
@@ -134,7 +135,7 @@ function briefingFor(overrides: BriefingOverrides, language: "pt" | "en" = "pt")
   });
 }
 
-const wholeBoard = () => parseGameText(`${BOARD}\n${GUIDE}`, { declaredComplete: true });
+const wholeBoard = () => parseGameText(`${BOARD}\n${GUIDE}`);
 
 describe("2026-09-10 Ustebra regression — parsing", () => {
   it("reads all fourteen Guide replies, including the two that used to fail", () => {
@@ -170,10 +171,13 @@ describe("2026-09-10 Ustebra regression — parsing", () => {
 });
 
 describe("2026-09-10 Ustebra regression — evidence semantics", () => {
-  it("treats the declared whole board as a complete snapshot", () => {
+  it("treats the board reading as a complete snapshot, with nothing asked of the reader", () => {
+    // The log has no opening line, which is what a real one looks like: that line is the
+    // board object's *look* text and does not travel with the messages it prints. Seven
+    // board messages are enough, because the one action that writes any of them writes all.
     const parsed = wholeBoard();
     expect(parsed.board.completeness).toBe("complete");
-    expect(parsed.board.basis).toBe("declared");
+    expect(parsed.board.basis).toBe("recognised");
     expect(parsed.board.recognisedCount).toBe(7);
   });
 
@@ -185,32 +189,45 @@ describe("2026-09-10 Ustebra regression — evidence semantics", () => {
     expect(briefingFor(applyEvidence(parsed))).not.toContain("ainda não verificado");
   });
 
-  it("leaves Yasir UNKNOWN when the same text is pasted without the declaration", () => {
-    // Byte-for-byte the same board, only the reader has not said it is the whole thing. That
-    // is a partial observation, and a partial observation can never settle an absence.
-    const partial = parseGameText(`${BOARD}\n${GUIDE}`);
-    expect(partial.board.completeness).toBe("partial");
-    expect(partial.board.basis).toBe("none");
-    expect(partial.inactiveMerchantIds).toEqual([]);
-    expect(partial.inactiveMiniWorldChangeIds).toEqual([]);
-    expect(applyEvidence(partial).merchants.yasir?.activityState).toBe("not-verified");
-    expect(briefingFor(applyEvidence(partial))).toContain("💰 Yasir: ainda não verificado");
+  it("leaves Yasir UNKNOWN when the paste contains no board reading at all", () => {
+    // The same fourteen Guide replies, without the board. A Guide answers one keyword and
+    // says nothing about Mini World Changes or about who is trading, so nothing here can
+    // settle an absence. This is the distinction the whole evidence model exists to hold:
+    // it now turns on whether the text is a board reading, not on a box the reader ticked.
+    const guideOnly = parseGameText(GUIDE);
+    expect(guideOnly.board.completeness).toBe("partial");
+    expect(guideOnly.board.basis).toBe("none");
+    expect(guideOnly.worldChangeSignals).toHaveLength(14);
+    expect(guideOnly.inactiveMerchantIds).toEqual([]);
+    expect(guideOnly.inactiveMiniWorldChangeIds).toEqual([]);
+    expect(applyEvidence(guideOnly).merchants.yasir?.activityState).toBe("not-verified");
+    expect(briefingFor(applyEvidence(guideOnly))).toContain("💰 Yasir: ainda não verificado");
+  });
+
+  it("leaves Yasir UNKNOWN from a Towncryer shout, which announces but never lists", () => {
+    const shout = parseGameText(
+      "Towncryer: Hear ye! Hear ye! It is Kingsday, people, let us celebrate and sing! Decorate Thais and let the bells ring! Come to the arena to hear the swords cling. Let us rejoice! Hail to the King!",
+    );
+    expect(shout.miniWorldChangeSignals.map((signal) => signal.changeId)).toEqual(["kingsday"]);
+    expect(shout.board.basis).toBe("none");
+    expect(shout.inactiveMerchantIds).toEqual([]);
+    expect(shout.inactiveMiniWorldChangeIds).toEqual([]);
   });
 
   it("keeps UNKNOWN and ABSENT apart for Mini World Changes too", () => {
-    const complete = applyEvidence(wholeBoard());
-    const partial = applyEvidence(parseGameText(`${BOARD}\n${GUIDE}`));
+    const board = applyEvidence(wholeBoard());
+    const noBoard = applyEvidence(parseGameText(GUIDE));
 
-    // Kingsday is announced and was not on the board: absent under a complete reading…
-    expect(complete.miniWorldChanges["kingsday"]?.status).toBe("inactive");
-    // …and still unknown under a partial one.
-    expect(partial.miniWorldChanges["kingsday"]?.status).toBe("unchecked");
+    // Kingsday is announced and was not on the board: absent once the board has been read…
+    expect(board.miniWorldChanges["kingsday"]?.status).toBe("inactive");
+    // …and still unknown when nothing that lists it has been read.
+    expect(noBoard.miniWorldChanges["kingsday"]?.status).toBe("unchecked");
 
     // Silent changes are never settled by any board reading, complete or not: the board could
     // not have mentioned them, so its silence about them means nothing at all.
     for (const id of ["beaver-breakout", "shipwrecked"]) {
-      expect(complete.miniWorldChanges[id]?.status, id).toBe("unchecked");
-      expect(partial.miniWorldChanges[id]?.status, id).toBe("unchecked");
+      expect(board.miniWorldChanges[id]?.status, id).toBe("unchecked");
+      expect(noBoard.miniWorldChanges[id]?.status, id).toBe("unchecked");
     }
   });
 

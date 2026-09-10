@@ -5,7 +5,7 @@ import type {
 } from "@/types/parser";
 import type { MerchantId } from "@/types/merchant";
 import type { BoardEvidence, GuideEvidence } from "@/types/evidence";
-import { parseBoardLog, type ParseBoardOptions } from "./parseBoardLog";
+import { parseBoardLog } from "./parseBoardLog";
 import { parseTowncryerLog } from "./parseTowncryerLog";
 import { parseGuideLog } from "./parseGuideLog";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
@@ -21,8 +21,8 @@ import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
  *
  * What each source is allowed to conclude stays strictly separate, though:
  *
- * - World Board  → Mini World Changes, and (only when the reading is *complete* — see
- *                  ParseBoardOptions) the negative that unlisted changes are not running.
+ * - World Board  → Mini World Changes, and the negative that unlisted changes are not
+ *                  running, since using the board writes its whole listing at once.
  * - Towncryer    → Mini World Changes, positives only, but sometimes with a variant the
  *                  board doesn't give.
  * - Guide NPC    → World Changes only, positives only.
@@ -52,11 +52,8 @@ export interface CombinedParseResult {
   isEmpty: boolean;
 }
 
-export function parseGameText(
-  rawText: string,
-  options: ParseBoardOptions = {},
-): CombinedParseResult {
-  const board = parseBoardLog(rawText, options);
+export function parseGameText(rawText: string): CombinedParseResult {
+  const board = parseBoardLog(rawText);
   const towncryer = parseTowncryerLog(rawText);
   const guide = parseGuideLog(rawText);
 

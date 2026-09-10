@@ -32,15 +32,17 @@ export type SourceCompleteness = "complete" | "partial";
  * boolean so the UI can say *how* it knows, and so a future source of completeness does not
  * silently change the meaning of existing data.
  *
- * - `preamble`  — the paste contains the board's own opening line. Self-evident.
- * - `declared`  — the reader ticked "this is the whole board". The board prints its messages
- *                 into the Server Log *without* that opening line, so for a player who copies
- *                 their Server Log — which is what everybody does — the reader's word is the
- *                 only completeness evidence that exists. Requiring the preamble meant real,
- *                 genuinely complete readings were permanently treated as fragments.
- * - `none`      — partial.
+ * - `preamble`   — the paste contains the board's own opening line. The only marker available
+ *                  when the board printed no messages at all, which is a real state: nothing
+ *                  running means nothing listed.
+ * - `recognised` — the paste contains at least one board message. Using the board writes its
+ *                  whole current listing to the Server Log in one action, and the game offers
+ *                  no way to produce a partial one, so a message in the log implies the
+ *                  listing it came from.
+ * - `none`       — not a board reading. Guide replies and Towncryer shouts land here, and
+ *                  neither can settle an absence.
  */
-export type BoardCompletenessBasis = "preamble" | "declared" | "none";
+export type BoardCompletenessBasis = "preamble" | "recognised" | "none";
 
 export interface BoardEvidence {
   completeness: SourceCompleteness;

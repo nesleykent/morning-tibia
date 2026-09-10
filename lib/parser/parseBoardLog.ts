@@ -5,55 +5,31 @@ import { normalizeForMatch } from "./textMatch";
 
 const NORMALIZED_PREAMBLE = normalizeForMatch(WORLD_BOARD_PREAMBLE);
 
-export interface ParseBoardOptions {
-  /**
-   * The reader has said this paste is the whole board.
-   *
-   * Necessary, not a convenience — and the alternatives were checked before adding it:
-   *
-   * 1. **The workflow does not know.** Morning Tibia's single input is one free-form box, and
-   *    the on-screen instructions are explicitly "paste whatever they told you… in any
-   *    combination". A paste may hold a board reading, Guide replies and a Towncryer shout at
-   *    once, or a fragment of any of them. Nothing in that flow separates "here is my board
-   *    consultation" from "here are the two lines I found interesting", because the product
-   *    deliberately never asked the reader to keep them apart.
-   * 2. **The text does not say either.** The one marker that would settle it — the opening
-   *    line quoted below — is the board object's *look* text and does not travel with the
-   *    messages the board prints into the Server Log. Both real logs kept as fixtures in this
-   *    repo (2026-08-19 and 2026-09-10) are missing it, which is why preamble-only detection
-   *    meant a genuinely complete reading was permanently indistinguishable from a fragment
-   *    and nothing could ever be ruled out.
-   * 3. **Inferring it from shape is the banned heuristic.** "Seven recognised board lines
-   *    therefore a whole board" cannot tell a complete seven-line board from seven lines
-   *    copied out of a longer log, and getting it wrong marks twenty-odd changes and Yasir as
-   *    confirmed-absent on no evidence — silently, and in the direction that makes a reader
-   *    miss something.
-   *
-   * So the fact lives with the only party that holds it. Automatic detection is still
-   * preferred wherever it exists: the preamble alone settles completeness with no tick, and
-   * `completenessBasis` records which of the two answered. Leaving the box unticked keeps a
-   * paste UNKNOWN rather than guessing, so nothing here can weaken that distinction.
-   */
-  declaredComplete?: boolean;
-}
-
 /**
  * Reads World Board text out of a pasted server log.
  *
  * The board prints one line per currently active Mini World Change, so each recognised line
- * proves that change is running — and, where the wording names one, which variant.
+ * proves that change is running, and, where the wording names one, which variant.
  *
- * The delicate part is the negative. Because the board is an exhaustive listing, a *complete*
- * reading also proves every unlisted change is not running. But that only holds if we actually
- * know the paste is complete, and matching a recognised message is emphatically NOT evidence
- * of that: a player who copies one interesting line has said nothing whatsoever about the
- * other changes, and treating that as a full reading would silently mark them all inactive.
+ * The delicate part is the negative. Because the board is an exhaustive listing, a reading of
+ * it also proves every unlisted change is not running. That turns on a fact about the game
+ * rather than about the text: **using the board writes the whole current listing into the
+ * Server Log in one go.** There is no in-game action that produces a partial listing, so any
+ * text carrying a recognised board message came from a complete reading, and it can settle
+ * absences.
  *
- * (This function used to do exactly that — `preamble || anyRecognisedEntry`.) Completeness now
- * comes from one of exactly two things, both recorded in `completenessBasis`: the board's own
- * opening line, or the reader saying so. Never from the shape of the text.
+ * This replaced a model that required the reader to tick "this is the whole board". That was
+ * built on the belief that a paste might be a fragment someone had cherry-picked, which is not
+ * a workflow the game offers: the player clicks the board, the log fills, they copy it. The
+ * tick asked for a fact the reader had no way to get wrong and no reason to think about, and
+ * left every unticked paste unable to rule anything out.
+ *
+ * What still cannot settle an absence is text that is not a board reading at all. A Guide
+ * reply answers one keyword and says nothing about the rest; a Towncryer shout announces one
+ * change as he walks his route and is not a listing. Neither produces a recognised board
+ * message, so neither reaches `completenessBasis` and neither can mark anything absent.
  */
-export function parseBoardLog(rawText: string, options: ParseBoardOptions = {}): ParsedBoardResult {
+export function parseBoardLog(rawText: string): ParsedBoardResult {
   const normalizedInput = normalizeForMatch(rawText);
   const signals: ParsedMiniWorldChangeSignal[] = [];
   const merchantHints: ParsedMerchantHint[] = [];
@@ -82,21 +58,22 @@ export function parseBoardLog(rawText: string, options: ParseBoardOptions = {}):
   }
 
   const hasPreamble = normalizedInput.includes(NORMALIZED_PREAMBLE);
+  const recognisedCount = signals.length + merchantHints.length;
 
-  // The declaration is honoured on its own, with no "…but only if the text looks board-ish"
-  // guard. A board with nothing running prints no messages at all, and that empty reading is
-  // precisely when ruling changes out is worth most; a guard would make the one case the
-  // feature exists for the one case it refuses to handle.
+  // The preamble still counts on its own, and it is the only thing that can: a board with
+  // nothing running prints no messages, so an empty reading has nothing else to identify it
+  // by. Otherwise a recognised message is the marker, because a message only reaches the
+  // Server Log by way of a whole reading.
   const basis: BoardCompletenessBasis = hasPreamble
     ? "preamble"
-    : options.declaredComplete
-      ? "declared"
+    : recognisedCount > 0
+      ? "recognised"
       : "none";
 
   return {
     signals,
     merchantHints,
-    recognisedCount: signals.length + merchantHints.length,
+    recognisedCount,
     completenessBasis: basis,
     isCompleteReading: basis !== "none",
   };

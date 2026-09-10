@@ -45,23 +45,27 @@ describe("2026-08-19 live Tibia regression", () => {
     expect(world.get("masters-voice")?.stateId).toBe("passable");
   });
 
-  it("does not conclude anything is inactive: this paste has no board preamble", () => {
+  it("reads the six board lines as the whole board, because that is how the board prints", () => {
     const result = parseGameText(OBSERVED_LOG);
 
-    // Six recognised board lines used to be treated as the whole board, which marked the
-    // other seventeen Mini World Changes — and Yasir — as confirmed not running. The log
-    // was copied from the middle of a server log, so it never proved that.
-    expect(result.isCompleteBoardReading).toBe(false);
-    expect(result.inactiveMiniWorldChangeIds).toEqual([]);
-    expect(result.inactiveMerchantIds).toEqual([]);
+    // This log has no opening line, which is normal: that line is the board object's *look*
+    // text and does not travel with the messages it writes to the Server Log. What it does
+    // have is six board messages, and the only action that puts one there writes all of them.
+    expect(result.isCompleteBoardReading).toBe(true);
+    expect(result.board.basis).toBe("recognised");
+    expect(result.inactiveMiniWorldChangeIds).toContain("hive-outpost");
+    expect(result.inactiveMerchantIds).toEqual(["yasir"]);
+    // The three Guide replies in the same paste settle World Changes and nothing else.
+    expect(result.worldChangeSignals).toHaveLength(3);
   });
 
-  it("does conclude it once the board's own opening line is included", () => {
+  it("says the same thing when the board's own opening line is included", () => {
     const result = parseGameText(
       `19:21:20 You see the world board. ${WORLD_BOARD_PREAMBLE}\n${OBSERVED_LOG}`,
     );
 
     expect(result.isCompleteBoardReading).toBe(true);
+    expect(result.board.basis).toBe("preamble");
     expect(result.inactiveMiniWorldChangeIds).toContain("hive-outpost");
     expect(result.inactiveMiniWorldChangeIds).toContain("warpath");
     expect(result.inactiveMiniWorldChangeIds).toContain("noodles-is-gone");
