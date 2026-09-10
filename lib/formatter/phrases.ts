@@ -92,10 +92,10 @@ export function formatActiveEventLine(event: ActiveEvent, language: BriefingLang
   if (event.daysRemaining <= 0) {
     return pick(
       {
-        pt: "último dia, termina hoje.",
-        en: "last day, ends today.",
-        es: "último día, termina hoy.",
-        pl: "ostatni dzień, kończy się dziś.",
+        pt: "último dia, termina hoje",
+        en: "last day, ends today",
+        es: "último día, termina hoy",
+        pl: "ostatni dzień, kończy się dziś",
       },
       language,
     );
@@ -103,16 +103,16 @@ export function formatActiveEventLine(event: ActiveEvent, language: BriefingLang
   if (event.daysRemaining === 1) {
     return pick(
       {
-        pt: "termina amanhã.",
-        en: "ends tomorrow.",
-        es: "termina mañana.",
-        pl: "kończy się jutro.",
+        pt: "termina amanhã",
+        en: "ends tomorrow",
+        es: "termina mañana",
+        pl: "kończy się jutro",
       },
       language,
     );
   }
   const shortDate = formatShortDateUTC(new Date(event.endAt));
-  return `${activeUntilPrefix(language)} ${shortDate}, ${daysRemainingPhrase(event.daysRemaining, language)}.`;
+  return `${activeUntilPrefix(language)} ${shortDate} (${daysRemainingPhrase(event.daysRemaining, language)})`;
 }
 
 /**
@@ -133,13 +133,23 @@ export function formatUpcomingEventLine(event: UpcomingEvent, language: Briefing
   return `${base}${phase}`;
 }
 
+/** Sentence-initial use of a value that is otherwise lower case ("rotação 42"). */
+function capitalize(text: string): string {
+  return text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
+}
+
+/**
+ * Lower case, because the label is a *value*: it reads "Drome: rotação 42 até 14/09" beside
+ * "Criatura: Badger", and mid-sentence as "Últimas horas da rotação 42". The two places where
+ * it opens a sentence capitalize it explicitly.
+ */
 function rotationLabel(rotationNumber: string, language: BriefingLanguage): string {
   return pick(
     {
-      pt: `Rotação ${rotationNumber}`,
-      en: `Rotation ${rotationNumber}`,
-      es: `Rotación ${rotationNumber}`,
-      pl: `Rotacja ${rotationNumber}`,
+      pt: `rotação ${rotationNumber}`,
+      en: `rotation ${rotationNumber}`,
+      es: `rotación ${rotationNumber}`,
+      pl: `rotacja ${rotationNumber}`,
     },
     language,
   );
@@ -203,10 +213,10 @@ export function formatDromeLine(
   const shortDate = formatShortDateInZone(endsAt, viewerTimeZone);
   return pick(
     {
-      pt: `${label} ativa. Último dia em ${dayDiff} dias, termina em ${shortDate} às ${time}.`,
-      en: `${label} active. Last day in ${dayDiff} days, ends on ${shortDate} at ${time}.`,
-      es: `${label} activa. Último día en ${dayDiff} días, termina el ${shortDate} a las ${time}.`,
-      pl: `${label} aktywna. Ostatni dzień za ${dayDiff} dni, kończy się ${shortDate} o ${time}.`,
+      pt: `${capitalize(label)} ativa. Último dia em ${dayDiff} dias, termina em ${shortDate} às ${time}.`,
+      en: `${capitalize(label)} active. Last day in ${dayDiff} days, ends on ${shortDate} at ${time}.`,
+      es: `${capitalize(label)} activa. Último día en ${dayDiff} días, termina el ${shortDate} a las ${time}.`,
+      pl: `${capitalize(label)} aktywna. Ostatni dzień za ${dayDiff} dni, kończy się ${shortDate} o ${time}.`,
     },
     language,
   );

@@ -122,6 +122,16 @@ export interface OpportunityDefinition {
    */
   caveat?: LocalizedText;
   /**
+   * The one condition a reader must know before setting out, in six or seven words.
+   *
+   * `detail` and `caveat` are written for the catalog page, where there is room for a
+   * sentence. The bulletin has room for a clause, and dropping the clause is not neutral:
+   * "Tanjis, Obujos or Jaul — boss · Bane" reads as an invitation, and the player arrives to
+   * find the teleporter shut because access had to be earned two stages ago. Set this only
+   * where its absence would mislead; most entries need nothing.
+   */
+  qualifier?: LocalizedText;
+  /**
    * Community judgement rather than game mechanic — a recommended level, "the best respawn in
    * the game", which creature is the most efficient source of a drop.
    *

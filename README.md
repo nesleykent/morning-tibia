@@ -466,28 +466,58 @@ uneventful end of a cycle for ordering and grouping; it does **not** hide anythi
 World Change state a Guide actually reported is printed in the briefing, because the section
 is a report of today's world state and a quiet answer is still an answer.
 
-## How to change the generated briefing format
+## How to change the generated bulletin
 
-The formatter is intentionally isolated from React:
+The bulletin is what the reader takes away — a message pasted into WhatsApp or Discord — so
+its shape is driven by that destination rather than by the app's own structure.
 
-- [`lib/formatter/translations.ts`](lib/formatter/translations.ts) holds the section
-  headers, field labels, and greeting for each supported language (PT/EN/ES/PL).
+**One entry per change, state and opportunities together.** The two used to be separate
+sections, which meant a reader met "Overhunting: starving wolves" near the top and
+"Overhunting / Starving Wolf — Bestiary" forty lines below, and had to hold the first in
+their head until the second arrived. Merged, each change is named once and every fact
+appears once: a full day went from 165 lines to about 90.
+
+**Opportunities that only restate the change are dropped.** A hunting ground, an access
+route and an NPC service *are* what the state sentence above already says — Spirit Grounds'
+only offer is "a spirit gate is open". The concrete kinds (bestiary, boss, mount,
+achievement, quest, item, World Change progress) name something separable, so they earn a
+`▸` line. Two per change, plus any deadline-bound line, which is admitted on top of the cap
+because it is the only tier that is worthless read tomorrow.
+
+**Markup is the intersection of the two clients.** `*bold*` is WhatsApp's; Discord reads it
+as italic, which is a graceful degradation. Discord's `**bold**` arrives in WhatsApp as
+literal asterisks, so it is never used. Leading whitespace is collapsed in chat clients, so
+nesting is a `▸` prefix. Names keep their own casing — upper-casing them shouted, and
+mangled official Tibia names the app is otherwise careful to reproduce exactly.
+
+The formatter is isolated from React:
+
+- [`lib/formatter/translations.ts`](lib/formatter/translations.ts) holds every word the
+  bulletin says in its own voice, in PT/EN/ES/PL. Labels are sentence case; official Tibia
+  terms ("Charm Points", "boss", "World Change") stay in English, because that is what a
+  Brazilian player says.
 - [`lib/formatter/briefingModel.ts`](lib/formatter/briefingModel.ts) turns raw app state
-  (plus the selected language) into a flat, render-agnostic `BriefingModel`.
-- [`lib/formatter/generateBriefing.ts`](lib/formatter/generateBriefing.ts) renders that
-  model two ways — `renderRichBriefing` (WhatsApp-style, `*bold*` + emoji) and
-  `renderPlainBriefing` (no markdown, no emoji) — and exports
-  `generateBriefingMessage` / `generatePlainTextBriefing` as the public API.
+  into a flat, render-agnostic `BriefingModel` whose `ChangeLine` carries a change's state
+  *and* its opportunities.
+- [`lib/formatter/opportunityPhrases.ts`](lib/formatter/opportunityPhrases.ts) composes an
+  opportunity's one-line form from the structured catalog entry — never from prose.
+- [`lib/formatter/generateBriefing.ts`](lib/formatter/generateBriefing.ts) is a **single**
+  renderer parameterised by a two-field `Style` (emoji on/off, markup on/off), exported as
+  `generateBriefingMessage` / `generatePlainTextBriefing`. It used to be two functions of
+  ~150 near-identical lines, and they drifted into different section shapes; one renderer
+  cannot.
 - [`lib/formatter/worldChangeNarratives.ts`](lib/formatter/worldChangeNarratives.ts) holds
-  the human-written headline/body/extra text per World Change and state, in all 4
-  languages — `getWorldChangeNarrative(changeId, state, detail, language)` — with a
-  `detail`-driven variant for states whose wording depends on parsed context (which
-  faction is winning, whether a daily quota was met). A state with no entry here falls
-  back to the compact ✅/stage line instead of disappearing.
+  the human-written headline/body per World Change and state, in all 4 languages. A state
+  with no entry falls back to its catalog label rather than disappearing.
 - [`lib/formatter/miniWorldChangeNarratives.ts`](lib/formatter/miniWorldChangeNarratives.ts)
-  is the same idea for Mini World Changes — `getMiniWorldChangeNarrative(changeId, state,
-  detail, language)` — one sentence per state, with the parsed location interpolated for
-  location-type changes.
+  is the same idea for Mini World Changes — one sentence per variant, with each variant's
+  name written out per language rather than interpolated from the English catalog label.
+
+Two test files guard this. [`generateBriefing.test.ts`](lib/formatter/generateBriefing.test.ts)
+reads a handful of scenarios closely; [`briefingCoverage.test.ts`](lib/formatter/briefingCoverage.test.ts)
+sweeps every state of every change in all four languages and both formats, asserting the
+structural invariants a pasteable message has to hold — balanced markup, no indentation, no
+doubled blank lines, no dangling separators, and a ceiling on length.
 
 To add a new language, add an entry to `translations.ts`'s `TRANSLATIONS` map and to
 `BRIEFING_LANGUAGES`. To change wording, section order, or add a new section, edit the

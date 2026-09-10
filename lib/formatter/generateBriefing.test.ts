@@ -1,48 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBriefing";
 import { createDefaultOverrides } from "@/lib/defaults";
+import { BRIEFING_LANGUAGES } from "./translations";
 import type { BriefingInput } from "./briefingModel";
 
-function makeInput(
-  overridesPatch: Partial<ReturnType<typeof createDefaultOverrides>> = {},
-  language: BriefingInput["language"] = "pt",
-): BriefingInput {
-  const referenceDate = new Date(2026, 7, 17); // 17 Aug 2026
-  const overrides = { ...createDefaultOverrides("Ustebra", referenceDate), ...overridesPatch };
+const LANGUAGES = BRIEFING_LANGUAGES.map((entry) => entry.value);
+const REFERENCE = new Date(2026, 7, 17); // 17 Aug 2026
 
-  overrides.miniWorldChanges["fury-gates"] = {
-    id: "fury-gates",
-    status: "active",
-    variantId: null,
-    updatedAt: null,
-  };
-  overrides.worldChanges["hive-born"] = {
-    id: "hive-born",
-    stateId: "fallen",
-    updatedAt: null,
-  };
-  overrides.merchants.yasir = {
-    id: "yasir",
-    name: "Yasir",
-    location: "Carlin",
-    isComputed: false,
-    updatedAt: null,
-    activityState: "location-known",
-  };
-  overrides.merchants.rashid = {
-    id: "rashid",
-    name: "Rashid",
-    location: "Svargrond",
-    isComputed: true,
-    updatedAt: null,
-    activityState: "location-known",
-  };
-  overrides.boostedRegions = ["Venore"];
-
+/** Nothing established: the day the app has been opened and told nothing. */
+function emptyInput(language: BriefingInput["language"] = "pt"): BriefingInput {
   return {
     world: "Ustebra",
-    referenceDate,
-    overrides,
+    referenceDate: REFERENCE,
+    overrides: createDefaultOverrides("Ustebra", REFERENCE),
     boostedCreature: { kind: "creature", name: "Gore Horn", imageUrl: null },
     boostedBoss: { kind: "boss", name: "Ratmiral", imageUrl: null },
     warzoneSchedule: null,
@@ -56,106 +26,223 @@ function makeInput(
   };
 }
 
-describe("generateBriefingMessage", () => {
-  it("matches the reference structure and content", () => {
-    const message = generateBriefingMessage(makeInput());
+/** A normal morning: a couple of changes checked, a merchant, a boosted region. */
+function makeInput(language: BriefingInput["language"] = "pt"): BriefingInput {
+  const input = emptyInput(language);
+  const { overrides } = input;
 
-    expect(message).toContain("📌 17/08/2026");
-    expect(message).toContain("🌞 Bom dia, Ustebra!");
-    expect(message).toContain("👾 CRIATURA BOOSTADA\nGore Horn");
-    expect(message).toContain("👹 BOSS BOOSTADO\nRatmiral");
-    expect(message).toContain("🗺️ REGIÃO BOOSTADA\nVenore");
-    expect(message).toContain("💰 YASIR\nCarlin");
-    expect(message).toContain("👳🏼‍♂️ RASHID\nSvargrond");
-    expect(message).toContain("🔥 FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
-    expect(message).toContain("*🌍 WORLD CHANGES*");
-    expect(message).toContain("🐝 HIVE BORN");
-    expect(message).toContain("As defesas da Hive caíram e todas as estruturas estão abertas.");
-    expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
+  overrides.miniWorldChanges["fury-gates"] = {
+    id: "fury-gates",
+    status: "active",
+    variantId: null,
+    updatedAt: null,
+  };
+  overrides.worldChanges["hive-born"] = { id: "hive-born", stateId: "fallen", updatedAt: null };
+  overrides.merchants.yasir = {
+    ...overrides.merchants.yasir!,
+    location: "Carlin",
+    activityState: "location-known",
+  };
+  overrides.merchants.rashid = { ...overrides.merchants.rashid!, location: "Svargrond" };
+  overrides.boostedRegions = ["Venore"];
+  return input;
+}
+
+function setMini(input: BriefingInput, id: string, variantId: string | null = null) {
+  input.overrides.miniWorldChanges[id] = { id, status: "active", variantId, updatedAt: null };
+}
+
+function setWorld(input: BriefingInput, id: string, stateId: string) {
+  input.overrides.worldChanges[id] = { id, stateId, updatedAt: null };
+}
+
+function withMarket(input: BriefingInput): BriefingInput {
+  const t = REFERENCE.getTime();
+  input.overrides.marketPrices.tibiaCoinSell = {
+    id: "tibiaCoinSell",
+    label: "Tibia Coin Sell Offer",
+    value: 41_500,
+    isLive: true,
+    sourceTimestamp: t - 2 * 3600e3,
+    updatedAt: "x",
+    history: [
+      { value: 40_800, timestamp: t - 86400e3 },
+      { value: 41_500, timestamp: t - 2 * 3600e3 },
+    ],
+  };
+  input.overrides.marketPrices.tibiaCoinBuy = {
+    id: "tibiaCoinBuy",
+    label: "Tibia Coin Buy Offer",
+    value: 39_900,
+    isLive: true,
+    sourceTimestamp: t - 2 * 3600e3,
+    updatedAt: "x",
+    history: [
+      { value: 40_100, timestamp: t - 86400e3 },
+      { value: 39_900, timestamp: t - 2 * 3600e3 },
+    ],
+  };
+  return input;
+}
+
+/** Every shape of day the bulletin has to survive, for the sweeps that must hold for all. */
+function everyScenario(): { name: string; input: BriefingInput }[] {
+  const busy = withMarket(makeInput());
+  setMini(busy, "stampede");
+  setMini(busy, "spirit-grounds", "ghostlands");
+  setMini(busy, "poacher-caves", "ghost-wolves");
+  setWorld(busy, "overhunting", "wolves");
+  setWorld(busy, "awash", "drained-quota-open");
+  setWorld(busy, "steamship", "not-running");
+  busy.overrides.merchants.yasir = {
+    ...busy.overrides.merchants.yasir!,
+    location: "",
+    activityState: "inactive",
+  };
+  busy.warzoneSchedule = {
+    world: "Ustebra",
+    timezone: null,
+    tracksWarzoneService: true,
+    mark: "healthy",
+    executions: [{ executionId: 1, scheduleTime: "12:00", warzoneSequence: "1-2-3" }],
+  };
+
+  const boardOnly = makeInput();
+  setMini(boardOnly, "kingsday");
+  boardOnly.overrides.worldChanges["hive-born"] = {
+    id: "hive-born",
+    stateId: null,
+    updatedAt: null,
+  };
+
+  const quiet = makeInput();
+  setWorld(quiet, "twisted-waters", "clean");
+
+  const outage = makeInput();
+  outage.unavailable = { boosted: true, warzone: true, market: true };
+
+  return [
+    { name: "nothing established", input: emptyInput() },
+    { name: "ordinary morning", input: makeInput() },
+    { name: "busy morning", input: busy },
+    { name: "board only, no guide", input: boardOnly },
+    { name: "quiet states only", input: quiet },
+    { name: "every live feed down", input: outage },
+  ];
+}
+
+describe("bulletin structure", () => {
+  it("leads with the world and the date on one line", () => {
+    expect(generateBriefingMessage(makeInput())).toMatch(/^📅 \*Ustebra\* · 17\/08\/2026\n/);
+    expect(generatePlainTextBriefing(makeInput())).toMatch(/^Ustebra · 17\/08\/2026\n/);
   });
 
-  it("renders a rich narrative for World Changes, with detail-driven variants", () => {
+  it("puts a change's state and what it is worth in the same entry", () => {
+    // The two used to be separate sections, so a reader met "Overhunting: starving wolves" at
+    // the top and "Overhunting / Starving Wolf — Bestiary" forty lines below, and had to hold
+    // the first in their head until the second arrived.
     const input = makeInput();
-    input.overrides.worldChanges["demon-war"] = {
-      id: "demon-war",
-      stateId: "shaburak-dominant",
-      updatedAt: null,
-    };
-    input.overrides.worldChanges["sea-serpent"] = {
-      id: "sea-serpent",
-      stateId: "awake",
-      updatedAt: null,
-    };
+    setWorld(input, "overhunting", "wolves");
     const message = generateBriefingMessage(input);
-    expect(message).toContain("Os Shaburak convocaram seus líderes e dominam o complexo.");
-    expect(message).toContain("A Serpent está desperta.");
-    // What the state makes possible is an opportunity, not narration: the Renegade Quara are
-    // reported once, as a structured fact, instead of twice in two catalogs that can disagree.
-    expect(message).toContain("Renegade Quara");
-    expect(message).not.toContain("⚔️ Renegade Quara dominam as regiões submersas de Oramond");
+
+    const entry = message.split("\n\n").find((block) => block.includes("*Overhunting*"))!;
+    expect(entry).toContain("Starving Wolves rondam");
+    expect(entry).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
+    // …and the change is named exactly once in the whole bulletin.
+    expect(message.match(/\*Overhunting\*/g)).toHaveLength(1);
   });
 
-  it("falls back to the compact form for a World Change state with no authored narrative", () => {
+  it("names each change once, in every scenario", () => {
+    for (const { name, input } of everyScenario()) {
+      const message = generateBriefingMessage(input);
+      const headings = [...message.matchAll(/^[^\s]+ \*([^*]+)\* — /gmu)].map((m) => m[1]!);
+      expect(new Set(headings).size, name).toBe(headings.length);
+    }
+  });
+
+  it("keeps every official name in its own casing", () => {
     const input = makeInput();
-    input.overrides.worldChanges["hive-born"] = {
-      id: "hive-born",
-      stateId: null,
-      updatedAt: null,
-    };
+    setMini(input, "fire-from-the-earth");
     const message = generateBriefingMessage(input);
-    expect(message).not.toContain("HIVE BORN");
+    expect(message).toContain("*Fire from the Earth*");
+    expect(message).not.toContain("FIRE FROM THE EARTH");
   });
 
-  it("never mentions an unchecked change, and hides confirmed-inactive ones by default", () => {
+  it("orders changes that offer something above the ones that only report", () => {
     const input = makeInput();
-    input.overrides.miniWorldChanges["spider-nest"] = {
-      id: "spider-nest",
-      status: "inactive",
-      variantId: null,
-      updatedAt: null,
-    };
-
+    setMini(input, "stampede"); // has opportunities
+    setMini(input, "spirit-grounds", "ghostlands"); // ambient only, so no ▸ lines
     const message = generateBriefingMessage(input);
-    // Grimvale was never checked — saying anything about it would be a claim we can't back.
-    expect(message).not.toContain("GRIMVALE");
-    expect(message).not.toContain("SPIDER NEST");
+    expect(message.indexOf("*Stampede*")).toBeLessThan(message.indexOf("*Spirit Grounds*"));
+  });
+});
 
-    input.overrides.includeAllChanges = true;
-    const fullMessage = generateBriefingMessage(input);
-    // Even with "include everything", an unchecked change stays out: there is nothing to say.
-    expect(fullMessage).not.toContain("GRIMVALE");
-    expect(fullMessage).toContain("SPIDER NEST");
+describe("formatting that has to survive a paste", () => {
+  it("uses only the markup WhatsApp and Discord both understand", () => {
+    for (const { name, input } of everyScenario()) {
+      const message = generateBriefingMessage(input);
+      // `**bold**` is Discord's; WhatsApp shows it as literal asterisks. Single `*` degrades
+      // to italics on Discord, which is still emphasis.
+      expect(message, name).not.toContain("**");
+      expect(message, name).not.toMatch(/[#`~|]/);
+      // Every `*` and `_` must be a matched pair on its own line.
+      for (const line of message.split("\n")) {
+        expect((line.match(/\*/g) ?? []).length % 2, `${name}: ${line}`).toBe(0);
+        expect((line.match(/_/g) ?? []).length % 2, `${name}: ${line}`).toBe(0);
+      }
+    }
   });
 
-  it("says where a change is when a source named the spot, and says so plainly when not", () => {
-    const input = makeInput("pt" === "pt" ? {} : {}, "en");
-    input.overrides.miniWorldChanges["fury-gates"] = {
-      id: "fury-gates",
-      status: "active",
-      variantId: null,
-      updatedAt: null,
-    };
-    expect(generateBriefingMessage(input)).toMatch(/which one isn't known yet/i);
-
-    input.overrides.miniWorldChanges["fury-gates"] = {
-      id: "fury-gates",
-      status: "active",
-      variantId: "thais",
-      updatedAt: null,
-    };
-    expect(generateBriefingMessage(input)).toMatch(/fury gate has opened near Thais/i);
+  it("never indents, because leading whitespace is eaten in chat clients", () => {
+    for (const { name, input } of everyScenario()) {
+      for (const line of generateBriefingMessage(input).split("\n")) {
+        expect(line, name).toBe(line.trimStart());
+      }
+    }
   });
 
-  it("shows a graceful empty state when there are no upcoming events", () => {
-    const message = generateBriefingMessage(makeInput());
-    expect(message).toContain("Nenhum evento programado no momento.");
+  it("never doubles a blank line or ends with whitespace", () => {
+    for (const { name, input } of everyScenario()) {
+      for (const message of [generateBriefingMessage(input), generatePlainTextBriefing(input)]) {
+        expect(message, name).not.toMatch(/\n{3,}/);
+        expect(message, name).toBe(message.trim());
+      }
+    }
   });
 
-  it("renders warzone times converted to the viewer's own timezone, semicolon-separated", () => {
+  it("gives the plain format the same text, minus emoji and markup", () => {
+    // One renderer, two styles — so the two can no longer drift into different section
+    // shapes, which is what happened when they were separate functions.
+    for (const { name, input } of everyScenario()) {
+      const plain = generatePlainTextBriefing(input);
+      expect(plain, name).not.toMatch(/[*_]/);
+      // Trend arrows stay: they are the value, not decoration — a price with the arrow
+      // removed has lost half of what it says.
+      const withoutArrows = plain.replace(/[⬆⬇➡]️?/g, "");
+      expect(withoutArrows, name).not.toMatch(/\p{Extended_Pictographic}/u);
+
+      // Compared on a normalised form: reversing the renderer's emoji exactly would mean
+      // re-implementing ZWJ and variation-selector handling in the test, which proves nothing.
+      const normalise = (text: string) =>
+        text
+          .replace(/[*_]/g, "")
+          .replace(/\p{Extended_Pictographic}[\u{FE0F}\u{1F3FB}-\u{1F3FF}\u{200D}\p{Extended_Pictographic}]*/gu, "")
+          .replace(/[ \t]+/g, " ")
+          .split("\n")
+          .map((line) => line.trim())
+          .join("\n");
+      expect(normalise(generateBriefingMessage(input)), name).toBe(normalise(plain));
+    }
+  });
+});
+
+describe("today's numbers", () => {
+  it("keeps each status fact to one label-and-value line", () => {
     const input = makeInput();
+    input.drome = { rotationNumber: "#134", endsAt: new Date(2026, 8, 2).toISOString() } as never;
     input.warzoneSchedule = {
       world: "Ustebra",
-      timezone: "Europe/Berlin", // CEST (UTC+2) in August
+      timezone: null,
       tracksWarzoneService: true,
       mark: "healthy",
       executions: [
@@ -163,551 +250,181 @@ describe("generateBriefingMessage", () => {
         { executionId: 2, scheduleTime: "20:00", warzoneSequence: "1-3-2" },
       ],
     };
-    // viewerTimeZone is America/Sao_Paulo (UTC-3, no DST) — 5h behind Berlin in August.
     const message = generateBriefingMessage(input);
-    expect(message).toContain("⚔️ WARZONES\n07:00 (1-2-3)\n15:00 (1-3-2)");
+
+    expect(message).toContain("👾 Criatura: Gore Horn");
+    expect(message).toContain("👹 Boss: Ratmiral");
+    expect(message).toContain("🗺️ Região: Venore");
+    expect(message).toContain("🏛️ Drome: rotação #134 até 02/09");
+    // Several execution times are a list, not a run-on sentence, and not four lines either.
+    expect(message).toContain("⚔️ Warzones: 12:00 (1-2-3) · 20:00 (1-3-2)");
   });
 
-  it("renders market prices with a trend symbol and age only when a value is set", () => {
+  it("puts both sides of a market price on the item's own line, buy first", () => {
+    const message = generateBriefingMessage(withMarket(makeInput()));
+    expect(message).toContain("🪙 Tibia Coin: compra 39.900 ⬇️ · venda 41.500 ⬆️");
+    // The source is an aside under the numbers, not a heading for a section that never existed.
+    expect(message).toMatch(/_Preços de tibiamarket\.top, .+\._/);
+    expect(message).not.toContain("TIBIAMARKET");
+  });
+
+  it("omits what the live feeds could not supply, rather than printing a placeholder", () => {
     const input = makeInput();
-    const sourceTimestamp = input.referenceDate.getTime() - 2 * 60 * 60 * 1000; // 2h before "now"
-    input.overrides.marketPrices.tibiaCoinSell = {
-      id: "tibiaCoinSell",
-      label: "Tibia Coin Sell Offer",
-      value: 41000,
-      isLive: true,
-      sourceTimestamp,
-      updatedAt: "t",
-      history: [
-        { value: 40000, timestamp: sourceTimestamp - 86400000 },
-        { value: 41000, timestamp: sourceTimestamp },
-      ],
-    };
+    input.unavailable = { boosted: true, market: true };
     const message = generateBriefingMessage(input);
-    expect(message).toContain("*TIBIAMARKET.TOP (2h)*");
-    expect(message).toContain("🪙 TIBIA COIN\nVenda: 41.000 ⬆️");
-    expect(message).not.toContain("GOLD TOKEN");
+    expect(message).not.toContain("Criatura:");
+    expect(message).not.toContain("Boss:");
+    expect(message).not.toContain("🪙");
+    expect(message).not.toContain("tibiamarket");
+    // …and the rest of the bulletin still stands.
+    expect(message).toContain("👳🏼‍♂️ Rashid: Svargrond");
   });
 
-  it("reflects the selected marketTrendBasis in both the shown value and the trend arrow", () => {
+  it("drops the events section entirely when nothing is scheduled", () => {
+    // "No events right now" is a heading plus a line saying the heading was unnecessary, in a
+    // message that gets forwarded to other people.
+    expect(generateBriefingMessage(makeInput())).not.toContain("PRÓXIMOS EVENTOS");
+  });
+
+  it("lists upcoming events as one line each when there are some", () => {
     const input = makeInput();
-    const sourceTimestamp = input.referenceDate.getTime();
-    input.overrides.marketPrices.tibiaCoinSell = {
-      id: "tibiaCoinSell",
-      label: "Tibia Coin Sell Offer",
-      value: 300,
-      isLive: false,
-      sourceTimestamp: null,
-      updatedAt: "t",
-      history: [
-        { value: 100, timestamp: sourceTimestamp - 3 * 86400000 },
-        { value: 200, timestamp: sourceTimestamp - 2 * 86400000 },
-        { value: 300, timestamp: sourceTimestamp - 1 * 86400000 },
-      ],
-    };
-
-    const lastMessage = generateBriefingMessage(input);
-    expect(lastMessage).toContain("🪙 TIBIA COIN\nVenda: 300 ⬆️");
-
-    input.marketTrendBasis = "avg3";
-    const avg3Message = generateBriefingMessage(input);
-    // avg(100,200,300) = 200 — a different headline number than the raw last entry.
-    expect(avg3Message).toContain("🪙 TIBIA COIN\nVenda: 200");
-  });
-});
-
-function cleanInput(): BriefingInput {
-  const input = makeInput();
-  // makeInput() also seeds Yasir as trading in Carlin, which is a genuine condition and
-  // would legitimately produce the "Si, Ariki!" opportunity. Reset him too, so these tests
-  // start from a world where truly nothing has been established.
-  input.overrides.merchants.yasir = {
-    ...input.overrides.merchants.yasir!,
-    location: "",
-    activityState: "not-verified",
-  };
-  // makeInput() always seeds fury-gate/hive-born as a baseline — undo that here so these
-  // tests can exercise the true "nothing checked yet" starting point.
-  input.overrides.miniWorldChanges["fury-gates"] = {
-    id: "fury-gates",
-    status: "unchecked",
-    variantId: null,
-    updatedAt: null,
-  };
-  input.overrides.worldChanges["hive-born"] = {
-    id: "hive-born",
-    stateId: null,
-    updatedAt: null,
-  };
-  return input;
-}
-
-describe("not-yet-verified vs. genuinely-zero-active empty states", () => {
-  it("shows a distinct 'not yet verified' message when nothing has been checked at all", () => {
-    const message = generateBriefingMessage(cleanInput());
-    expect(message).toContain("Nenhuma Mini World Change foi verificada ainda hoje");
-    expect(message).toContain("Nenhuma World Change foi consultada ainda hoje");
-  });
-
-  it("shows a distinct 'checked, none active' message once at least one entry was verified inactive", () => {
-    const input = cleanInput();
-    input.overrides.miniWorldChanges["fury-gates"] = {
-      id: "fury-gates",
-      status: "inactive",
-      variantId: null,
-      updatedAt: null,
-    };
-    // A "quiet" state is still real, confirmed knowledge — the hive being well defended is
-    // an answer — but it isn't news, so the section reports as checked-and-quiet.
-    input.overrides.worldChanges["hive-born"] = {
-      id: "hive-born",
-      stateId: "defended",
-      updatedAt: null,
-    };
+    input.upcomingEvents = [
+      {
+        title: "Double XP Weekend",
+        startAt: new Date(2026, 7, 19).toISOString(),
+        daysUntil: 2,
+        certainty: "confirmed",
+      } as never,
+    ];
     const message = generateBriefingMessage(input);
-    expect(message).toContain("World Board conferido — nenhuma Mini World Change ativa no momento.");
-    // A quiet state is an answer, and answers are reported. This one used to be deleted.
-    expect(message).toContain("🐝 HIVE BORN");
-    expect(message).toContain("A Hive está bem defendida e preparada para a guerra.");
+    expect(message).toContain("*📅 PRÓXIMOS EVENTOS*");
+    expect(message).toMatch(/Double XP Weekend: 19\/08, em 2 dias/);
   });
 });
 
-describe("language support", () => {
-  it("renders section headers, greeting, and stage wording in English", () => {
-    const message = generateBriefingMessage(makeInput({}, "en"));
-    expect(message).toContain("🌞 Good morning, Ustebra!");
-    expect(message).not.toContain("*🌎 TODAY'S ACTIVE EVENTS & STATUS*");
-    expect(message).toContain("👾 BOOSTED CREATURE\nGore Horn");
-    expect(message).toContain("The hive's defences have fallen and every structure is open.");
-    expect(message).toContain("*📅 NEXT EVENTS*");
+describe("what the reader is told, and what they are not", () => {
+  it("says nothing was checked without telling the reader to go and check it", () => {
+    // The bulletin is pasted into a guild channel; instructions there address the wrong person.
+    const message = generateBriefingMessage(emptyInput());
+    expect(message).toContain("*🎲 MINI WORLD CHANGES*\n_Não conferido hoje._");
+    expect(message).toContain("*🌍 WORLD CHANGES*\n_Não conferido hoje._");
+    expect(message).not.toMatch(/cole o texto|pergunte a um Guide/i);
   });
 
-  it("renders Spanish and Polish greetings distinctly", () => {
-    expect(generateBriefingMessage(makeInput({}, "es"))).toContain("🌞 ¡Buenos días, Ustebra!");
-    expect(generateBriefingMessage(makeInput({}, "pl"))).toContain("🌞 Dzień dobry, Ustebra!");
-  });
-
-  it("keeps merchant names (Yasir/Rashid) untranslated across languages", () => {
-    for (const language of ["pt", "en", "es", "pl"] as const) {
-      const message = generateBriefingMessage(makeInput({}, language));
-      expect(message).toContain("YASIR\n");
-      expect(message).toContain("RASHID\n");
-    }
-  });
-});
-
-describe("generatePlainTextBriefing", () => {
-  it("contains no markdown bold markers or decorative emoji", () => {
-    const plain = generatePlainTextBriefing(makeInput());
-    expect(plain).not.toContain("*");
-    // Decorative section/field emoji should be gone; the ✅/❌ status glyphs stay
-    // (they're functional content, not decoration).
-    for (const decorative of ["📌", "🌞", "👾", "👹", "🗺️", "💰", "👳🏼‍♂️", "🎎", "🌍", "📅", "🪙"]) {
-      expect(plain).not.toContain(decorative);
-    }
-    expect(plain).toContain("CRIATURA BOOSTADA\nGore Horn");
-    expect(plain).toContain("FURY GATES: Um fiery fury gate se abriu perto de uma das grandes cidades");
-    expect(plain).toContain("HIVE BORN");
-    expect(plain).toContain("As defesas da Hive caíram e todas as estruturas estão abertas.");
-  });
-});
-
-describe("approved briefing hierarchy in rich and plain formats", () => {
-  it("renders the approved grouped layout in both outputs", () => {
-    const input = makeInput();
-
-    input.warzoneSchedule = {
-      world: "Ustebra",
-      timezone: null,
-      tracksWarzoneService: true,
-      mark: "healthy",
-      executions: [
-        {
-          executionId: 1,
-          scheduleTime: "12:00",
-          warzoneSequence: "1-2-3",
-        },
-        {
-          executionId: 2,
-          scheduleTime: "20:00",
-          warzoneSequence: "1-3-2",
-        },
-        {
-          executionId: 3,
-          scheduleTime: "21:30",
-          warzoneSequence: "1-2-3",
-        },
-        {
-          executionId: 4,
-          scheduleTime: "23:00",
-          warzoneSequence: "1-2-3",
-        },
-      ],
-    };
-
-    input.drome = {
-      rotationNumber: "#134",
-      endsAt: "2026-09-02T08:00:00.000Z",
-    };
-
-    const marketTimestamp =
-      input.referenceDate.getTime() -
-      2 * 86400000;
-
-    input.overrides.marketPrices.tibiaCoinSell = {
-      id: "tibiaCoinSell",
-      label: "Tibia Coin Sell Offer",
-      value: 41340,
-      isLive: true,
-      sourceTimestamp: marketTimestamp,
-      updatedAt: "t",
-      history: [
-        {
-          value: 40000,
-          timestamp: marketTimestamp - 86400000,
-        },
-        {
-          value: 41340,
-          timestamp: marketTimestamp,
-        },
-      ],
-    };
-
-    input.overrides.marketPrices.tibiaCoinBuy = {
-      id: "tibiaCoinBuy",
-      label: "Tibia Coin Buy Offer",
-      value: 40163,
-      isLive: true,
-      sourceTimestamp: marketTimestamp,
-      updatedAt: "t",
-      history: [
-        {
-          value: 39000,
-          timestamp: marketTimestamp - 86400000,
-        },
-        {
-          value: 40163,
-          timestamp: marketTimestamp,
-        },
-      ],
-    };
-
-    input.overrides.marketPrices.goldTokenSell = {
-      id: "goldTokenSell",
-      label: "Gold Token Sell Offer",
-      value: 57071,
-      isLive: true,
-      sourceTimestamp: marketTimestamp,
-      updatedAt: "t",
-      history: [
-        {
-          value: 58000,
-          timestamp: marketTimestamp - 86400000,
-        },
-        {
-          value: 57071,
-          timestamp: marketTimestamp,
-        },
-      ],
-    };
-
-    input.overrides.marketPrices.silverTokenSell = {
-      id: "silverTokenSell",
-      label: "Silver Token Sell Offer",
-      value: 59083,
-      isLive: true,
-      sourceTimestamp: marketTimestamp,
-      updatedAt: "t",
-      history: [
-        {
-          value: 60000,
-          timestamp: marketTimestamp - 86400000,
-        },
-        {
-          value: 59083,
-          timestamp: marketTimestamp,
-        },
-      ],
-    };
-
-    const rich =
-      generateBriefingMessage(input);
-
-    const plain =
-      generatePlainTextBriefing(input);
-
-    expect(rich).toContain(
-      "📌 17/08/2026",
-    );
-
-    expect(rich).not.toContain(
-      "EVENTOS ATIVOS E STATUS DO DIA",
-    );
-
-    expect(rich).toContain(
-      "👾 CRIATURA BOOSTADA\nGore Horn",
-    );
-
-    expect(rich).toContain(
-      "👹 BOSS BOOSTADO\nRatmiral",
-    );
-
-    expect(rich).toContain(
-      "🏛️ TIBIA DROME\nRotação #134 até 02/09",
-    );
-
-    expect(rich).not.toContain(
-      "Rotação #134 ativa.",
-    );
-
-    expect(rich).toContain(
-      "⚔️ WARZONES\n12:00 (1-2-3)\n20:00 (1-3-2)\n21:30 (1-2-3)\n23:00 (1-2-3)",
-    );
-
-    expect(rich).toContain(
-      "*💸 COMERCIANTES*",
-    );
-
-    expect(rich).toContain(
-      "💰 YASIR\nCarlin",
-    );
-
-    expect(rich).toContain(
-      "👳🏼‍♂️ RASHID\nSvargrond",
-    );
-
-    expect(rich).toContain(
-      "*TIBIAMARKET.TOP (2d)*",
-    );
-
-    expect(rich).toContain(
-      "🪙 TIBIA COIN\nVenda: 41.340 ⬆️\nCompra: 40.163 ⬆️",
-    );
-
-    expect(rich).toContain(
-      "🪙 GOLD TOKEN\nVenda: 57.071 ⬇️",
-    );
-
-    expect(rich).toContain(
-      "🪙 SILVER TOKEN\nVenda: 59.083 ⬇️",
-    );
-
-    expect(rich).not.toContain(
-      "41.340 gp",
-    );
-
-    expect(rich).not.toContain(
-      "(há 2d)",
-    );
-
-    expect(plain).toContain(
-      "CRIATURA BOOSTADA\nGore Horn",
-    );
-
-    expect(plain).toContain(
-      "BOSS BOOSTADO\nRatmiral",
-    );
-
-    expect(plain).toContain(
-      "TIBIA DROME\nRotação #134 até 02/09",
-    );
-
-    expect(plain).toContain(
-      "WARZONES\n12:00 (1-2-3)\n20:00 (1-3-2)\n21:30 (1-2-3)\n23:00 (1-2-3)",
-    );
-
-    expect(plain).toContain(
-      "COMERCIANTES",
-    );
-
-    expect(plain).toContain(
-      "YASIR\nCarlin",
-    );
-
-    expect(plain).toContain(
-      "RASHID\nSvargrond",
-    );
-
-    expect(plain).toContain(
-      "TIBIAMARKET.TOP (2d)",
-    );
-
-    expect(plain).toContain(
-      "TIBIA COIN\nVenda: 41.340 ⬆️\nCompra: 40.163 ⬆️",
-    );
-
-    expect(plain).not.toContain(
-      "41.340 gp",
-    );
-  });
-});
-
-describe("UNKNOWN vs a reported state in the World Changes section", () => {
-  it("reports every state a Guide gave, and names what is still unasked", () => {
-    const input = cleanInput();
-    input.overrides.worldChanges["twisted-waters"] = {
-      id: "twisted-waters",
-      stateId: "clean",
-      updatedAt: null,
-    };
-    const message = generateBriefingMessage(input);
-
-    // A "quiet" answer is still an answer, and it is now reported like any other.
-    expect(message).toContain("💧 TWISTED WATERS");
-    expect(message).toContain("O grande lago perto de Port Hope está limpo.");
-    // …and the thirteen keywords nobody asked about are named as unasked, not left to be read
-    // as "nothing is happening there".
-    expect(message).toContain("Ainda não consultadas hoje:");
-    expect(message).toContain("Steamship");
-    expect(message).not.toContain("🚢 STEAMSHIP");
-  });
-
-  it("says only that nothing was checked when no Guide was asked at all", () => {
-    const message = generateBriefingMessage(cleanInput());
-    expect(message).toContain("Nenhuma World Change foi consultada ainda hoje");
-    // The "still unasked" list would be all fourteen, which is the same statement twice.
-    expect(message).not.toContain("Ainda não consultadas hoje:");
-  });
-});
-
-describe("opportunities in the briefing", () => {
-  it("says nothing about opportunities when nothing is confirmed", () => {
-    const message = generateBriefingMessage(cleanInput());
-    expect(message).not.toContain("OPORTUNIDADES");
-    expect(message).not.toContain("Trail of the Ape God");
-  });
-
-  it("lists an opportunity once its enabling change is confirmed running", () => {
-    const input = cleanInput();
-    input.overrides.miniWorldChanges["stampede"] = {
-      id: "stampede",
-      status: "active",
-      variantId: null,
-      updatedAt: null,
-    };
-    const message = generateBriefingMessage(input);
-    expect(message).toContain("OPORTUNIDADES DE HOJE");
-    // Grouped under the change, so the subject and the achievement it grants both survive.
-    expect(message).toContain("🐘 STAMPEDE");
-    expect(message).toContain("Terrified Elephant");
-    expect(message).toContain("Trail of the Ape God");
-    // The line must be localized, not an English task description dropped into a PT briefing.
-    expect(message).toContain("Elephant Tusks");
-    // …and the old per-line connector, which produced "X — graças a X", must be gone.
-    expect(message).not.toContain("graças a Stampede");
-  });
-
-  it("never lists one from a change that was ruled out", () => {
-    const input = cleanInput();
+  it("tells 'checked, none running' apart from 'nobody looked'", () => {
+    const input = emptyInput();
     input.overrides.miniWorldChanges["stampede"] = {
       id: "stampede",
       status: "inactive",
       variantId: null,
       updatedAt: null,
     };
-    expect(generateBriefingMessage(input)).not.toContain("Trail of the Ape God");
+    expect(generateBriefingMessage(input)).toContain("_Nenhuma ativa no momento._");
+    expect(generateBriefingMessage(emptyInput())).toContain("_Não conferido hoje._");
   });
 
-  it("keeps the plain briefing free of markdown while still listing opportunities", () => {
-    const input = cleanInput();
-    input.overrides.miniWorldChanges["kingsday"] = {
-      id: "kingsday",
-      status: "active",
-      variantId: null,
-      updatedAt: null,
-    };
-    const plain = generatePlainTextBriefing(input);
-    // Kingsday's most state-specific offer is the arena raid rotation, not the greeting
-    // achievement, so that is the line the briefing spends on it. Both are in the catalog.
-    expect(plain).toContain("KINGSDAY");
-    expect(plain).toContain("Knights' Guild arena");
-    expect(plain).not.toContain("*");
+  it("names the Guide keywords still unasked, so unknown cannot read as nothing", () => {
+    const input = emptyInput();
+    setWorld(input, "twisted-waters", "clean");
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("*Twisted Waters* — O grande lago perto de Port Hope está limpo.");
+    expect(message).toMatch(/_Ainda sem resposta do Guide: .*Steamship.*_/);
   });
-  it("localizes the opportunity line in every supported language", () => {
-    // The typed facts around the official names are what must be translated; the names
-    // themselves (Terrified Elephant, Trail of the Ape God) stay official everywhere.
-    const expected: Record<string, string> = {
-      pt: "500 mortes",
-      en: "500 kills",
-      es: "500 muertes",
-      pl: "500 zabójstw",
-    };
-    for (const [language, phrase] of Object.entries(expected)) {
-      const input = cleanInput();
-      input.language = language as BriefingInput["language"];
-      input.overrides.miniWorldChanges["stampede"] = {
-        id: "stampede",
-        status: "active",
-        variantId: null,
-        updatedAt: null,
-      };
-      const message = generateBriefingMessage(input);
-      expect(message, language).toContain("Trail of the Ape God");
-      expect(message, language).toContain(phrase);
-    }
+
+  it("never mentions a change nobody checked", () => {
+    expect(generateBriefingMessage(makeInput())).not.toContain("Grimvale");
   });
 });
 
-describe("unavailable live data", () => {
-  it("never leaves a doubled blank line where a section was empty", () => {
-    // The briefing is pasted straight into WhatsApp, where a stray gap is visible. The
-    // opportunities section renders as "" whenever today's state created none — so the
-    // fixture has to be a state that genuinely creates none, which makeInput() is not.
-    const referenceDate = new Date(2026, 7, 17);
-    const quiet: BriefingInput = {
-      world: "Ustebra",
-      referenceDate,
-      overrides: createDefaultOverrides("Ustebra", referenceDate),
-      boostedCreature: { kind: "creature", name: "Gore Horn", imageUrl: null },
-      boostedBoss: { kind: "boss", name: "Ratmiral", imageUrl: null },
-      warzoneSchedule: null,
-      activeEvents: [],
-      upcomingEvents: [],
-      drome: null,
-      language: "pt",
-      viewerTimeZone: "America/Sao_Paulo",
-      upcomingEventsWindowDays: 14,
-      marketTrendBasis: "last",
-    };
-
-    const rich = generateBriefingMessage(quiet);
-    const plain = generatePlainTextBriefing(quiet);
-
-    // Guard the guard: this fixture must actually hit the empty-section path.
-    expect(rich).not.toContain("Oportunidades de hoje");
-    expect(rich).not.toContain("\n\n\n");
-    expect(plain).not.toContain("\n\n\n");
-  });
-
-  it("omits the boosted blocks entirely when the feed failed", () => {
+describe("opportunities, under the change that created them", () => {
+  it("skips the ones that only restate the change", () => {
+    // Spirit Grounds' single offer is "an undead hunting ground is open", which is verbatim
+    // what its own state line says.
     const input = makeInput();
-    input.unavailable = { boosted: true };
-    const rich = generateBriefingMessage(input);
-
-    // A line the app could not verify must not appear at all — a "not available"
-    // placeholder is noise dressed as a reading in a message shared as fact.
-    expect(rich).not.toContain("CRIATURA BOOSTADA");
-    expect(rich).not.toContain("BOSS BOOSTADO");
-    expect(rich).not.toContain("não disponível");
-    // Everything else survives.
-    expect(rich).toContain("REGIÃO BOOSTADA");
-    expect(rich).not.toContain("\n\n\n");
+    setMini(input, "spirit-grounds", "ghostlands");
+    const message = generateBriefingMessage(input);
+    const entry = message.split("\n\n").find((block) => block.includes("*Spirit Grounds*"))!;
+    expect(entry).toContain("Um Spirit Gate está aberto em Ghostlands.");
+    expect(entry).not.toContain("▸");
   });
 
-  it("still prints the boosted blocks when nothing failed", () => {
-    const rich = generateBriefingMessage(makeInput());
-    expect(rich).toContain("Gore Horn");
-    expect(rich).toContain("Ratmiral");
-  });
-
-  it("omits market lines when the market feed failed", () => {
+  it("caps a change at two lines but always keeps its deadline line", () => {
+    // Awash has four offers; two fit, and the fourth — the quota that expires at the server
+    // save — is admitted anyway, because it is the only one that is worthless tomorrow.
     const input = makeInput();
-    input.unavailable = { market: true };
-    const rich = generateBriefingMessage(input);
+    setWorld(input, "awash", "drained-quota-open");
+    const entry = generateBriefingMessage(input)
+      .split("\n\n")
+      .find((block) => block.includes("*Awash*"))!;
 
-    expect(rich).not.toContain("TIBIAMARKET.TOP");
-    expect(rich).not.toContain("TIBIA COIN");
-    // Merchants are recorded by the player, not the feed, so they stay.
-    expect(rich).toContain("RASHID");
+    const bullets = entry.split("\n").filter((line) => line.startsWith("▸"));
+    expect(bullets).toHaveLength(3);
+    expect(bullets.at(-1)).toContain("vale após o Server Save");
+  });
+
+  it("marks anything that is not available today", () => {
+    const input = makeInput();
+    setWorld(input, "steamship", "not-running");
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("▸ Coal — progresso · 200 unidades para Junkar · vale após o Server Save");
+  });
+
+  it("gives every line something to act on beyond the name", () => {
+    // "Slug Drug — item" names a thing without saying what to do with it, which is the one
+    // thing a reader needs at eight in the morning.
+    for (const { name, input } of everyScenario()) {
+      for (const line of generateBriefingMessage(input).split("\n")) {
+        if (!line.startsWith("▸")) continue;
+        expect(line, `${name}: ${line}`).toContain(" — ");
+        expect(line.split(" — ")[1]!.length, `${name}: ${line}`).toBeGreaterThan(6);
+      }
+    }
+  });
+
+  it("never offers something the current state blocks", () => {
+    const input = makeInput();
+    setWorld(input, "overhunting", "wolves");
+    const message = generateBriefingMessage(input);
+    expect(message).not.toContain("Kingly Deer");
+    expect(message).not.toContain("White Deer Antlers");
+  });
+});
+
+describe("language", () => {
+  it("renders every language without leaving a gap", () => {
+    for (const language of LANGUAGES) {
+      const message = generateBriefingMessage(makeInput(language));
+      expect(message, language).not.toContain("undefined");
+      expect(message, language).not.toMatch(/\[object/);
+      expect(message.length, language).toBeGreaterThan(80);
+    }
+  });
+
+  it("translates the app's own words and leaves Tibia's alone", () => {
+    const input = makeInput("en");
+    setWorld(input, "overhunting", "wolves");
+    const english = generateBriefingMessage(input);
+    expect(english).toContain("👾 Creature: Gore Horn");
+    expect(english).toContain("*🌍 WORLD CHANGES*");
+    expect(english).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
+
+    const portuguese = generateBriefingMessage(makeInput());
+    expect(portuguese).toContain("👾 Criatura: Gore Horn");
+    // Merchants, Charm Points and the change names are Tibia's, not the app's.
+    for (const language of LANGUAGES) {
+      const message = generateBriefingMessage(makeInput(language));
+      expect(message, language).toContain("Rashid: Svargrond");
+      expect(message, language).toContain("Yasir: Carlin");
+    }
+  });
+
+  it("keeps Portuguese prose free of stray English", () => {
+    const input = makeInput();
+    setMini(input, "nightmare-isles", "daramas-northernmost-coast");
+    setWorld(input, "demon-war", "shaburak-dominant");
+    const message = generateBriefingMessage(input);
+    expect(message).not.toMatch(/darama's northernmost coast/i);
+    expect(message).not.toMatch(/\bonly in this state\b/);
+    expect(message).not.toMatch(/\bprogress only\b/);
   });
 });

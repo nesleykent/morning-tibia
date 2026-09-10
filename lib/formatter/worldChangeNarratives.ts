@@ -672,23 +672,23 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       pl: { headline: "Fire-Feathered Serpent jest pogrążony w głębokim śnie." },
     }),
     "dreaming": simple({
-      pt: { headline: "A Serpent sonha e a terra sangra lava." },
-      en: { headline: "The Serpent dreams and the earth bleeds lava." },
-      es: { headline: "La Serpent sueña y la tierra sangra lava." },
-      pl: { headline: "Serpent śni, a ziemia krwawi lawą." },
+      pt: { headline: "A Fire-Feathered Serpent sonha e a terra sangra lava." },
+      en: { headline: "The Fire-Feathered Serpent dreams and the earth bleeds lava." },
+      es: { headline: "La Fire-Feathered Serpent sueña y la tierra sangra lava." },
+      pl: { headline: "Fire-Feathered Serpent śni, a ziemia krwawi lawą." },
     }),
     "awake": simple({
       pt: {
-        headline: "A Serpent está desperta.",
+        headline: "A Fire-Feathered Serpent está desperta.",
       },
       en: {
-        headline: "The Serpent is awake.",
+        headline: "The Fire-Feathered Serpent is awake.",
       },
       es: {
-        headline: "La Serpent está despierta.",
+        headline: "La Fire-Feathered Serpent está despierta.",
       },
       pl: {
-        headline: "Serpent się obudził.",
+        headline: "Fire-Feathered Serpent się obudził.",
       },
     }),
   },

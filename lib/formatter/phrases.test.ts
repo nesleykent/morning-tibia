@@ -40,11 +40,11 @@ function upcomingEvent(overrides: Partial<UpcomingEvent> = {}): UpcomingEvent {
 describe("formatActiveEventLine", () => {
   it("uses the multi-day tier with Brazilian short date and correct pluralization", () => {
     expect(formatActiveEventLine(activeEvent({ daysRemaining: 13 }), "pt")).toBe(
-      "ativa até 31/08, faltam 13 dias.",
+      "ativa até 31/08 (faltam 13 dias)",
     );
-    expect(formatActiveEventLine(activeEvent({ daysRemaining: 1 }), "pt")).toBe("termina amanhã.");
+    expect(formatActiveEventLine(activeEvent({ daysRemaining: 1 }), "pt")).toBe("termina amanhã");
     expect(formatActiveEventLine(activeEvent({ daysRemaining: 0 }), "pt")).toBe(
-      "último dia, termina hoje.",
+      "último dia, termina hoje",
     );
   });
 
@@ -56,7 +56,7 @@ describe("formatActiveEventLine", () => {
 
   it("renders in English", () => {
     expect(formatActiveEventLine(activeEvent({ daysRemaining: 13 }), "en")).toBe(
-      "active until 31/08, 13 days left.",
+      "active until 31/08 (13 days left)",
     );
   });
 });
@@ -98,13 +98,13 @@ describe("formatDromeLine", () => {
   it("uses the 'tomorrow' tier a day out", () => {
     const endsAt = new Date(NOW.getTime() + 20 * 3600000).toISOString(); // ~20h away, next BRT calendar day
     const line = formatDromeLine("#133", endsAt, "pt", NOW, TZ);
-    expect(line).toMatch(/^Último dia da Rotação #133\. Termina amanhã às \d{2}:\d{2}\.$/);
+    expect(line).toMatch(/^Último dia da rotação #133\. Termina amanhã às \d{2}:\d{2}\.$/);
   });
 
   it("uses the final-hours tier under the 6h threshold", () => {
     const endsAt = new Date(NOW.getTime() + 3 * 3600000 + 24 * 60000).toISOString();
     const line = formatDromeLine("#133", endsAt, "pt", NOW, TZ);
-    expect(line).toMatch(/^Últimas horas da Rotação #133\. Termina hoje às \d{2}:\d{2}, faltam 3h 24min\.$/);
+    expect(line).toMatch(/^Últimas horas da rotação #133\. Termina hoje às \d{2}:\d{2}, faltam 3h 24min\.$/);
   });
 });
 

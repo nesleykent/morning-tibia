@@ -63,6 +63,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Tras un intento fallido cada personaje espera una hora real; romper un jar lleva de 10 a 80 intentos.",
       pl: "Po nieudanej próbie każda postać czeka godzinę; rozbicie zajmuje 10–80 prób.",
     },
+    qualifier: {
+      pt: "cada jar quebrado é uma entrada",
+      en: "each jar broken is one entry",
+      es: "cada jar roto es una entrada",
+      pl: "każdy rozbity jar to jedno wejście",
+    },
     sources: [wc("The_Mummy's_Curse")],
   },
   {
@@ -80,6 +86,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Faraon opuścił grobowiec — zmierzy się z nim każdy, kto rozbił Ornate Canopic Jar.",
     },
     prerequisites: ["One Ornate Canopic Jar broken (banked from any earlier day)"],
+    qualifier: {
+      pt: "para quem já quebrou um Ornate Canopic Jar",
+      en: "for anyone holding an Ornate Canopic Jar break",
+      es: "para quien ya rompió un Ornate Canopic Jar",
+      pl: "dla tych, którzy rozbili Ornate Canopic Jar",
+    },
     sources: [wc("The_Mummy's_Curse"), `${WIKI}/Horestis`],
   },
 
@@ -130,6 +142,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Użyj Golden Can of Oil na nieruchomym Uniwheel w Yielothax Dimension — wierzchowiec jest tylko tam.",
     },
     prerequisites: ["A Golden Can of Oil (dropped by Golden Servants and Ethershreck)"],
+    qualifier: {
+      pt: "com um Golden Can of Oil",
+      en: "with a Golden Can of Oil",
+      es: "con un Golden Can of Oil",
+      pl: "z Golden Can of Oil",
+    },
     sources: [`${WIKI}/Uniwheel_(Mount)`, `${WIKI}/Golden_Can_of_Oil`],
   },
   {
@@ -150,6 +168,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Killing him collapses the portal five minutes later, until the next server save.",
       es: "Matarlo derriba el portal cinco minutos después, hasta el próximo Server Save.",
       pl: "Jego śmierć zamyka portal po pięciu minutach, aż do następnego server save.",
+    },
+    qualifier: {
+      pt: "depois de 2.000 Yielothaxes no mundo",
+      en: "after 2,000 Yielothaxes server-wide",
+      es: "tras 2.000 Yielothaxes en el mundo",
+      pl: "po 2000 Yielothaxów na serwerze",
     },
     sources: [wc("The_Mage's"), `${WIKI}/Raging_Mage`],
   },
@@ -172,6 +196,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Only one fungus every 5 seconds — bring company.",
       es: "Solo un hongo cada 5 segundos — lleva compañía.",
       pl: "Tylko jeden grzyb co 5 sekund — weź towarzystwo.",
+    },
+    qualifier: {
+      pt: "25 fungos liberam o Mad Mage",
+      en: "25 fungus tiles unlock the Mad Mage",
+      es: "25 hongos liberan al Mad Mage",
+      pl: "25 grzybów odblokowuje Mad Mage",
     },
     sources: [wc("Their_Master's_Voice")],
   },
@@ -237,6 +267,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Solo aparece tras eliminar todas las oleadas de sirvientes, y solo para quien limpió 25 hongos.",
       pl: "Pojawia się dopiero po zabiciu wszystkich fal sług i tylko dla tych, którzy usunęli 25 grzybów.",
     },
+    qualifier: {
+      pt: "depois do fungo e de todas as ondas",
+      en: "after the fungus and every wave",
+      es: "tras el hongo y todas las oleadas",
+      pl: "po grzybie i wszystkich falach",
+    },
     sources: [wc("Their_Master's_Voice"), `${WIKI}/Mad_Mage`],
   },
 
@@ -258,6 +294,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "The Slug Drug is a very rare result from the bag, and breaks on roughly 30% of uses.",
       es: "El Slug Drug es un resultado muy raro de la bolsa y se rompe en cerca del 30% de los usos.",
       pl: "Slug Drug wypada z torby bardzo rzadko i pęka przy około 30% użyć.",
+    },
+    qualifier: {
+      pt: "doma o Tiger Slug",
+      en: "tames the Tiger Slug",
+      es: "doma el Tiger Slug",
+      pl: "oswaja Tiger Sluga",
     },
     sources: [wc("Swamp_Fever"), `${WIKI}/Belongings_of_a_deceased`, `${WIKI}/Slug_Drug`],
   },
@@ -312,6 +354,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Mata a los tres Elf Overseers y a todos los elfos de Shadowthorn para quitar el musgo de las rejas y liberar a los firestarters — la aldea arde en el próximo Server Save.",
       pl: "Zabij trzech Elf Overseers i wszystkie elfy w Shadowthorn, by zdjąć mech z krat i uwolnić firestarterów — wioska spłonie po następnym server save.",
     },
+    qualifier: {
+      pt: "mate os Elf Overseers e todos os elfos",
+      en: "kill the Elf Overseers and every elf",
+      es: "mata a los Elf Overseers y a todos los elfos",
+      pl: "zabij Elf Overseers i wszystkie elfy",
+    },
     sources: [wc("Thornfire")],
   },
   {
@@ -334,6 +382,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Szansa to 0,1–1% na ugaszony ogień, a Diapason może pęknąć.",
     },
     prerequisites: ["Prepared Buckets (a Bucket plus a Flask of Embalming Fluid)", "A Diapason"],
+    qualifier: {
+      pt: "com um Diapason, a partir de um Thornfire Wolf",
+      en: "with a Diapason, from a Thornfire Wolf",
+      es: "con un Diapason, a partir de un Thornfire Wolf",
+      pl: "Diapasonem, z Thornfire Wolfa",
+    },
     sources: [wc("Thornfire"), `${WIKI}/Crystal_Wolf_(Mount)`],
   },
   {
@@ -388,6 +442,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "500 ognisk to suma z wielu dni, nie jedna sesja.",
     },
     prerequisites: ["Prepared Buckets (a Bucket plus a Flask of Embalming Fluid)"],
+    qualifier: {
+      pt: "500 fogos com Buckets of Bog Water",
+      en: "500 fires with Buckets of Bog Water",
+      es: "500 fuegos con Buckets of Bog Water",
+      pl: "500 ognisk Bucketami of Bog Water",
+    },
     sources: [wc("Thornfire"), `${WIKI}/Firefighter`],
   },
 
@@ -404,6 +464,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Arroja cadáveres al lago al norte de Port Hope: 1000 en el servidor ensucian el agua en el próximo Server Save y traen los Shimmer Swimmers.",
       pl: "Wrzucaj zwłoki do jeziora na północ od Port Hope: 1000 na serwerze zabrudzi wodę po następnym server save i sprowadzi Shimmer Swimmery.",
     },
+    qualifier: {
+      pt: "jogue corpos no lago",
+      en: "dump corpses in the lake",
+      es: "arroja cadáveres al lago",
+      pl: "wrzucaj zwłoki do jeziora",
+    },
     sources: [wc("Twisted_Waters")],
   },
   {
@@ -418,6 +484,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Fish in Lake Equivocolao: it is the only place in Tibia the fish exists, and each character catches one every 20 hours.",
       es: "Pesca en el Lake Equivocolao: es el único lugar de Tibia donde existe el pez, y cada personaje saca uno cada 20 horas.",
       pl: "Łów w Lake Equivocolao: to jedyne miejsce w Tibii z tą rybą, a każda postać łowi jedną co 20 godzin.",
+    },
+    qualifier: {
+      pt: "pesque no lago, 1 a cada 20h",
+      en: "fish it in the lake, one every 20h",
+      es: "pesca en el lago, 1 cada 20h",
+      pl: "łów w jeziorze, 1 na 20h",
     },
     sources: [wc("Twisted_Waters"), `${WIKI}/Shimmer_Swimmer`],
   },
@@ -434,6 +506,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "50 Shimmer Swimmers en total, a uno cada 20 horas por personaje.",
       pl: "Łącznie 50 Shimmer Swimmerów, po jednym na 20 godzin na postać.",
     },
+    qualifier: {
+      pt: "50 Shimmer Swimmers pescados",
+      en: "50 Shimmer Swimmers fished",
+      es: "50 Shimmer Swimmers pescados",
+      pl: "50 złowionych Shimmer Swimmerów",
+    },
     sources: [`${WIKI}/Biodegradable`],
   },
 
@@ -449,6 +527,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Use 202 pieces of Coal on the water pumps by Dronk: the mines open at the next server save.",
       es: "Usa 202 unidades de Coal en las bombas de agua junto a Dronk: las minas abren en el próximo Server Save.",
       pl: "Użyj 202 sztuk Coal na pompach przy Dronku: kopalnie otworzą się po następnym server save.",
+    },
+    qualifier: {
+      pt: "202 unidades nas bombas de Dronk",
+      en: "202 pieces on Dronk's pumps",
+      es: "202 unidades en las bombas de Dronk",
+      pl: "202 sztuki na pompy Dronka",
     },
     sources: [wc("Awash")],
   },
@@ -496,7 +580,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   {
     id: "awash-steamship-route",
     kind: "service",
-    subject: "Junkar's steamship",
+    subject: "Junkar",
     availability: "available-today",
     trigger: {
       kind: "world-change",
@@ -523,6 +607,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "La cuota de Deepling Scouts de hoy sigue abierta: sin ella el túnel vuelve a inundarse en el próximo Server Save.",
       pl: "Dzisiejszy limit Deepling Scoutów wciąż otwarty: bez niego tunel znów zaleje po server save.",
     },
+    qualifier: {
+      pt: "a cota de hoje ainda está aberta",
+      en: "today's quota is still open",
+      es: "la cuota de hoy sigue abierta",
+      pl: "dzisiejszy limit wciąż otwarty",
+    },
     sources: [wc("Awash")],
   },
 
@@ -530,7 +620,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   {
     id: "steamship-coal",
     kind: "progress",
-    subject: "Thais–Kazordoon steamship",
+    subject: "Coal",
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "steamship", stateIds: ["not-running"] },
     detail: {
@@ -544,6 +634,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Junkar accepts coal even once he has enough — only a Guide NPC will say when the target is met.",
       es: "Junkar acepta carbón incluso cuando ya tiene suficiente — solo un Guide NPC dice cuándo se alcanzó.",
       pl: "Junkar przyjmuje węgiel nawet gdy ma już dość — tylko Guide NPC powie, kiedy cel osiągnięto.",
+    },
+    qualifier: {
+      pt: "200 unidades para Junkar",
+      en: "200 pieces for Junkar",
+      es: "200 unidades para Junkar",
+      pl: "200 sztuk dla Junkara",
     },
     sources: [wc("Steamship")],
   },
@@ -595,6 +691,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Ordinary horses cannot be tamed — only the Wild Horses of this state.",
       es: "Los caballos comunes no pueden domarse — solo los Wild Horses de este estado.",
       pl: "Zwykłych koni nie da się oswoić — tylko Wild Horse'y z tego stanu.",
+    },
+    qualifier: {
+      pt: "Sugar Oat em um Wild Horse",
+      en: "Sugar Oat on a Wild Horse",
+      es: "Sugar Oat en un Wild Horse",
+      pl: "Sugar Oat na Wild Horse",
     },
     sources: [wc("Horse_Station"), `${WIKI}/Sugar_Oat`, `${WIKI}/Wild_Horse`],
   },
@@ -659,6 +761,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El Golden Fir Cone se rompe en el 25–33% de los usos; suelen hacer falta de 2 a 4.",
       pl: "Golden Fir Cone pęka przy 25–33% użyć; zwykle potrzeba 2–4 sztuk.",
     },
+    qualifier: {
+      pt: "Golden Fir Cone em um Enraged White Deer",
+      en: "Golden Fir Cone on an Enraged White Deer",
+      es: "Golden Fir Cone en un Enraged White Deer",
+      pl: "Golden Fir Cone na Enraged White Deer",
+    },
     sources: [wc("Overhunting"), `${WIKI}/Kingly_Deer`, `${WIKI}/Golden_Fir_Cone`],
   },
   {
@@ -682,6 +790,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Over-hunting today is what makes the population leave tomorrow.",
       es: "Cazar de más hoy es lo que hace desaparecer la población mañana.",
       pl: "Nadmierne polowanie dziś sprawia, że jutro populacja odejdzie.",
+    },
+    qualifier: {
+      pt: "vende para Cruleo",
+      en: "sells to Cruleo",
+      es: "se vende a Cruleo",
+      pl: "sprzedasz Cruleo",
     },
     sources: [wc("Overhunting")],
   },
@@ -719,6 +833,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Matar a los lobos también cuenta, pero es diez veces menos efectivo que atraparlos.",
       pl: "Zabijanie wilków też się liczy, ale jest dziesięć razy mniej skuteczne niż łapanie.",
     },
+    qualifier: {
+      pt: "Magic Wolf Traps em Femor Hills",
+      en: "Magic Wolf Traps at the Femor Hills",
+      es: "Magic Wolf Traps en las Femor Hills",
+      pl: "Magic Wolf Trapy w Femor Hills",
+    },
     sources: [wc("Overhunting"), `${WIKI}/Magic_Wolf_Trap`],
   },
 
@@ -734,6 +854,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "A 100-kill difference between the factions at server save moves the war on; 400 or more jumps straight to the Princes stage.",
       es: "Una diferencia de 100 muertes entre facciones en el Server Save mueve la guerra; a partir de 400 salta directo a la fase de los Princes.",
       pl: "Różnica 100 zabójstw między frakcjami przy server save przesuwa wojnę; od 400 przeskakuje wprost do etapu Princes.",
+    },
+    qualifier: {
+      pt: "100 kills de diferença movem a guerra",
+      en: "a 100-kill difference moves the war",
+      es: "100 muertes de diferencia mueven la guerra",
+      pl: "różnica 100 zabójstw rusza wojnę",
     },
     sources: [wc("Demon_Wars")],
   },
@@ -852,6 +978,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Cada 1000 Seacrest Serpents muertos en el servidor avanza una etapa, y el cambio ocurre al instante, sin esperar al Server Save.",
       pl: "Każde 1000 zabitych Seacrest Serpentów na serwerze przesuwa etap, a zmiana następuje od razu, bez czekania na server save.",
     },
+    qualifier: {
+      pt: "1.000 Seacrest Serpents avançam o estágio",
+      en: "1,000 Seacrest Serpents advance the stage",
+      es: "1.000 Seacrest Serpents avanzan la etapa",
+      pl: "1000 Seacrest Serpentów przesuwa etap",
+    },
     sources: [wc("The_Fire-Feathered_Serpent")],
   },
   {
@@ -905,6 +1037,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Solo en esta fase: mina Rough Red Gems, conviértelos en Hearts of the Sea en el Strong Water Vortex y ofrécelos a la estatua de Qjell — cinco entregas abren la sala de recompensa de la fase 2.",
       pl: "Tylko na tym etapie: wydobądź Rough Red Gems, zamień je w Hearts of the Sea przy Strong Water Vortex i złóż w ofierze posągowi Qjella — pięć ofiar otwiera salę nagród etapu 2.",
     },
+    qualifier: {
+      pt: "ofereça Hearts of the Sea à estátua de Qjell",
+      en: "offer Hearts of the Sea to the Qjell statue",
+      es: "ofrece Hearts of the Sea a la estatua de Qjell",
+      pl: "złóż Hearts of the Sea posągowi Qjella",
+    },
     sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
   },
   {
@@ -926,6 +1064,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El acceso se guarda entre ciclos, así que no hace falta usarlo en esta rotación.",
       pl: "Dostęp zapisuje się między cyklami, więc nie trzeba go użyć w tej rotacji.",
     },
+    qualifier: {
+      pt: "minere 10 crates você mesmo",
+      en: "mine 10 crates yourself",
+      es: "mina 10 crates tú mismo",
+      pl: "wydobądź 10 crates samodzielnie",
+    },
     sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
   },
   {
@@ -946,7 +1090,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   {
     id: "deeplings-boss",
     kind: "boss",
-    subject: "Tanjis, Obujos or Jaul",
+    subject: "Tanjis / Obujos / Jaul",
     availability: "available-today",
     exclusive: true,
     bosstiary: "Bane",
@@ -964,6 +1108,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Otwarcie skrzyni jednego bossa odbiera dostęp do dwóch pozostałych w tej rotacji.",
     },
     prerequisites: ["10 coral crates mined during Deepling stage 2"],
+    qualifier: {
+      pt: "só com 10 coral crates da fase 2",
+      en: "only with 10 coral crates from stage 2",
+      es: "solo con 10 coral crates de la fase 2",
+      pl: "tylko z 10 coral crates z etapu 2",
+    },
     sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
   },
   {
@@ -979,6 +1129,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "They appear only in the third area of Fiehonja, which is open only in this stage.",
       es: "Solo aparecen en la tercera área de Fiehonja, abierta únicamente en esta fase.",
       pl: "Występują tylko w trzecim obszarze Fiehonji, otwartym wyłącznie na tym etapie.",
+    },
+    qualifier: {
+      pt: "na terceira área de Fiehonja",
+      en: "in the third area of Fiehonja",
+      es: "en la tercera área de Fiehonja",
+      pl: "w trzecim obszarze Fiehonji",
     },
     sources: [`${WIKI}/Manta_Ray`, `${WIKI}/Liquid_Black_Quest/Spoiler`],
   },
@@ -996,6 +1152,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Cuatro tareas valen 1 punto cada una; el servidor necesita 200 puntos en un mismo día para romper las defensas en el Server Save.",
       pl: "Cztery zadania warte po 1 punkcie; serwer potrzebuje 200 punktów jednego dnia, by przełamać obronę przy server save.",
     },
+    qualifier: {
+      pt: "200 pontos hoje abrem a Hive",
+      en: "200 points today breach the hive",
+      es: "200 puntos hoy abren la Hive",
+      pl: "200 punktów dziś przełamie Hive",
+    },
     sources: [wc("Hive_Born")],
   },
   {
@@ -1010,6 +1172,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Gasta 50 Favour Points con Orockle (reward, yes) por la feromona que abre los Hive Gates durante 7 días y da acceso a las salas con Insectoid Cells.",
       pl: "Wydaj 50 Favour Points u Orockle'a (reward, yes) na feromon, który otwiera Hive Gates na 7 dni i daje dostęp do sal z Insectoid Cells.",
     },
+    qualifier: {
+      pt: "com 50 Favour Points gastos em Orockle",
+      en: "with 50 Favour Points spent at Orockle",
+      es: "con 50 Favour Points gastados en Orockle",
+      pl: "za 50 Favour Points u Orockle'a",
+    },
     sources: [wc("Hive_Born")],
   },
   {
@@ -1023,6 +1191,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Two further tasks are worth 2 points each; another 200 points opens the western Hive, and without them everything reverts to stage 1 in three days.",
       es: "Dos tareas nuevas valen 2 puntos cada una; otros 200 puntos abren el lado oeste de la Hive, y sin ellos todo vuelve a la fase 1 en tres días.",
       pl: "Dwa kolejne zadania warte po 2 punkty; następne 200 punktów otwiera zachodnią część Hive, a bez nich wszystko wraca do etapu 1 w trzy dni.",
+    },
+    qualifier: {
+      pt: "mais 200 pontos abrem o lado oeste",
+      en: "another 200 points open the western side",
+      es: "otros 200 puntos abren el lado oeste",
+      pl: "kolejne 200 punktów otwiera zachód",
     },
     sources: [wc("Hive_Born")],
   },
@@ -1045,6 +1219,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Stage 3 lasts five days and then falls back to stage 1.",
       es: "La fase 3 dura cinco días y luego vuelve a la fase 1.",
       pl: "Etap 3 trwa pięć dni, po czym wraca do etapu 1.",
+    },
+    qualifier: {
+      pt: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit e Shadowstalker",
+      en: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit and Shadowstalker",
+      es: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit y Shadowstalker",
+      pl: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit i Shadowstalker",
     },
     sources: [wc("Hive_Born")],
   },
@@ -1108,6 +1288,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Usa una Decorative Ribbon o Music Box en un Dragonling: solo existen en la Fury Dungeon y en el volcán de Goroma en erupción.",
       pl: "Użyj Decorative Ribbon lub Music Box na Dragonlingu: występują tylko w Fury Dungeon i na wybuchającym wulkanie Goroma.",
     },
+    qualifier: {
+      pt: "com Decorative Ribbon ou Music Box",
+      en: "with a Decorative Ribbon or Music Box",
+      es: "con Decorative Ribbon o Music Box",
+      pl: "z Decorative Ribbon lub Music Box",
+    },
     sources: [`${WIKI}/Dragonling_(Mount)`, `${WIKI}/Dragonling`],
   },
 
@@ -1150,6 +1336,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Solo puede matarse cada 24 horas, y subir la escalera antes reinicia el contador.",
       pl: "Można ją zabić raz na 24 godziny, a wcześniejsze wejście po schodach resetuje licznik.",
     },
+    qualifier: {
+      pt: "limpe os orcs do acampamento",
+      en: "clear the orcs from the camp",
+      es: "limpia los orcos del campamento",
+      pl: "wyczyść orki z obozu",
+    },
     sources: [mwc("Warpath"), `${WIKI}/Bibby's_Bloodbath`],
   },
 
@@ -1180,6 +1372,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Dla punktów Bosstiary zwykle radzi się trzymać trzech najsłabszych — Anmothra, Irahsae i Teneshpar to razem 75 kawałków.",
     },
     prerequisites: ["Tentacle Pieces"],
+    qualifier: {
+      pt: "em troca de Tentacle Pieces",
+      en: "in exchange for Tentacle Pieces",
+      es: "a cambio de Tentacle Pieces",
+      pl: "w zamian za Tentacle Pieces",
+    },
     sources: [mwc("Devovorga's_Essence")],
   },
 
@@ -1195,6 +1393,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "The iceberg is packed with Chakoyas, a good source of Fireproof Horns — with a Tinder Box they become the Melting Horn that tames the Ursagrodon.",
       es: "El iceberg está lleno de Chakoyas, buena fuente de Fireproof Horns — con una Tinder Box se vuelven el Melting Horn que doma al Ursagrodon.",
       pl: "Góra lodowa pełna Chakoyów to dobre źródło Fireproof Hornów — z Tinder Boxem stają się Melting Hornem do oswojenia Ursagrodona.",
+    },
+    qualifier: {
+      pt: "vira Melting Horn para o Ursagrodon",
+      en: "becomes the Melting Horn for the Ursagrodon",
+      es: "se vuelve Melting Horn para el Ursagrodon",
+      pl: "staje się Melting Hornem na Ursagrodona",
     },
     sources: [mwc("Chakoya_Iceberg"), `${WIKI}/Fireproof_Horn`],
   },
@@ -1309,6 +1513,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "La erupción trae Dragonlings al volcán — usa una Decorative Ribbon o Music Box en uno.",
       pl: "Erupcja sprowadza Dragonlingi na wulkan — użyj na jednym Decorative Ribbon lub Music Box.",
     },
+    qualifier: {
+      pt: "com Decorative Ribbon ou Music Box",
+      en: "with a Decorative Ribbon or Music Box",
+      es: "con Decorative Ribbon o Music Box",
+      pl: "z Decorative Ribbon lub Music Box",
+    },
     sources: [mwc("Fire_from_the_Earth"), `${WIKI}/Dragonling_(Mount)`],
   },
   {
@@ -1379,6 +1589,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El campamento al sur del Tarpit Tomb no tiene ningún cofre.",
       pl: "Obóz na południe od Tarpit Tomb nie ma żadnej skrzyni.",
     },
+    qualifier: {
+      pt: "saqueie o baú do acampamento de hoje",
+      en: "loot today's camp chest",
+      es: "saquea el cofre del campamento de hoy",
+      pl: "złup skrzynię dzisiejszego obozu",
+    },
     sources: [mwc("Nomads"), `${WIKI}/Chest_Robber`],
   },
 
@@ -1396,6 +1612,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Entrega Blood Herbs a Wyda hasta que dé un Torn Teddy; normalmente devuelve Witchesbrooms antes.",
       pl: "Oddawaj Wydzie Blood Herby, aż da Torn Teddy'ego; wcześniej zwykle zwraca Witchesbroomy.",
     },
+    qualifier: {
+      pt: "Blood Herbs para Wyda até sair o Torn Teddy",
+      en: "Blood Herbs to Wyda until the Torn Teddy",
+      es: "Blood Herbs a Wyda hasta el Torn Teddy",
+      pl: "Blood Herby Wydzie aż do Torn Teddy",
+    },
     sources: [mwc("Bored"), `${WIKI}/Torn_Treasures`],
   },
   {
@@ -1410,6 +1632,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Kill one of the fake Giant Spiders that appear around Wyda's house.",
       es: "Mata una de las Giant Spiders falsas que aparecen alrededor de la casa de Wyda.",
       pl: "Zabij jednego z fałszywych Giant Spiderów krążących wokół domu Wydy.",
+    },
+    qualifier: {
+      pt: "mate uma Giant Spider falsa",
+      en: "kill a fake Giant Spider",
+      es: "mata una Giant Spider falsa",
+      pl: "zabij fałszywego Giant Spidera",
     },
     sources: [mwc("Bored"), `${WIKI}/Someone%27s_Bored`],
   },
@@ -1434,6 +1662,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Solo repetible cada dos semanas, y cuanto antes lo busques tras el Server Save, más fácil es hallarlo.",
       pl: "Powtarzalne co dwa tygodnie, a im wcześniej po server save szukasz, tym łatwiej go znaleźć.",
     },
+    qualifier: {
+      pt: "Dog Collar do King Tibianus, depois ache Noodles",
+      en: "Dog Collar from King Tibianus, then find Noodles",
+      es: "Dog Collar de King Tibianus, luego halla a Noodles",
+      pl: "Dog Collar od King Tibianusa, potem znajdź Noodlesa",
+    },
     sources: [mwc("Noodles_is_Gone"), `${WIKI}/Dog_Sitter`],
   },
 
@@ -1456,6 +1690,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Cursing at the king lands you in the Thaian Jail until the next raid, with no way to log out.",
       es: "Insultar al rey te manda a la Thaian Jail hasta la próxima raid, sin poder desconectarte.",
       pl: "Przeklinanie króla wsadza cię do Thaian Jail aż do następnego rajdu, bez możliwości wylogowania.",
+    },
+    qualifier: {
+      pt: 'diga "Hello King" a King Tibianus',
+      en: 'say "Hello King" to King Tibianus',
+      es: 'dile "Hello King" a King Tibianus',
+      pl: 'powiedz "Hello King" King Tibianusowi',
     },
     sources: [mwc("Kingsday"), `${WIKI}/Loyal_Subject`],
   },
@@ -1501,6 +1741,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Cada flor tarda 4 horas en volver a crecer tras cosecharla.",
       pl: "Każdy kwiat odrasta 4 godziny po zerwaniu.",
     },
+    qualifier: {
+      pt: "10 Ice Flower Seeds",
+      en: "10 Ice Flower Seeds",
+      es: "10 Ice Flower Seeds",
+      pl: "10 Ice Flower Seeds",
+    },
     sources: [mwc("Thawing"), `${WIKI}/Ice_Harvester`],
   },
 
@@ -1524,6 +1770,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "After the third kill you can never enter the area again.",
       es: "Tras la tercera muerte no podrás volver a entrar a la zona.",
       pl: "Po trzecim zabiciu nigdy więcej nie wejdziesz na ten teren.",
+    },
+    qualifier: {
+      pt: "3 kills",
+      en: "3 kills",
+      es: "3 kills",
+      pl: "3 kills",
     },
     sources: [mwc("Spider_Nest"), `${WIKI}/Nestling`],
   },
@@ -1658,6 +1910,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Enfrentar a Feroxa exige, cada vez, 3 Purple Nightshade Blossoms para Maeryn y 50 were-creatures muertos.",
       pl: "Walka z Feroxą wymaga za każdym razem 3 Purple Nightshade Blossoms dla Maeryn i 50 zabitych were-creatures.",
     },
+    qualifier: {
+      pt: "só do dia 12 ao 15 de cada mês",
+      en: "only from the 12th to the 15th each month",
+      es: "solo del 12 al 15 de cada mes",
+      pl: "tylko od 12. do 15. każdego miesiąca",
+    },
     sources: [mwc("Grimvale"), `${WIKI}/Grimvale_Quest`],
   },
 
@@ -1706,6 +1964,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "La bolsa debe entregarse antes del próximo Server Save, y el banco de la ciudad sigue cerrado hasta entonces.",
       pl: "Torbę trzeba oddać przed następnym server save, a bank w mieście jest do tego czasu zamknięty.",
     },
+    qualifier: {
+      pt: "devolva a Bag with Stolen Gold ao banqueiro",
+      en: "return the Bag with Stolen Gold to the banker",
+      es: "devuelve la Bag with Stolen Gold al banquero",
+      pl: "oddaj Bag with Stolen Gold bankierowi",
+    },
     sources: [mwc("Bank_Robbery"), `${WIKI}/Honest_Finder`],
   },
   {
@@ -1720,6 +1984,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "Five bags returned in total, normally one per robbery — today moves it on by one.",
       es: "Cinco bolsas devueltas en total, normalmente una por robo — hoy avanza un paso.",
       pl: "Łącznie pięć zwróconych toreb, zwykle jedna na napad — dziś posuwa to o krok.",
+    },
+    qualifier: {
+      pt: "5 bolsas devolvidas ao todo",
+      en: "five bags returned in all",
+      es: "5 bolsas devueltas en total",
+      pl: "łącznie pięć zwróconych toreb",
     },
     sources: [`${WIKI}/Goldhunter`],
   },
@@ -1745,6 +2015,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Puede tardar: usa hotkey en la Fishing Rod y come un Northern Fishburger.",
       pl: "Może zająć chwilę: ustaw hotkey na Fishing Rod i zjedz Northern Fishburgera.",
     },
+    qualifier: {
+      pt: "pesque um Sandfish no rio de Zao",
+      en: "fish a Sandfish in the Zao river",
+      es: "pesca un Sandfish en el río de Zao",
+      pl: "złów Sandfisha w rzece Zao",
+    },
     sources: [mwc("River_Runs_Deep"), `${WIKI}/Desert_Fisher`],
   },
 
@@ -1768,6 +2044,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Chip también compra Wood por 50 gp mientras tala los árboles.",
       pl: "Chip kupuje też Wood po 50 gp, póki ścina drzewa.",
     },
+    qualifier: {
+      pt: "fale com Chip antes da Queen Eloise",
+      en: "talk to Chip before Queen Eloise",
+      es: "habla con Chip antes que Queen Eloise",
+      pl: "pogadaj z Chipem przed Queen Eloise",
+    },
     sources: [mwc("Lumberjack"), `${WIKI}/Whistle-Blower`],
   },
 
@@ -1785,6 +2067,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "The flood opens a small island with 11 Water Elementals south of the Outlaw Camp; 50 kills inside are needed.",
       es: "La crecida abre una islita con 11 Water Elementals al sur del Outlaw Camp; hacen falta 50 muertes allí.",
       pl: "Powódź otwiera wysepkę z 11 Water Elementalami na południe od Outlaw Camp; potrzeba tam 50 zabójstw.",
+    },
+    qualifier: {
+      pt: "50 Water Elementals na ilha alagada",
+      en: "50 Water Elementals on the flooded island",
+      es: "50 Water Elementals en la isla inundada",
+      pl: "50 Water Elementali na zalanej wyspie",
     },
     sources: [mwc("Down_the_Drain"), `${WIKI}/Down_the_Drain`],
   },
@@ -1808,6 +2096,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       "Star-Crossed Lovers mission of the Within the Tides Quest",
       "A Colourful Water Lily",
     ],
+    qualifier: {
+      pt: "com uma Colourful Water Lily",
+      en: "with a Colourful Water Lily",
+      es: "con una Colourful Water Lily",
+      pl: "z Colourful Water Lily",
+    },
     sources: [`${WIKI}/Beaver_Away`, `${WIKI}/Giant_Beaver_(Mount)`],
   },
 
@@ -1856,6 +2150,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Melting Horn pęka bardzo łatwo — weź kilka Fireproof Hornów i Tinder Box.",
     },
     prerequisites: ["A Melting Horn"],
+    qualifier: {
+      pt: "com um Melting Horn",
+      en: "with a Melting Horn",
+      es: "con un Melting Horn",
+      pl: "z Melting Hornem",
+    },
     sources: [mwc("Chyllfroest"), `${WIKI}/Ursagrodon`, `${WIKI}/Icy_Glare`],
   },
   {
@@ -1951,6 +2251,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: 'Say "ariki" or "trade" to Yasir to trade with him for the first time.',
       es: 'Dile "ariki" o "trade" a Yasir para comerciar por primera vez.',
       pl: 'Powiedz Yasirowi "ariki" albo "trade", by pierwszy raz z nim handlować.',
+    },
+    qualifier: {
+      pt: 'diga "ariki" ou "trade" a Yasir',
+      en: 'say "ariki" or "trade" to Yasir',
+      es: 'dile "ariki" o "trade" a Yasir',
+      pl: 'powiedz Yasirowi "ariki" lub "trade"',
     },
     sources: [mwc("Oriental_Trader"), `${WIKI}/Si,_Ariki!`],
   },

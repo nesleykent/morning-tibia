@@ -1,3 +1,5 @@
+import type { MarketPriceId } from "@/types/market";
+
 export type BriefingLanguage = "pt" | "en" | "es" | "pl";
 
 export const BRIEFING_LANGUAGES: { value: BriefingLanguage; label: string }[] = [
@@ -7,10 +9,17 @@ export const BRIEFING_LANGUAGES: { value: BriefingLanguage; label: string }[] = 
   { value: "pl", label: "Polski" },
 ];
 
+/**
+ * Every word the bulletin says in its own voice.
+ *
+ * Two rules hold this file together. **Labels are sentence case**, because the bulletin is
+ * forwarded to other people and a column of shouted headings reads as machine output — and
+ * because upper-casing a Tibia name silently changes it. **Official terms stay in English**:
+ * a Brazilian player says "boss boostado", "Charm Points" and "World Change", so translating
+ * those is not localization, it is making the text harder to read for the people using it.
+ */
 export interface BriefingTranslation {
-  greeting: (world: string) => string;
-  sectionStatus: string;
-  sectionMarket: string;
+  sectionMerchants: string;
   sectionMiniWorldChanges: string;
   sectionWorldChanges: string;
   sectionNextEvents: string;
@@ -21,131 +30,109 @@ export interface BriefingTranslation {
   merchantRashid: string;
   warzoneToday: string;
   tibiaDrome: string;
+  /** "compra"/"venda" — which side of the market a price is. */
+  marketOffer: (id: MarketPriceId) => string;
+  /** Attribution for the market numbers, with their age when one is known. */
+  marketSource: (source: string, age: string | null) => string;
   /** A Mini World Change confirmed running, when no narrative sentence is authored. */
   running: string;
   /** A Mini World Change a complete World Board reading proved is not running. */
   notRunning: string;
-  /** Nothing has been checked this session — every entry is still "unknown". */
-  miniWorldChangesNotVerified: string;
-  /** At least one entry was checked (via a World Board paste), and none came back active. */
-  miniWorldChangesNoneActive: string;
-  /** Nothing has been checked via a Guide NPC this session — every entry is still "unknown". */
-  worldChangesNotVerified: string;
   /**
-   * The World Change keywords nobody asked a Guide about. Printed as its own small line so
-   * UNKNOWN reads as unknown rather than as "nothing is happening there" — the distinction the
-   * whole evidence model exists to keep.
+   * Nothing of this kind has been checked yet. Deliberately not an instruction: the bulletin
+   * is pasted into a guild channel, and telling *those* readers to go and paste a World Board
+   * is addressing the wrong person.
+   */
+  notCheckedToday: string;
+  /** Checked via a World Board paste, and none came back active. */
+  miniWorldChangesNoneActive: string;
+  /**
+   * The World Change keywords nobody asked a Guide about. Its own small line so UNKNOWN reads
+   * as unknown rather than as "nothing is happening there".
    */
   worldChangesUnchecked: (labels: string[]) => string;
-  /** Heading for what today's confirmed states make worth doing. */
-  sectionOpportunities: string;
-  /** "and 4 more" — the tail of a capped opportunity list. */
-  opportunitiesHidden: (count: number) => string;
-  noActiveEvents: string;
-  noUpcomingEvents: string;
 }
 
 const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
   pt: {
-    greeting: (world) => `Bom dia, ${world}!`,
-    sectionStatus: "EVENTOS ATIVOS E STATUS DO DIA",
-    sectionMarket: "COMERCIANTES E CÂMBIO DO DIA",
+    sectionMerchants: "COMERCIANTES",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "PRÓXIMOS EVENTOS",
-    boostedCreature: "CRIATURA BOOSTADA",
-    boostedBoss: "BOSS BOOSTADO",
-    boostedRegion: "Região boostada",
-    merchantYasir: "YASIR",
-    merchantRashid: "RASHID",
-    warzoneToday: "WARZONES",
-    tibiaDrome: "TIBIA DROME",
-    running: "Ativa.",
+    boostedCreature: "Criatura",
+    boostedBoss: "Boss",
+    boostedRegion: "Região",
+    merchantYasir: "Yasir",
+    merchantRashid: "Rashid",
+    warzoneToday: "Warzones",
+    tibiaDrome: "Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "compra" : "venda"),
+    marketSource: (source, age) => (age ? `Preços de ${source}, ${age}.` : `Preços de ${source}.`),
+    running: "Está ativa.",
     notRunning: "Não está acontecendo.",
-    miniWorldChangesNotVerified: "Nenhuma Mini World Change foi verificada ainda hoje — cole o texto do World Board para conferir.",
-    miniWorldChangesNoneActive: "World Board conferido — nenhuma Mini World Change ativa no momento.",
-    worldChangesNotVerified: "Nenhuma World Change foi consultada ainda hoje — pergunte a um Guide NPC para conferir.",
-    worldChangesUnchecked: (labels) =>
-      `Ainda não consultadas hoje: ${labels.join(", ")}.`,
-    sectionOpportunities: "OPORTUNIDADES DE HOJE",
-    opportunitiesHidden: (count) => `E mais ${count} ${count === 1 ? "oportunidade" : "oportunidades"} hoje.`,
-    noActiveEvents: "Nenhum evento ativo no momento.",
-    noUpcomingEvents: "Nenhum evento programado no momento.",
+    notCheckedToday: "Não conferido hoje.",
+    miniWorldChangesNoneActive: "Nenhuma ativa no momento.",
+    worldChangesUnchecked: (labels) => `Ainda sem resposta do Guide: ${labels.join(", ")}.`,
   },
   en: {
-    greeting: (world) => `Good morning, ${world}!`,
-    sectionStatus: "TODAY'S ACTIVE EVENTS & STATUS",
-    sectionMarket: "MERCHANTS & DAILY EXCHANGE",
+    sectionMerchants: "MERCHANTS",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "NEXT EVENTS",
-    boostedCreature: "BOOSTED CREATURE",
-    boostedBoss: "BOOSTED BOSS",
-    boostedRegion: "Boosted region",
-    merchantYasir: "YASIR",
-    merchantRashid: "RASHID",
-    warzoneToday: "WARZONES",
-    tibiaDrome: "TIBIA DROME",
+    boostedCreature: "Creature",
+    boostedBoss: "Boss",
+    boostedRegion: "Region",
+    merchantYasir: "Yasir",
+    merchantRashid: "Rashid",
+    warzoneToday: "Warzones",
+    tibiaDrome: "Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "buy" : "sell"),
+    marketSource: (source, age) => (age ? `Prices from ${source}, ${age}.` : `Prices from ${source}.`),
     running: "Running.",
     notRunning: "Not running.",
-    miniWorldChangesNotVerified: "No Mini World Changes have been checked yet today — paste the World Board text to check them.",
-    miniWorldChangesNoneActive: "World Board checked — no Mini World Changes are active right now.",
-    worldChangesNotVerified: "No World Changes have been checked yet today — ask a Guide NPC to check them.",
-    worldChangesUnchecked: (labels) => `Not checked yet today: ${labels.join(", ")}.`,
-    sectionOpportunities: "TODAY'S OPPORTUNITIES",
-    opportunitiesHidden: (count) => `And ${count} more ${count === 1 ? "opportunity" : "opportunities"} today.`,
-    noActiveEvents: "No active events right now.",
-    noUpcomingEvents: "No events scheduled right now.",
+    notCheckedToday: "Not checked today.",
+    miniWorldChangesNoneActive: "None running right now.",
+    worldChangesUnchecked: (labels) => `Still unasked: ${labels.join(", ")}.`,
   },
   es: {
-    greeting: (world) => `¡Buenos días, ${world}!`,
-    sectionStatus: "EVENTOS ACTIVOS Y ESTADO DEL DÍA",
-    sectionMarket: "COMERCIANTES Y CAMBIO DEL DÍA",
+    sectionMerchants: "COMERCIANTES",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "PRÓXIMOS EVENTOS",
-    boostedCreature: "CRIATURA POTENCIADA",
-    boostedBoss: "JEFE POTENCIADO",
-    boostedRegion: "Región potenciada",
-    merchantYasir: "YASIR",
-    merchantRashid: "RASHID",
-    warzoneToday: "WARZONES",
-    tibiaDrome: "TIBIA DROME",
-    running: "Activa.",
+    boostedCreature: "Criatura",
+    boostedBoss: "Boss",
+    boostedRegion: "Región",
+    merchantYasir: "Yasir",
+    merchantRashid: "Rashid",
+    warzoneToday: "Warzones",
+    tibiaDrome: "Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "compra" : "venta"),
+    marketSource: (source, age) => (age ? `Precios de ${source}, ${age}.` : `Precios de ${source}.`),
+    running: "Está activa.",
     notRunning: "No está ocurriendo.",
-    miniWorldChangesNotVerified: "Aún no se verificó ninguna Mini World Change hoy — pega el texto del World Board para comprobarlas.",
-    miniWorldChangesNoneActive: "World Board revisado — ninguna Mini World Change está activa en este momento.",
-    worldChangesNotVerified: "Aún no se consultó ninguna World Change hoy — pregúntale a un Guide NPC para comprobarlas.",
-    worldChangesUnchecked: (labels) => `Sin consultar hoy: ${labels.join(", ")}.`,
-    sectionOpportunities: "OPORTUNIDADES DE HOY",
-    opportunitiesHidden: (count) => `Y ${count} ${count === 1 ? "oportunidad más" : "oportunidades más"} hoy.`,
-    noActiveEvents: "No hay eventos activos ahora mismo.",
-    noUpcomingEvents: "No hay eventos programados por ahora.",
+    notCheckedToday: "Sin comprobar hoy.",
+    miniWorldChangesNoneActive: "Ninguna activa ahora mismo.",
+    worldChangesUnchecked: (labels) => `Aún sin preguntar al Guide: ${labels.join(", ")}.`,
   },
   pl: {
-    greeting: (world) => `Dzień dobry, ${world}!`,
-    sectionStatus: "AKTYWNE WYDARZENIA I STATUS DNIA",
-    sectionMarket: "KUPCY I KURS DNIA",
+    sectionMerchants: "KUPCY",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "NADCHODZĄCE WYDARZENIA",
-    boostedCreature: "WZMOCNIONE STWORZENIE",
-    boostedBoss: "WZMOCNIONY BOSS",
-    boostedRegion: "Wzmocniony region",
-    merchantYasir: "YASIR",
-    merchantRashid: "RASHID",
-    warzoneToday: "WARZONES",
-    tibiaDrome: "TIBIA DROME",
+    boostedCreature: "Stworzenie",
+    boostedBoss: "Boss",
+    boostedRegion: "Region",
+    merchantYasir: "Yasir",
+    merchantRashid: "Rashid",
+    warzoneToday: "Warzones",
+    tibiaDrome: "Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "kupno" : "sprzedaż"),
+    marketSource: (source, age) => (age ? `Ceny z ${source}, ${age}.` : `Ceny z ${source}.`),
     running: "Aktywna.",
     notRunning: "Nieaktywna.",
-    miniWorldChangesNotVerified: "Żadna Mini World Change nie została dziś jeszcze sprawdzona — wklej tekst z World Board, aby to zrobić.",
-    miniWorldChangesNoneActive: "Sprawdzono World Board — obecnie żadna Mini World Change nie jest aktywna.",
-    worldChangesNotVerified: "Żadna World Change nie została dziś jeszcze sprawdzona — zapytaj Guide NPC, aby to zrobić.",
-    worldChangesUnchecked: (labels) => `Dziś jeszcze niesprawdzone: ${labels.join(", ")}.`,
-    sectionOpportunities: "DZISIEJSZE OKAZJE",
-    opportunitiesHidden: (count) => `I jeszcze ${count} okazji dziś.`,
-    noActiveEvents: "Obecnie brak aktywnych wydarzeń.",
-    noUpcomingEvents: "Obecnie brak zaplanowanych wydarzeń.",
+    notCheckedToday: "Dziś niesprawdzone.",
+    miniWorldChangesNoneActive: "Żadna nie jest teraz aktywna.",
+    worldChangesUnchecked: (labels) => `Wciąż bez odpowiedzi Guide'a: ${labels.join(", ")}.`,
   },
 };
 

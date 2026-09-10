@@ -181,7 +181,7 @@ describe("2026-09-10 Ustebra regression — evidence semantics", () => {
     const parsed = wholeBoard();
     expect(parsed.inactiveMerchantIds).toEqual(["yasir"]);
     expect(applyEvidence(parsed).merchants.yasir?.activityState).toBe("inactive");
-    expect(briefingFor(applyEvidence(parsed))).toContain("💰 YASIR\nnão está comerciando hoje");
+    expect(briefingFor(applyEvidence(parsed))).toContain("💰 Yasir: não está comerciando hoje");
     expect(briefingFor(applyEvidence(parsed))).not.toContain("ainda não verificado");
   });
 
@@ -194,7 +194,7 @@ describe("2026-09-10 Ustebra regression — evidence semantics", () => {
     expect(partial.inactiveMerchantIds).toEqual([]);
     expect(partial.inactiveMiniWorldChangeIds).toEqual([]);
     expect(applyEvidence(partial).merchants.yasir?.activityState).toBe("not-verified");
-    expect(briefingFor(applyEvidence(partial))).toContain("💰 YASIR\nainda não verificado");
+    expect(briefingFor(applyEvidence(partial))).toContain("💰 Yasir: ainda não verificado");
   });
 
   it("keeps UNKNOWN and ABSENT apart for Mini World Changes too", () => {
@@ -243,16 +243,16 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
 
   it("keeps every one of the fourteen recognised World Changes", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      expect(message, def.id).toContain(`${def.emoji} ${def.shortLabel.toUpperCase()}`);
+      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}* — `);
     }
     // Six of these were previously deleted for being "quiet" states.
     for (const label of [
-      "🚢 STEAMSHIP",
-      "🐴 HORSE STATION",
-      "🐝 HIVE BORN",
-      "🦟 SWAMP FEVER",
-      "🌵 THORNFIRE",
-      "💧 TWISTED WATERS",
+      "🚢 *Steamship*",
+      "🐴 *Horse Station*",
+      "🐝 *Hive Born*",
+      "🦟 *Swamp Fever*",
+      "🌵 *Thornfire*",
+      "💧 *Twisted Waters*",
     ]) {
       expect(message, label).toContain(label);
     }
@@ -263,7 +263,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   it("keeps every one of the seven announced Mini World Changes", () => {
     for (const id of Object.keys(EXPECTED_MINI)) {
       const def = MINI_WORLD_CHANGE_DEFINITIONS.find((d) => d.id === id)!;
-      expect(message, id).toContain(`${def.emoji} ${def.name.toUpperCase()}`);
+      expect(message, id).toContain(`${def.emoji} *${def.name}* — `);
     }
   });
 
@@ -286,26 +286,28 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   });
 
   it("surfaces the state-specific opportunity the blocked content hid", () => {
-    expect(message).toContain("🦌 OVERHUNTING");
-    expect(message).toContain("Starving Wolf — Bestiary · 500 mortes · 15 Charm Points");
+    expect(message).toContain("🦌 *Overhunting* — ");
+    expect(message).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
   });
 
   it("offers more than achievements", () => {
     // The old catalog could only express achievements, so a state whose whole value was a
-    // bestiary entry, a boss or a hunting ground reported nothing at all.
-    for (const kind of ["Bestiary", "Boss", "Caçada", "Progresso da World Change"]) {
-      expect(message, kind).toContain(kind);
-    }
-    expect(message).toContain("Achievement");
+    // bestiary entry, a boss or a mount reported nothing at all.
+    expect(message).toContain("Charm Points");
+    expect(message).toContain("— boss ·");
+    expect(message).toContain("— montaria ·");
+    expect(message).toContain("— progresso ·");
+    expect(message).toContain("— achievement ·");
   });
 
   it("marks availability honestly, in all three tiers", () => {
-    // Available today carries no marker — the section already says today.
-    expect(message).toContain("Deepling Scout — Bestiary · 1000 mortes · 25 Charm Points");
-    expect(message).toContain("dá para avançar hoje");
-    expect(message).toContain("vale a partir do próximo Server Save");
+    // Available today carries no marker — the bulletin is already about today.
+    expect(message).toContain("▸ Deepling Scout — 1.000 kills · 25 Charm Points · só neste estado");
+    expect(message).toContain("só progresso hoje");
+    expect(message).toContain("vale após o Server Save");
     expect(message).not.toContain("undefined");
   });
+
 
   it("reads as Portuguese, not as Portuguese with English pasted into it", () => {
     expect(message).toContain("O portal para as Nightmare Isles está na costa mais ao norte de Darama.");

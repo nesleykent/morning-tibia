@@ -23,7 +23,7 @@ import {
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
 import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
-import { groupOpportunities, type OpportunityGroup } from "./opportunityPhrases";
+import { opportunityLinesFor, type OpportunityLine } from "./opportunityPhrases";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 
 export type { BriefingLanguage } from "./translations";
@@ -61,10 +61,23 @@ export interface BriefingInput {
   };
 }
 
-export interface MiniWorldChangeLine {
+/**
+ * One change, and everything the bulletin has to say about it.
+ *
+ * State and opportunities live on the same entry because they are one subject. Rendered as two
+ * sections they said everything twice — "Fire from the Earth: the volcano is erupting" up top,
+ * then "Fire from the Earth / Hellgore volcano — hunt: in place of the usual creatures come
+ * Demons, Dragons…" forty lines below. A reader scanning for what to do this morning had to
+ * hold the first half in their head until the second half arrived.
+ */
+export interface ChangeLine {
   emoji: string;
-  label: string;
-  valueLabel: string;
+  /** Official name, in its own casing — never upper-cased. */
+  name: string;
+  /** What is true right now, in one or two sentences. */
+  state: string;
+  /** What this state makes worth doing, one line each. Empty when it offers nothing today. */
+  opportunities: OpportunityLine[];
 }
 
 export interface MarketPriceLine {
@@ -82,19 +95,11 @@ export interface EventLine {
   detail: string;
 }
 
-export interface WorldChangeLine {
-  emoji: string;
-  label: string;
-  headline: string;
-  body: string | null;
-}
-
 export interface BriefingModel {
   language: BriefingLanguage;
   t: BriefingTranslation;
   dateLabel: string;
   worldName: string;
-  greetingText: string;
   /** null when the feed failed — the renderers drop the whole block. */
   boostedCreatureLabel: string | null;
   boostedBossLabel: string | null;
@@ -106,26 +111,20 @@ export interface BriefingModel {
   yasirLabel: string;
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
-  miniWorldChangeLines: MiniWorldChangeLine[];
+  /** Where the market numbers came from and how old they are, or null when there are none. */
+  marketSourceLabel: string | null;
+  miniWorldChangeLines: ChangeLine[];
   /** True once at least one Mini World Change has left "unknown" this session (a World
    * Board paste was actually applied) — distinguishes "checked, none active" from "nothing
    * has been checked yet" when miniWorldChangeLines is empty. */
   miniWorldChangesVerified: boolean;
-  worldChangeLines: WorldChangeLine[];
+  worldChangeLines: ChangeLine[];
   /**
    * World Changes no Guide has been asked about, by short label. UNKNOWN is a distinct state
    * from every recognised one, so it gets a distinct — and deliberately tiny — line rather
    * than being indistinguishable from "nothing is happening there".
    */
   worldChangesUnchecked: string[];
-  /**
-   * What today's *confirmed* states make worth doing, grouped by the change that created
-   * them. Derived from the same evidence rules as everything else, so an unchecked change can
-   * never produce one. Capped — the briefing is a morning summary, not a wiki.
-   */
-  opportunityGroups: OpportunityGroup[];
-  /** Opportunities the cap left out, so the briefing can say there are more. */
-  opportunitiesHiddenCount: number;
   upcomingEventLines: EventLine[];
   upcomingEventsHiddenCount: number;
 }
@@ -148,15 +147,18 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
 }
 
 /**
- * How many opportunity lines the briefing will print before it starts saying "and N more".
+ * How many opportunity lines any single change may contribute to the bulletin.
  *
- * A full Guide sweep plus a busy board can establish forty-odd opportunities, and a message
- * that long stops being a morning briefing and becomes a wiki dump. The budget is spent one
- * round at a time across the changes that have something to offer (see groupOpportunities), so
- * sixteen lines means a dozen different states heard from rather than three heard from at
- * length, with a small reserve so the deadline-bound tiers cannot be crowded out entirely. "Include everything" lifts it entirely.
+ * The cap is per change rather than global, which keeps a busy morning readable without an
+ * arbitrator deciding between changes. A drained Awash has four things to offer and a quiet
+ * Thawing has one; two apiece is enough to see what each state is worth, and the catalog view
+ * has the rest. A deadline-bound line is admitted on top of the cap — see opportunityLinesFor.
+ * "Include everything" lifts it entirely.
  */
-const OPPORTUNITY_LINE_LIMIT = 16;
+const OPPORTUNITIES_PER_CHANGE = 2;
+
+/** Where the market numbers come from. Lower-case: it is a domain, not a shout. */
+const MARKET_SOURCE = "tibiamarket.top";
 
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const { overrides } = input;
@@ -167,7 +169,23 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   // something: it is running (with the variant if a source named one), or a complete board
   // reading proved it is not. "Not checked" produces nothing at all — the briefing must
   // never present an unasked question as an answer.
-  const miniWorldChangeLines: MiniWorldChangeLine[] = [];
+  // Every established change carries its own opportunities, so the two are written once.
+  const allOpportunities = deriveOpportunities({
+    miniWorldChanges: overrides.miniWorldChanges,
+    worldChanges: overrides.worldChanges,
+    merchants: overrides.merchants,
+  });
+  const perChangeLimit = overrides.includeAllChanges
+    ? Number.MAX_SAFE_INTEGER
+    : OPPORTUNITIES_PER_CHANGE;
+  const opportunitiesFor = (conditionName: string): OpportunityLine[] =>
+    opportunityLinesFor(
+      allOpportunities.filter((o) => o.conditionName === conditionName),
+      input.language,
+      perChangeLimit,
+    );
+
+  const miniWorldChangeLines: ChangeLine[] = [];
   let miniWorldChangesVerified = false;
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
@@ -188,8 +206,9 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       if (!overrides.includeAllChanges) continue;
       miniWorldChangeLines.push({
         emoji: def.emoji,
-        label: def.name.toUpperCase(),
-        valueLabel: t.notRunning,
+        name: def.name,
+        state: t.notRunning,
+        opportunities: [],
       });
       continue;
     }
@@ -200,8 +219,9 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
     miniWorldChangeLines.push({
       emoji: def.emoji,
-      label: def.name.toUpperCase(),
-      valueLabel: narrative ?? variantLabel ?? t.running,
+      name: def.name,
+      state: narrative ?? variantLabel ?? t.running,
+      opportunities: opportunitiesFor(def.name),
     });
   }
 
@@ -216,7 +236,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   // about today that changes what a player can do, and several of them are the *reason*
   // something else is impossible. `quiet` now only affects ordering-adjacent presentation
   // decisions elsewhere; it can no longer make a checked change disappear.
-  const worldChangeLines: WorldChangeLine[] = [];
+  const worldChangeLines: ChangeLine[] = [];
   const worldChangesUnchecked: string[] = [];
   for (const def of WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.worldChanges[def.id];
@@ -231,21 +251,14 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     const narrative = getWorldChangeNarrative(def.id, state.id, input.language);
     worldChangeLines.push({
       emoji: def.emoji,
-      label: def.shortLabel.toUpperCase(),
-      headline: narrative?.headline ?? state.label,
-      body: narrative?.body ?? null,
+      name: def.shortLabel,
+      // Headline and body are one paragraph about one state, so they are joined into one
+      // line. Split across two they read as two separate facts, and the second — "no White
+      // Deer while the wolves are there" — is the half that decides what the morning is worth.
+      state: [narrative?.headline ?? state.label, narrative?.body].filter(Boolean).join(" "),
+      opportunities: opportunitiesFor(def.shortLabel),
     });
   }
-
-  const { groups: opportunityGroups, hiddenCount: opportunitiesHiddenCount } = groupOpportunities(
-    deriveOpportunities({
-      miniWorldChanges: overrides.miniWorldChanges,
-      worldChanges: overrides.worldChanges,
-      merchants: overrides.merchants,
-    }),
-    input.language,
-    overrides.includeAllChanges ? Number.MAX_SAFE_INTEGER : OPPORTUNITY_LINE_LIMIT,
-  );
 
   const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
   const marketPriceLines: MarketPriceLine[] = (
@@ -267,6 +280,13 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
             : null,
       };
     });
+
+  // Attribution belongs to the numbers, so it is computed once here rather than reassembled
+  // by each renderer. It used to sit as its own bold block between the merchants and the
+  // coins, reading like a section heading for a section that did not exist.
+  const marketAge = marketPriceLines.find((price) => price.ageLabel !== null)?.ageLabel ?? null;
+  const marketSourceLabel =
+    marketPriceLines.length > 0 ? t.marketSource(MARKET_SOURCE, marketAge) : null;
 
   const warzone = input.unavailable?.warzone ? null : input.warzoneSchedule;
   const warzoneLine =
@@ -319,7 +339,6 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     t,
     dateLabel: toBriefingDate(input.referenceDate),
     worldName: input.world,
-    greetingText: t.greeting(input.world),
     boostedCreatureLabel: input.unavailable?.boosted
       ? null
       : (input.boostedCreature?.name ?? notAvailableText(input.language)),
@@ -335,12 +354,11 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       : notAvailableText(input.language),
     rashidLabel: rashidLocation || notAvailableText(input.language),
     marketPriceLines,
+    marketSourceLabel,
     miniWorldChangeLines,
     miniWorldChangesVerified,
     worldChangeLines,
     worldChangesUnchecked,
-    opportunityGroups,
-    opportunitiesHiddenCount,
     upcomingEventLines,
     upcomingEventsHiddenCount: Math.max(0, sortedUpcoming.length - visibleUpcoming.length),
   };
