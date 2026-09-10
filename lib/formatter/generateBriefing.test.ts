@@ -5,7 +5,14 @@ import { BRIEFING_LANGUAGES } from "./translations";
 import type { BriefingInput } from "./briefingModel";
 
 const LANGUAGES = BRIEFING_LANGUAGES.map((entry) => entry.value);
-const REFERENCE = new Date(2026, 7, 17); // 17 Aug 2026
+/**
+ * Monday 17 Aug 2026, written as an explicit instant rather than `new Date(2026, 7, 17)`.
+ * Local-midnight construction means a different moment on every machine, and the fixtures
+ * below are rendered into named zones (Europe/Berlin for Rashid, America/Sao_Paulo for the
+ * viewer), so a local-midnight date is a different calendar day depending on who runs it.
+ * Midday UTC sits far from every zone boundary these tests cross.
+ */
+const REFERENCE = new Date("2026-08-17T12:00:00Z");
 
 /** Nothing established: the day the app has been opened and told nothing. */
 function emptyInput(language: BriefingInput["language"] = "pt"): BriefingInput {
@@ -259,7 +266,9 @@ describe("formatting that has to survive a paste", () => {
 describe("today's numbers", () => {
   it("keeps each status fact to one label-and-value line", () => {
     const input = makeInput();
-    input.drome = { rotationNumber: "#134", endsAt: new Date(2026, 8, 2).toISOString() } as never;
+    // Midday UTC on 2 Sep, so it is still 2 Sep for the America/Sao_Paulo viewer this
+    // input describes. Local midnight here read as 01/09 on a UTC runner.
+    input.drome = { rotationNumber: "#134", endsAt: "2026-09-02T12:00:00Z" } as never;
     input.warzoneSchedule = {
       world: "Ustebra",
       timezone: null,
@@ -311,7 +320,7 @@ describe("today's numbers", () => {
     input.upcomingEvents = [
       {
         title: "Double XP Weekend",
-        startAt: new Date(2026, 7, 19).toISOString(),
+        startAt: "2026-08-19T12:00:00Z",
         daysUntil: 2,
         certainty: "confirmed",
       } as never,

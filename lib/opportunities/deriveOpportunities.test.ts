@@ -3,7 +3,7 @@ import { deriveOpportunities, type OpportunityInput } from "./deriveOpportunitie
 import { createDefaultOverrides } from "@/lib/defaults";
 
 function baseInput(): OpportunityInput {
-  const overrides = createDefaultOverrides("Ustebra", new Date(2026, 8, 10));
+  const overrides = createDefaultOverrides("Ustebra", new Date("2026-09-10T12:00:00Z"));
   return {
     miniWorldChanges: overrides.miniWorldChanges,
     worldChanges: overrides.worldChanges,

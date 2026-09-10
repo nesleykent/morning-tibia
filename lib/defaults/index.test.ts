@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { mergeOverridesWithDefaults } from "./index";
 
 const WORLD = "Ustebra";
-const DATE = new Date(2026, 7, 19);
+// An explicit instant: the defaults it feeds resolve Rashid in Europe/Berlin.
+const DATE = new Date("2026-08-19T12:00:00Z");
 
 describe("mergeOverridesWithDefaults — merchant activityState migration", () => {
   it("backfills a missing activityState on an older save", () => {
