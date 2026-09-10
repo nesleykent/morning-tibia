@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Server, Timer } from "lucide-react";
+import { Server, Timer } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useViewerSettings } from "@/lib/context/ViewerSettingsContext";
 import { useIsClient } from "@/hooks/useIsClient";
@@ -23,10 +23,11 @@ function useNow(enabled: boolean): Date {
 }
 
 /**
- * Lives inline inside app/layout.tsx's single top bar, alongside the brand mark — not a
- * bar of its own. Its Drome/server-save countdowns and the timezone selector all sit at
- * the top of the page, above everything else, since they're relevant no matter what the
- * dashboard beneath is doing.
+ * Lives inline inside app/layout.tsx's single top bar, alongside the brand mark — not a bar of
+ * its own. Its two countdowns and the timezone selector sit above everything else, since
+ * they're relevant no matter what the view beneath is doing.
+ *
+ * Everything here is sans and small: it is instrumentation, not editorial.
  */
 export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
   const isClient = useIsClient();
@@ -37,45 +38,47 @@ export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
   const dromeMsLeft = isClient && drome?.endsAt ? new Date(drome.endsAt).getTime() - now.getTime() : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11.5px]">
+    <div className="flex min-w-0 items-center justify-end gap-x-4 gap-y-1 text-[11.5px]">
       {serverSaveMsLeft !== null && (
         <span
-          className="flex items-center gap-1.5 text-muted-foreground"
+          className="flex shrink-0 items-center gap-1.5 text-ink-faint"
           title="Time until the next server save (10:00 CET/CEST)"
         >
           <Server className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="hidden sm:inline">Server save in</span>
-          
-          <span className="font-mono font-medium text-foreground">{formatCountdownClock(serverSaveMsLeft)}</span>
+          <span className="hidden sm:inline">Server save</span>
+          <Clock>{formatCountdownClock(serverSaveMsLeft)}</Clock>
         </span>
       )}
       {dromeMsLeft !== null && (
         <span
-          className="flex items-center gap-1.5 text-muted-foreground"
+          className="hidden shrink-0 items-center gap-1.5 text-ink-faint md:flex"
           title="Time until the current Tibia Drome rotation ends"
         >
           <Timer className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          Drome{drome?.rotationNumber ? ` ${drome.rotationNumber}` : ""} ends in{" "}
-          <span className="font-mono font-medium text-foreground">
-            {formatCountdownClock(Math.max(0, dromeMsLeft))}
-          </span>
+          <span>Drome{drome?.rotationNumber ? ` ${drome.rotationNumber}` : ""}</span>
+          <Clock>{formatCountdownClock(Math.max(0, dromeMsLeft))}</Clock>
         </span>
       )}
-      <div className="flex items-center gap-1.5">
-        <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <Select value={viewerTimeZone} onValueChange={setViewerTimeZone}>
-          <SelectTrigger className="h-8 w-[190px] text-xs" aria-label="Show times in">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {COMMON_TIME_ZONES.map((tz) => (
-              <SelectItem key={tz.value} value={tz.value}>
-                {tz.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={viewerTimeZone} onValueChange={setViewerTimeZone}>
+        <SelectTrigger
+          className="h-7 w-auto max-w-[190px] shrink-0 gap-1 border-transparent bg-transparent px-1.5 text-[11.5px] text-ink-soft shadow-none hover:bg-accent"
+          aria-label="Show times in"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="end">
+          {COMMON_TIME_ZONES.map((tz) => (
+            <SelectItem key={tz.value} value={tz.value}>
+              {tz.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
+}
+
+/** Tabular so a ticking countdown doesn't shuffle the bar sideways once a second. */
+function Clock({ children }: { children: React.ReactNode }) {
+  return <span className="tnum font-medium text-ink">{children}</span>;
 }

@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -15,6 +14,17 @@ const config: Config = {
       },
     },
     extend: {
+      screens: {
+        /**
+         * Where the dispatch and the take-away rail can sit side by side.
+         *
+         * Not `lg` (1024px): the browser people actually use this in is docked beside the
+         * Tibia client at roughly 860–1000px, and at `lg` that whole range fell back to one
+         * column — which put the briefing below a two-screen document. 960px is the width
+         * at which a 620px prose column and a 300px rail both still work.
+         */
+        rail: "960px",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -49,23 +59,41 @@ const config: Config = {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
         },
+
+        // The light system, named as the design names it.
+        canvas: {
+          DEFAULT: "hsl(var(--canvas))",
+          deep: "hsl(var(--canvas-deep))",
+        },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          2: "hsl(var(--surface-2))",
+          sunken: "hsl(var(--sunken))",
+        },
+        line: {
+          DEFAULT: "hsl(var(--line))",
+          soft: "hsl(var(--line-soft))",
+          strong: "hsl(var(--line-strong))",
+        },
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          soft: "hsl(var(--ink-soft))",
+          faint: "hsl(var(--ink-faint))",
+        },
         gold: {
           DEFAULT: "hsl(var(--gold))",
+          bright: "hsl(var(--gold-bright))",
+          tint: "hsl(var(--gold-tint))",
+          line: "hsl(var(--gold-line))",
           foreground: "hsl(var(--gold-foreground))",
-          muted: "hsl(var(--gold-muted))",
         },
-        parchment: {
-          DEFAULT: "hsl(var(--parchment))",
-          foreground: "hsl(var(--parchment-foreground))",
-          border: "hsl(var(--parchment-border))",
+        live: {
+          DEFAULT: "hsl(var(--live))",
+          tint: "hsl(var(--live-tint))",
         },
-        status: {
-          active: "hsl(var(--status-active))",
-          inactive: "hsl(var(--status-inactive))",
-          stage1: "hsl(var(--status-stage1))",
-          stage2: "hsl(var(--status-stage2))",
-          stage3: "hsl(var(--status-stage3))",
-          unknown: "hsl(var(--status-unknown))",
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          tint: "hsl(var(--danger-tint))",
         },
       },
       borderRadius: {
@@ -82,25 +110,24 @@ const config: Config = {
           "Segoe UI",
           "sans-serif",
         ],
+        serif: ["var(--font-serif)", "Georgia", "Times New Roman", "serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       boxShadow: {
-        card: "0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.2)",
-        elevated: "0 4px 16px -4px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3)",
-        gold: "0 0 0 1px hsl(var(--gold) / 0.4), 0 2px 12px -2px hsl(var(--gold) / 0.25)",
+        // Warm and shallow: on a cream field, a grey shadow reads as dirt.
+        card: "0 1px 2px hsl(30 25% 25% / 0.05)",
+        raised: "0 1px 2px hsl(30 25% 25% / 0.05), 0 8px 24px -18px hsl(30 30% 20% / 0.28)",
+        elevated:
+          "0 10px 30px -12px hsl(30 30% 18% / 0.22), 0 2px 8px -3px hsl(30 30% 18% / 0.12)",
+        gold: "0 1px 2px hsl(36 60% 25% / 0.18), 0 6px 16px -8px hsl(36 80% 40% / 0.45)",
       },
       keyframes: {
-        "fade-in": {
-          from: { opacity: "0", transform: "translateY(4px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
-        "fade-in": "fade-in 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
       },
     },

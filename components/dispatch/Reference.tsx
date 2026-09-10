@@ -20,15 +20,16 @@ import { miniWorldChangeWikiUrl, worldChangeWikiUrl } from "@/lib/utils/tibiaWik
  * The complete catalog, for when the dispatch isn't enough.
  *
  * This is reference, and reference earns a different surface: every tracked change with its
- * exact state, editable, in one dense table. It is a separate view rather than a section
- * because it answers a different question ("what is the app tracking?") from the one the
- * dispatch answers ("what is true today?"), and merging them is what produced forty rows of
- * "Not checked" on the main screen in the first place.
+ * exact state, editable, in one dense list. It is a separate view rather than a section because
+ * it answers a different question ("what is the app tracking?") from the one the dispatch
+ * answers ("what is true today?"), and merging them is what produced forty rows of "Not
+ * checked" on the main screen in the first place.
  *
- * Each row expands. The catalogs carry researched location, description, how-to-check and
- * alternative-source text for every entry, none of which had anywhere to appear — but putting
- * it inline would turn a scannable list into four hundred lines of prose, so the collapsed row
- * stays exactly as dense as it was and the detail is one click away.
+ * Lists, not cards. Forty entries whose whole content is a name and a state are a table, and a
+ * card apiece would turn one screen of scanning into four screens of scrolling. Each row does
+ * expand — the catalogs carry researched location, description, how-to-check and
+ * alternative-source text for every entry — but the collapsed row stays exactly as dense as it
+ * was and the detail is one click away.
  */
 export function Reference({
   digest,
@@ -60,15 +61,16 @@ export function Reference({
   const visibleEvents = upcomingEvents.filter((e) => e.daysUntil <= windowDays);
 
   return (
-    /* Two columns from 768px, not 1024px. A browser beside the Tibia client is commonly
-       860-1000px wide, and at `lg` that fell back to one column: forty rows with the name
-       hard left, its state hard right, ~600px of dead space between. Two columns cut that
-       gap to 174px at 860px, and the page from 2.3 screens to 1.46.
+    /* Two columns from 768px, not 960px like the Today view. The catalog splits earlier
+       because its rows are two words wide: at 820px in one column the name sits hard left,
+       its state hard right and ~500px of nothing lies between them. Two columns cut that gap
+       to ~120px, and the page from 2.3 screens to 1.46. The dispatch can't split that early —
+       it is prose, and prose needs the width.
 
-       Not three columns at `xl` — tried and measured. The gap improves, but the columns
-       hold 26, 14 and 3 rows, so the third renders ~80% empty. An even margin outside the
-       content beats a hollow column inside it. */
-    <div className="grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2">
+       Not three columns at `xl` — tried and measured. The gap improves, but the columns hold
+       26, 14 and 3 rows, so the third renders ~80% empty. An even margin outside the content
+       beats a hollow column inside it. */
+    <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2 xl:gap-x-7">
       <Column title="World board & towncryer" count={`${mini.length} tracked`}>
         {mini.map(({ definition: d, value }) => {
           const variant = d.variants.find((v) => v.id === value.variantId);
@@ -111,9 +113,7 @@ export function Reference({
                 <span
                   className={cn(
                     "text-[12.5px]",
-                    value.status === "active"
-                      ? "text-[hsl(var(--live))]"
-                      : "text-[hsl(var(--muted-foreground))]",
+                    value.status === "active" ? "font-medium text-live" : "text-ink-faint",
                   )}
                 >
                   {value.status === "active"
@@ -130,14 +130,12 @@ export function Reference({
 
       {/* Guide NPC and Events stay stacked in the second column: together they roughly match
           the 26-row Mini World Change list, so the two columns end up close to even. */}
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-6">
         <Column
           title="Guide NPC"
           count={
             <span className="flex items-center gap-2">
-              <span className="text-[12px] text-[hsl(var(--muted-foreground))]">
-                {world.length} tracked
-              </span>
+              <span className="text-[12px] text-ink-faint">{world.length} tracked</span>
               <CopyAllKeywords />
             </span>
           }
@@ -171,10 +169,10 @@ export function Reference({
           title="Events"
           count={
             <Select value={String(windowDays)} onValueChange={(v) => onWindowDaysChange(Number(v))}>
-              <SelectTrigger className="h-7 w-[92px] border-white/10 bg-transparent text-[12px]" aria-label="Days ahead">
+              <SelectTrigger className="h-7 w-[92px] text-[12px]" aria-label="Days ahead">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end">
                 {UPCOMING_EVENTS_WINDOW_OPTIONS.map((d) => (
                   <SelectItem key={d} value={String(d)}>{d} days</SelectItem>
                 ))}
@@ -183,23 +181,19 @@ export function Reference({
           }
         >
           {activeEvents.length === 0 && visibleEvents.length === 0 && (
-            <p className="py-2 text-[12.5px] text-[hsl(var(--muted-foreground))]">
-              Nothing in this window.
-            </p>
+            <p className="px-3 py-2.5 text-[12.5px] text-ink-faint">Nothing in this window.</p>
           )}
           {/* Every event already arrives with its own wiki URL from the build-time fetch. */}
           {activeEvents.map((e) => (
             <Row key={e.id} name={e.title} emoji={eventEmoji(e.title)} accent href={e.url}>
-              <span className="text-[12.5px] text-[hsl(var(--live))]">
+              <span className="text-[12.5px] font-medium text-live">
                 {formatActiveEventLine(e, "en")}
               </span>
             </Row>
           ))}
           {visibleEvents.map((e) => (
             <Row key={e.id} name={e.title} emoji={eventEmoji(e.title)} dim href={e.url}>
-              <span className="text-[12.5px] text-[hsl(var(--muted-foreground))]">
-                {formatUpcomingEventLine(e, "en")}
-              </span>
+              <span className="text-[12.5px] text-ink-faint">{formatUpcomingEventLine(e, "en")}</span>
             </Row>
           ))}
         </Column>
@@ -212,14 +206,14 @@ function Column({
   title, count, children,
 }: { title: string; count: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="min-w-0">
-      <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--muted-foreground))]">
+    <section className="surface min-w-0 overflow-hidden">
+      <div className="flex items-center justify-between gap-4 border-b border-line bg-surface-2 px-3 py-2">
+        <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
           {title}
         </h2>
-        <span className="text-[12px] text-[hsl(var(--muted-foreground))]">{count}</span>
+        <span className="text-[12px] text-ink-faint">{count}</span>
       </div>
-      <div className="mt-0.5">{children}</div>
+      <div>{children}</div>
     </section>
   );
 }
@@ -248,27 +242,43 @@ function Row({
   );
 
   return (
-    <div className="border-b border-white/[0.05] last:border-0">
-      <div className="grid grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-x-3 py-[7px]">
+    <div
+      className={cn(
+        "border-b border-line-soft last:border-0",
+        open && "bg-surface-2",
+      )}
+    >
+      {/* Flex, not grid, and it wraps.
+          A three-track grid gave the state column `auto`, which never shrinks — so at a
+          376px column the name absorbed the entire squeeze and collapsed to "Ho…", or to
+          nothing at all. Here the name keeps a 13rem floor and the state drops to its own
+          right-aligned line the moment both no longer fit. Wide columns are unaffected: the
+          name simply grows, which is also what stopped "The Fire-Feathered Serpent" from
+          truncating at 1440. */}
+      <div className="flex flex-wrap items-center gap-x-2.5 px-3 py-[5px] transition-colors hover:bg-surface-2">
         <span
           aria-hidden="true"
-          className={cn("h-1.5 w-1.5 rounded-full", accent ? "bg-[hsl(var(--gold))]" : "bg-transparent")}
+          className={cn(
+            "h-1.5 w-1.5 shrink-0 rounded-full",
+            accent ? "bg-gold-bright ring-1 ring-gold-line" : "bg-transparent",
+          )}
         />
-        <span className="flex min-w-0 items-center gap-2">
+        <span className="flex min-w-0 flex-[1_0_13rem] items-center gap-1.5 overflow-hidden">
           {details ? (
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
+              title={name}
               className={cn(
-                "flex min-w-0 items-center gap-1 truncate text-left text-[13px] transition-colors hover:text-[hsl(var(--foreground))]",
-                dim ? "text-[hsl(var(--muted-foreground))]" : "text-[hsl(var(--foreground))]",
+                "-ml-1 flex min-w-0 items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[13px] transition-colors hover:text-ink",
+                dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
               <ChevronRight
                 aria-hidden="true"
                 className={cn(
-                  "h-3 w-3 shrink-0 text-[hsl(var(--muted-foreground))] transition-transform",
+                  "h-3 w-3 shrink-0 text-ink-faint transition-transform",
                   open && "rotate-90",
                 )}
               />
@@ -279,9 +289,10 @@ function Row({
               href={href}
               target="_blank"
               rel="noreferrer"
+              title={name}
               className={cn(
-                "min-w-0 truncate text-[13px] underline decoration-white/20 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--gold))]",
-                dim ? "text-[hsl(var(--muted-foreground))]" : "text-[hsl(var(--foreground))]",
+                "min-w-0 truncate text-[13px] underline decoration-line-strong underline-offset-[3px] transition-colors hover:decoration-gold",
+                dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
               {nameNode}
@@ -290,7 +301,7 @@ function Row({
             <span
               className={cn(
                 "min-w-0 truncate text-[13px]",
-                dim ? "text-[hsl(var(--muted-foreground))]" : "text-[hsl(var(--foreground))]",
+                dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
               {nameNode}
@@ -298,9 +309,9 @@ function Row({
           )}
           {aside}
         </span>
-        <span className="justify-self-end">{children}</span>
+        <span className="ml-auto shrink-0 py-[1px]">{children}</span>
       </div>
-      {open && details && <div className="pb-3 pl-[19px] pr-1">{details}</div>}
+      {open && details && <div className="pb-3 pl-[34px] pr-3">{details}</div>}
     </div>
   );
 }
@@ -332,8 +343,8 @@ function WorldDetails({ definition }: { definition: WorldChangeDefinition }) {
       <Detail term="Where">{definition.location}</Detail>
       <Detail term="What">{definition.description}</Detail>
       <Detail term="Ask a guide">
-        Greet any Guide, say <span className="font-mono">world change</span>, then{" "}
-        <span className="font-mono text-[hsl(var(--foreground))]">{definition.guideKeyword}</span>.
+        Greet any Guide, say <span className="font-mono text-[12px]">world change</span>, then{" "}
+        <span className="font-mono text-[12px] font-medium text-ink">{definition.guideKeyword}</span>.
       </Detail>
       {definition.alternativeSource && (
         <Detail term="Also reported by">{definition.alternativeSource}</Detail>
@@ -345,9 +356,9 @@ function WorldDetails({ definition }: { definition: WorldChangeDefinition }) {
 
 function Detail({ term, children }: { term: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3">
-      <dt className="text-[hsl(var(--muted-foreground))]/80">{term}</dt>
-      <dd className="text-[hsl(var(--muted-foreground))]">{children}</dd>
+    <div className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3">
+      <dt className="text-ink-faint">{term}</dt>
+      <dd className="text-ink-soft">{children}</dd>
     </div>
   );
 }
@@ -356,14 +367,14 @@ function Detail({ term, children }: { term: string; children: React.ReactNode })
 function WikiLink({ href }: { href: string | null }) {
   if (!href) return null;
   return (
-    <div className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3">
-      <dt className="text-[hsl(var(--muted-foreground))]/80">Read more</dt>
+    <div className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3">
+      <dt className="text-ink-faint">Read more</dt>
       <dd>
         <a
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[hsl(var(--gold))] underline-offset-[3px] hover:underline"
+          className="inline-flex items-center gap-1 font-medium text-gold underline-offset-[3px] hover:underline"
         >
           TibiaWiki <ExternalLink className="h-3 w-3" aria-hidden="true" />
         </a>
@@ -381,7 +392,7 @@ function KeywordChip({ keyword, changeName }: { keyword: string; changeName: str
       onClick={() => copy(keyword)}
       aria-label={`Copy the guide keyword ${keyword} for ${changeName}`}
       title={`Copy "${keyword}"`}
-      className="inline-flex shrink-0 items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-[hsl(var(--muted-foreground))] transition-colors hover:bg-white/[0.12] hover:text-[hsl(var(--foreground))]"
+      className="inline-flex shrink-0 items-center gap-1 rounded border border-line bg-surface-2 px-1 py-[1px] font-mono text-[10.5px] text-ink-soft transition-colors hover:border-gold-line hover:bg-gold-tint hover:text-gold"
     >
       {keyword}
       {copied ? (
@@ -400,10 +411,10 @@ function CopyAllKeywords() {
       variant="ghost"
       size="sm"
       onClick={() => copy(GUIDE_KEYWORDS.join("\n"))}
-      className="h-7 px-2 text-[12px] text-[hsl(var(--muted-foreground))]"
+      className="h-6 px-1.5 text-[12px]"
     >
       {copied ? <Check className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
-      {copied ? "Copied" : "Copy all keywords"}
+      {copied ? "Copied" : "Copy all"}
     </Button>
   );
 }
@@ -423,8 +434,8 @@ function Inline({
       <SelectTrigger
         aria-label={label}
         className={cn(
-          "h-auto w-auto shrink-0 gap-1 whitespace-nowrap border-0 bg-transparent px-0 py-0 text-right text-[12.5px] shadow-none focus:ring-0",
-          accent ? "text-[hsl(var(--gold))]" : "text-[hsl(var(--foreground))]",
+          "h-auto w-auto shrink-0 gap-1 whitespace-nowrap rounded border-transparent bg-transparent px-1 py-0.5 text-right text-[12.5px] shadow-none hover:border-line hover:bg-surface focus:ring-0",
+          accent ? "font-medium text-gold" : "text-ink-soft",
         )}
       >
         <SelectValue placeholder={placeholder} />
@@ -452,7 +463,7 @@ function Tiny({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="min-h-[30px] rounded bg-white/[0.07] px-2 text-[12px] text-[hsl(var(--muted-foreground))] transition-colors hover:bg-white/[0.14] hover:text-[hsl(var(--foreground))]"
+      className="min-h-[22px] rounded border border-line bg-surface px-1.5 text-[11.5px] text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 hover:text-ink"
     >
       {children}
     </button>

@@ -3,131 +3,191 @@
 @tailwind utilities;
 
 /**
- * DAWN
+ * MORNING LIGHT
  *
- * The product is three quiet minutes before you play, finding out what changed in a world
- * that moved while you slept. That is the experience the palette encodes: a cool night field
- * warming toward a horizon, with the day's dispatch resting on it as a lit page.
+ * The product is three quiet minutes before you play, finding out what changed in a world that
+ * moved while you slept. The surface it happens on is one warm, lit sheet of paper: an
+ * off-white cream field, light surfaces resting on it, hairline warm rules between them, and
+ * dark text you can read at 7am without squinting.
  *
- * Temperature does the orienting — cool at the edges, warm at the centre — so the eye lands
- * on the document without needing a border to tell it to. Gold is spent on exactly one thing:
- * a fact that is missing and needs the reader. Nothing decorative is ever gold, which is what
- * lets a single unfilled blank pull the eye across the whole page.
+ * There is a single accent — a low, restrained amber. It is spent on exactly two things: the
+ * one action that ends the ritual (Copy briefing) and the facts the dispatch is still missing.
+ * Nothing decorative is ever gold, which is what lets one unfilled blank pull the eye across
+ * the page.
+ *
+ * Typography carries the Tibia character rather than ornament: a text serif for anything read
+ * as prose or as a title, and a plain grotesk for controls, metadata and every number.
  */
 :root {
-  /* Night field */
-  --background: 232 34% 7%;
-  --field-far: 234 38% 5%;
-  --field-near: 226 30% 11%;
+  /* ── The field ────────────────────────────────────────────────────────────── */
+  --canvas: 40 32% 95%;
+  --canvas-deep: 38 26% 91%;
 
-  /* The dispatch page: warm, lit, never pure white */
-  --page: 38 44% 94%;
-  --page-edge: 36 26% 84%;
-  --ink: 232 28% 13%;
-  --ink-soft: 232 12% 38%;
-  --ink-faint: 232 12% 39%;
+  /* ── Surfaces resting on it ───────────────────────────────────────────────── */
+  --surface: 42 50% 98.5%;
+  --surface-2: 40 33% 96.5%;
+  /* Wells: the paste field, the briefing preview — things you put text *into*. */
+  --sunken: 38 26% 93%;
 
-  /* One accent: something needs you */
-  --gold: 38 92% 58%;
-  --gold-deep: 30 88% 29%;
-  --gold-foreground: 232 34% 8%;
+  /* ── Warm rules ───────────────────────────────────────────────────────────── */
+  --line: 36 22% 86%;
+  --line-soft: 38 26% 90.5%;
+  --line-strong: 34 18% 76%;
 
-  --live: 158 58% 36%;
-  --danger: 358 62% 48%;
-  /* The same two signals as they must appear on the lit page, where the field's values are
-     too pale to read: the market trend arrows sit on parchment, not on the night field. */
-  --live-ink: 158 62% 26%;
-  --danger-ink: 358 64% 38%;
+  /* ── Ink ──────────────────────────────────────────────────────────────────── */
+  --ink: 28 18% 15%;
+  --ink-soft: 30 10% 38%;
+  /* 42%, not 44%: the canvas is a shade darker than the surfaces, so a faint that
+     cleared 4.5:1 on a card came in at 4.36:1 on the field behind it. */
+  --ink-faint: 32 9% 42%;
 
-  --foreground: 40 26% 92%;
-  --muted-foreground: 232 12% 70%;
-  --border: 232 18% 20%;
-  --input: 232 18% 22%;
-  --ring: 38 92% 58%;
-  --card: 232 26% 10%;
-  --card-foreground: 40 26% 92%;
-  --popover: 38 44% 96%;
-  --popover-foreground: 232 28% 13%;
-  --muted: 232 16% 16%;
-  --primary: 38 92% 58%;
-  --primary-foreground: 232 34% 8%;
-  --secondary: 232 16% 17%;
-  --secondary-foreground: 40 26% 92%;
-  --accent: 232 16% 22%;
-  --accent-foreground: 40 26% 96%;
-  --destructive: 358 62% 52%;
-  --destructive-foreground: 0 0% 98%;
+  /* ── The one accent ───────────────────────────────────────────────────────── */
+  /* Text-safe amber (4.7:1 on the field) for words, icons and rules. */
+  --gold: 32 76% 34%;
+  /* The saturated fill, used only where something is a surface rather than a word. */
+  --gold-bright: 38 84% 52%;
+  --gold-tint: 41 84% 89%;
+  --gold-line: 36 52% 70%;
+  --gold-foreground: 28 45% 13%;
 
-  --radius: 0.5rem;
+  /* ── Two signals ──────────────────────────────────────────────────────────── */
+  --live: 158 52% 27%;
+  --live-tint: 156 40% 91%;
+  --danger: 358 60% 41%;
+  --danger-tint: 356 62% 95%;
+
+  /* ── shadcn-shaped aliases, so the primitives need no special cases ───────── */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: 36 70% 44%;
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --muted: var(--canvas-deep);
+  --muted-foreground: var(--ink-soft);
+  --primary: var(--gold-bright);
+  --primary-foreground: var(--gold-foreground);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink);
+  --accent: 40 44% 92%;
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: 40 40% 97%;
+
+  /* The dispatch used to be the only lit thing on a dark field, so it had page-specific
+     ink tokens. The whole application is that page now, and these alias straight through
+     rather than being deleted — every reading surface shares one ink. */
+  --page: var(--surface);
+  --page-edge: var(--line);
+  --live-ink: var(--live);
+  --danger-ink: var(--danger);
+
+  --radius: 0.625rem;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Chrome height, so a sticky rail and in-page anchors agree on where the fold is. */
+  --appbar-h: 3rem;
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: hsl(var(--line));
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
+  /* WebKit still needs the prefix for a scroll offset under a sticky bar. */
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--appbar-h) + 1rem);
 }
 
 body {
   min-height: 100dvh;
-  background-color: hsl(var(--field-far));
-  /* The horizon. Warmth gathers behind the page, low and off-centre, the way light does. */
+  background-color: hsl(var(--canvas));
+  /* Barely there: a little more warmth at the top, so the field is paper rather than fill. */
   background-image:
-    radial-gradient(120% 68% at 50% 112%, hsl(38 60% 30% / 0.28) 0%, transparent 62%),
-    radial-gradient(90% 50% at 12% 0%, hsl(232 50% 26% / 0.5) 0%, transparent 58%);
+    radial-gradient(115% 60% at 50% -10%, hsl(40 60% 88% / 0.55) 0%, transparent 62%);
   background-attachment: fixed;
-  color: hsl(var(--foreground));
+  color: hsl(var(--ink));
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
+/**
+ * Nothing portalled animates on entry, and this is load-bearing rather than taste.
+ *
+ * A CSS animation on Radix's popper content promotes it to its own compositing layer inside
+ * the wrapper's `transform`, and WebKit then never resolves that layer: the panel paints at
+ * partial opacity forever — computed `opacity: 1`, `background-color` opaque, `getAnimations()`
+ * empty, `animation-play-state` stuck at `running`. You could read the page straight through
+ * the open world selector. The `fade-in` utility is gone from the Tailwind theme entirely so
+ * it cannot be reached for again out of habit.
+ *
+ * A dropdown that appears the instant you ask for it is the right behaviour anyway.
+ */
+
 /* Keyboard users get a ring on everything; pointer users never see it. */
 :focus-visible {
-  outline: 2px solid hsl(var(--gold));
+  outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
   border-radius: 3px;
 }
 
 ::selection {
-  background-color: hsl(var(--gold) / 0.3);
-}
-
-/* ── The dispatch page ─────────────────────────────────────────────────────── */
-.page-sheet {
-  background: linear-gradient(178deg, hsl(var(--page)) 0%, hsl(38 40% 91%) 100%);
+  background-color: hsl(var(--gold-bright) / 0.28);
   color: hsl(var(--ink));
-  box-shadow:
-    0 0 0 1px hsl(var(--page-edge) / 0.7),
-    0 24px 60px -24px hsl(232 60% 2% / 0.85),
-    0 2px 8px -2px hsl(232 60% 2% / 0.5);
 }
 
-/* Serif for anything that is being read as prose. */
+/* Serif for anything being read as prose or standing as a title. */
 .prose-serif {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
 }
 
+/* ── Surfaces ──────────────────────────────────────────────────────────────── */
+.surface {
+  background-color: hsl(var(--surface));
+  border: 1px solid hsl(var(--line));
+  border-radius: var(--radius);
+}
+
+/* The dispatch itself: the one surface that reads as a sheet rather than a panel. */
+.sheet {
+  background-color: hsl(var(--surface));
+  border: 1px solid hsl(var(--line));
+  border-radius: calc(var(--radius) + 0.25rem);
+  box-shadow:
+    0 1px 2px hsl(30 25% 25% / 0.04),
+    0 8px 24px -18px hsl(30 30% 20% / 0.28);
+}
+
+.well {
+  background-color: hsl(var(--sunken));
+  border: 1px solid hsl(var(--line));
+  border-radius: calc(var(--radius) - 0.125rem);
+}
+
 /* ── A blank: a fact the dispatch is missing ───────────────────────────────── */
 .blank {
-  color: hsl(var(--gold-deep));
-  background: linear-gradient(hsl(var(--gold) / 0.16), hsl(var(--gold) / 0.16));
-  border-bottom: 1.5px solid hsl(var(--gold-deep) / 0.55);
-  border-radius: 2px 2px 0 0;
+  color: hsl(var(--gold));
+  background-color: hsl(var(--gold-tint));
+  border-bottom: 1.5px solid hsl(var(--gold-line));
+  border-radius: 3px 3px 0 0;
   padding: 0 0.28em 0.04em;
   transition: background-color 140ms ease, color 140ms ease;
 }
 .blank:hover,
 .blank[data-state="open"] {
-  background: linear-gradient(hsl(var(--gold) / 0.3), hsl(var(--gold) / 0.3));
-  color: hsl(var(--ink));
+  background-color: hsl(var(--gold-bright) / 0.42);
+  color: hsl(var(--gold-foreground));
 }
 
 /* A fact the reader supplied: settled, but still traceable. */
 .filled {
-  border-bottom: 1.5px solid hsl(var(--gold-deep) / 0.35);
+  border-bottom: 1.5px solid hsl(var(--gold-line) / 0.75);
   padding-bottom: 0.04em;
 }
 
@@ -136,18 +196,39 @@ body {
   font-feature-settings: "tnum";
 }
 
+/* ── Scrollbars inside the app's own wells ─────────────────────────────────── */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--line-strong)) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--line-strong));
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--accent)) 37%, hsl(var(--muted)) 63%);
+  background: linear-gradient(90deg, hsl(38 22% 90%) 25%, hsl(40 34% 95%) 37%, hsl(38 22% 90%) 63%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
   border-radius: 4px;
 }
+/* Kept as an alias: the dispatch used to need a second, lighter skeleton for the lit page.
+   One field, one skeleton — but the callers still name it. */
 .skeleton-ink {
-  background: linear-gradient(90deg, hsl(36 20% 86%) 25%, hsl(36 20% 91%) 37%, hsl(36 20% 86%) 63%);
+  background: linear-gradient(90deg, hsl(38 22% 90%) 25%, hsl(40 34% 95%) 37%, hsl(38 22% 90%) 63%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
   border-radius: 4px;

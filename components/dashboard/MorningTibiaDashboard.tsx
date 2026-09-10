@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Share2, Check, Copy as CopyIcon, RefreshCw, RotateCcw, AlertTriangle, Sunrise } from "lucide-react";
 import { useBriefingState, type UseBriefingStateProps } from "@/hooks/useBriefingState";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -11,13 +11,13 @@ import { UNFILLED_BLANK_SELECTOR } from "@/components/dispatch/Blank";
 import { EvidenceBar } from "@/components/dispatch/EvidenceBar";
 import { Reference } from "@/components/dispatch/Reference";
 import { WorldSelector } from "./WorldSelector";
+import { BriefingPanel } from "./BriefingPanel";
+import { formatList } from "./formatList";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils/cn";
 import { buildDailyDigest } from "@/lib/dashboard/dailyDigest";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
@@ -25,16 +25,20 @@ import { composeDispatch } from "@/lib/dispatch/composeDispatch";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { toBriefingDate, toTibiaDayKey } from "@/lib/utils/date";
 import { useNowMs } from "@/lib/utils/clock";
-import { BRIEFING_LANGUAGES, type BriefingLanguage } from "@/lib/formatter/translations";
 import type { MarketTrendBasis } from "@/types/market";
 
 /**
  * Morning Tibia.
  *
  * The product object is *my Tibia world today*, and the page is that object: a dispatch you
- * read, with the handful of facts the game can't tell the app left as gaps you fill. There is
- * no dashboard, no card grid and no permanent briefing pane — the briefing is what you take
- * away at the end, so it is an action, not a region.
+ * read, with the handful of facts the game can't tell the app left as gaps you fill.
+ *
+ * On a desktop it is two columns. The left one is the document — the masthead and the dispatch,
+ * the things you read. The right one is the ritual — paste what the game said, then take the
+ * briefing away — and it is sticky, because both ends of that ritual have to be reachable
+ * without scrolling a two-screen document to find them. Below 960px the same three pieces
+ * stack in the order the morning happens in: what's special today, what the game told you,
+ * what you send, then the detail behind it.
  *
  * The complete catalog lives on a second view because it answers a different question. That is
  * navigation between two purposes, not a disclosure hiding content from the first one.
@@ -45,6 +49,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   const { copy, copied } = useCopyToClipboard();
   const [copyFailed, setCopyFailed] = useState(false);
   const [view, setView] = useState<"today" | "everything">("today");
+  const [briefingPanelOnScreen, watchBriefingPanel] = useOnScreen();
 
   const digest = useMemo(
     () => buildDailyDigest(state.overrides.miniWorldChanges, state.overrides.worldChanges),
@@ -114,11 +119,14 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
 
   if (!isClient) {
     return (
-      <div className="mx-auto max-w-[760px] px-5 py-14">
-        <div className="skeleton h-12 w-64" />
-        <div className="skeleton mt-6 h-28" />
-        <div className="skeleton mt-8 h-[420px] rounded-xl" />
-      </div>
+      <Shell>
+        <div className="skeleton h-9 w-48" />
+        <div className="mt-8 grid gap-6 rail:grid-cols-[minmax(0,1fr)_312px] xl:grid-cols-[minmax(0,1fr)_352px] xl:gap-7">
+          <div className="skeleton h-24 rail:col-span-2" />
+          <div className="skeleton h-[420px] rounded-xl" />
+          <div className="skeleton h-[420px] rounded-xl" />
+        </div>
+      </Shell>
     );
   }
 
@@ -158,51 +166,32 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   }));
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <div
-        className={cn(
-          "mx-auto px-5 pb-32 pt-8 transition-[max-width] duration-300 sm:px-8 sm:pb-16 sm:pt-14",
-          // Today keeps its 760px measure at every width — it is prose. The catalog stops at
-          // 1060px for a related reason: past ~480px per column, the gap between a row's name
-          // and its state grows faster than the extra width helps.
-          view === "today" ? "max-w-[760px]" : "max-w-[1060px]",
-        )}
-      >
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
-          <nav className="flex gap-1 rounded-lg bg-white/[0.05] p-0.5" aria-label="View">
-            {(["today", "everything"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                aria-current={view === v ? "page" : undefined}
-                onClick={() => setView(v)}
-                className={cn(
-                  "rounded-[6px] px-3.5 py-1.5 text-[13px] font-medium capitalize transition-colors",
-                  view === v
-                    ? "bg-white/[0.1] text-[hsl(var(--foreground))]"
-                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
-                )}
-              >
-                {v}
-              </button>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
+    <TooltipProvider delayDuration={250}>
+      <Shell>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <ViewSwitch value={view} onChange={setView} />
+
+          <div className="flex items-center gap-1.5">
             <WorldSelector
               value={state.world}
               worlds={state.worldsQuery.data ?? []}
               isLoading={state.worldsQuery.isLoading}
               onChange={state.setWorld}
             />
-            <Button variant="ghost" size="icon" onClick={state.refreshLiveData} aria-label="Refresh data">
+            <IconAction label="Refresh live data" onClick={state.refreshLiveData}>
               <RefreshCw className={cn("h-4 w-4", state.boostedQuery.isLoading && "animate-spin")} />
-            </Button>
+            </IconAction>
             <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Reset today">
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" aria-label="Reset today">
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Reset today</TooltipContent>
+              </Tooltip>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Reset today&apos;s dispatch for {state.world}?</DialogTitle>
@@ -232,11 +221,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         />
 
         {state.liveData.hasFailure && (
-          <div
-            role="status"
-            className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-[hsl(var(--danger))]/10 px-4 py-3 text-[12.5px] text-[hsl(var(--foreground))] ring-1 ring-inset ring-[hsl(var(--danger))]/30"
-          >
-            <AlertTriangle className="h-4 w-4 shrink-0 text-[hsl(var(--danger))]" aria-hidden="true" />
+          <Notice tone="danger" icon={<AlertTriangle className="h-4 w-4 shrink-0 text-danger" />}>
             <span>
               Couldn&apos;t load {formatList(state.liveData.failures)}. Everything you recorded
               yourself is unaffected.
@@ -244,23 +229,54 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
             <Button variant="outline" size="sm" onClick={state.refreshLiveData}>
               Retry
             </Button>
-          </div>
+          </Notice>
         )}
 
         {view === "today" ? (
-          <>
-            <Masthead
-              dateLabel={toBriefingDate(state.referenceDate)}
-              world={state.world}
-              detail={state.worldDetailQuery.data}
-              creature={state.boostedQuery.data?.creature ?? null}
-              boss={state.boostedQuery.data?.boss ?? null}
-              loading={state.boostedQuery.isLoading}
-              boostedFailed={state.liveData.boostedFailed}
-              worldDetailFailed={state.liveData.worldDetailFailed}
-            />
+          <div className="grid gap-6 rail:grid-cols-[minmax(0,1fr)_312px] rail:gap-6 xl:grid-cols-[minmax(0,1fr)_352px] xl:gap-7">
+            <div className="rail:col-span-2">
+              <Masthead
+                dateLabel={toBriefingDate(state.referenceDate)}
+                world={state.world}
+                detail={state.worldDetailQuery.data}
+                creature={state.boostedQuery.data?.creature ?? null}
+                boss={state.boostedQuery.data?.boss ?? null}
+                loading={state.boostedQuery.isLoading}
+                boostedFailed={state.liveData.boostedFailed}
+                worldDetailFailed={state.liveData.worldDetailFailed}
+              />
+            </div>
 
-            <div className="mt-7 sm:mt-8">
+            {/* Before the dispatch in the DOM so the stacked order is the order of the
+                morning, and placed into the second column on a desktop. Sticky needs
+                `self-start`, and nothing between here and the viewport may clip overflow. */}
+            <aside className="grid items-start gap-4 sm:grid-cols-2 rail:grid-cols-1 rail:col-start-2 rail:row-start-2 rail:sticky rail:top-[calc(var(--appbar-h)+1.25rem)] rail:max-h-[calc(100dvh-var(--appbar-h)-2.5rem)] rail:self-start rail:overflow-y-auto rail:overscroll-contain thin-scroll">
+              <EvidenceBar
+                onApply={state.applyParsedEvidence}
+                onUndo={state.undoLastEvidence}
+                canUndo={state.canUndoEvidence}
+                hasEvidence={hasEvidence}
+                unresolvedCount={unresolvedCount}
+                onJumpToUnresolved={jumpToUnresolved}
+              />
+              <BriefingPanel
+                briefing={briefing}
+                copied={copied}
+                copyFailed={copyFailed}
+                onCopy={() => runCopy(briefing)}
+                onShare={handleShare}
+                language={state.briefingLanguage}
+                onLanguageChange={state.setBriefingLanguage}
+                plainText={state.preferredFormat === "plain"}
+                onPlainTextChange={(on) => state.setPreferredFormat(on ? "plain" : "rich")}
+                includeQuiet={state.overrides.includeAllChanges}
+                onIncludeQuietChange={state.setIncludeAllChanges}
+                unavailable={state.liveData.failures}
+                panelRef={watchBriefingPanel}
+              />
+            </aside>
+
+            <div className="min-w-0 rail:col-start-1 rail:row-start-2">
               <Dispatch
                 stanzas={stanzas}
                 opportunities={opportunities}
@@ -275,90 +291,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                 }}
               />
             </div>
-
-            <EvidenceBar
-              onApply={state.applyParsedEvidence}
-              onUndo={state.undoLastEvidence}
-              canUndo={state.canUndoEvidence}
-              hasEvidence={hasEvidence}
-              unresolvedCount={unresolvedCount}
-              onJumpToUnresolved={jumpToUnresolved}
-            />
-
-            {/* Take-away. The briefing is the end of the ritual, not a permanent fixture. */}
-            <section className="mt-8 border-t border-white/[0.08] pt-6" aria-label="Share today">
-              <div className="flex flex-wrap items-center gap-3">
-                <Button onClick={() => runCopy(briefing)} className="min-w-[7.5rem]">
-                  {copied ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
-                  {copied ? "Copied" : "Copy briefing"}
-                </Button>
-                <Button variant="outline" onClick={handleShare}>
-                  <Share2 className="h-4 w-4" /> Share
-                </Button>
-                <Select
-                  value={state.briefingLanguage}
-                  onValueChange={(v) => state.setBriefingLanguage(v as BriefingLanguage)}
-                >
-                  <SelectTrigger className="h-9 w-[124px] text-[13px]" aria-label="Briefing language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BRIEFING_LANGUAGES.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <LabelledSwitch
-                  label="Plain text"
-                  checked={state.preferredFormat === "plain"}
-                  onCheckedChange={(on) => state.setPreferredFormat(on ? "plain" : "rich")}
-                />
-                <LabelledSwitch
-                  label="Include quiet items"
-                  checked={state.overrides.includeAllChanges}
-                  onCheckedChange={state.setIncludeAllChanges}
-                />
-              </div>
-
-              <div role="status" aria-live="polite" className="mt-2 empty:mt-0">
-                {copyFailed && (
-                  <p className="text-[12.5px] text-[hsl(var(--danger))]">
-                    Couldn&apos;t copy. Select the text below and copy it manually.
-                  </p>
-                )}
-                {copied && !copyFailed && (
-                  <p className="text-[12.5px] text-[hsl(var(--muted-foreground))]">
-                    Briefing copied.
-                  </p>
-                )}
-                {state.liveData.hasFailure && (
-                  <p className="text-[12.5px] text-[hsl(var(--muted-foreground))]">
-                    This briefing leaves out {formatList(state.liveData.failures)}. The app
-                    couldn&apos;t load {state.liveData.failures.length === 1 ? "it" : "them"}, so
-                    nothing is claimed about {state.liveData.failures.length === 1 ? "it" : "them"}.
-                  </p>
-                )}
-              </div>
-
-              {/* Shown outright rather than behind a toggle: the reader is about to paste
-                  this into a chat, and the dispatch above is in English while this is in their
-                  chosen language, so it is genuinely different content. */}
-              <pre className="mt-4 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-white/[0.03] p-4 font-mono text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]">
-                {briefing}
-              </pre>
-            </section>
-
-            {/* Mobile only: the primary output action, without scrolling the whole dispatch. */}
-            <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-white/10 bg-[hsl(var(--background))] px-4 py-3 sm:hidden">
-              <Button onClick={() => runCopy(briefing)} className="flex-1">
-                {copied ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
-                {copied ? "Copied" : "Copy briefing"}
-              </Button>
-              <Button variant="outline" onClick={handleShare} aria-label="Share briefing">
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </>
+          </div>
         ) : (
           <Reference
             digest={digest}
@@ -370,8 +303,142 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
             onWindowDaysChange={state.setUpcomingEventsWindowDays}
           />
         )}
-      </div>
+
+        {/* Phones only, and only once the real panel has scrolled away.
+            From 640px up the rail holds the briefing in view, so the bar is hidden there
+            outright; on a phone the panel now sits near the top of the page, so showing both
+            at once put two identical gold buttons a finger's width apart. */}
+        {view === "today" && !briefingPanelOnScreen && (
+          <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-line bg-surface px-4 py-3 shadow-elevated sm:hidden">
+            <Button onClick={() => runCopy(briefing)} className="flex-1">
+              {copied ? <Check className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+              {copied ? "Copied" : "Copy briefing"}
+            </Button>
+            <Button variant="outline" onClick={handleShare} aria-label="Share briefing">
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </Shell>
     </TooltipProvider>
+  );
+}
+
+/**
+ * Whether the watched element is currently within the viewport.
+ *
+ * Hands back a *callback* ref rather than taking a RefObject, because the thing being watched
+ * does not exist on the first render: the page withholds its real tree until hydration, so an
+ * effect keyed on a stable ref object ran once against `null` and never again, and the observer
+ * was simply never attached. A callback ref fires the moment the node arrives.
+ *
+ * Starts as `true` so the phone-sized copy bar never flashes on during the first paint, before
+ * the observer has anything to report.
+ */
+function useOnScreen(): [boolean, (node: HTMLElement | null) => void] {
+  const [onScreen, setOnScreen] = useState(true);
+  const [node, setNode] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      if (entry) setOnScreen(entry.isIntersecting);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [node]);
+
+  return [onScreen, setNode];
+}
+
+/**
+ * One measure for the whole application, matching the chrome above it.
+ *
+ * `overflow` is deliberately untouched: an `overflow: hidden` anywhere on this path would
+ * silently kill the take-away rail's stickiness.
+ */
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-[1200px] px-5 pb-24 pt-6 sm:pb-14 lg:px-7">{children}</div>
+  );
+}
+
+/** Today and Everything answer different questions, so they are navigation, not a filter. */
+function ViewSwitch({
+  value,
+  onChange,
+}: {
+  value: "today" | "everything";
+  onChange: (view: "today" | "everything") => void;
+}) {
+  return (
+    <nav
+      className="flex gap-0.5 rounded-lg border border-line bg-surface-2 p-0.5"
+      aria-label="View"
+    >
+      {(["today", "everything"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-current={value === v ? "page" : undefined}
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded-[7px] px-3.5 py-1.5 text-[13px] font-medium capitalize transition-colors",
+            value === v
+              ? "bg-surface text-ink shadow-card"
+              : "text-ink-soft hover:text-ink",
+          )}
+        >
+          {v}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function IconAction({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="outline" size="icon" onClick={onClick} aria-label={label}>
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** The two things that interrupt a morning: a feed is down, or the world reset under you. */
+function Notice({
+  tone,
+  icon,
+  children,
+}: {
+  tone: "danger" | "gold";
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        "mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3.5 py-2.5 text-[12.5px] text-ink",
+        tone === "danger" ? "border-[hsl(var(--danger)/0.3)] bg-danger-tint" : "border-gold-line bg-gold-tint",
+      )}
+    >
+      {icon}
+      {children}
+    </div>
   );
 }
 
@@ -385,25 +452,25 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
  */
 function Invitation() {
   return (
-    <div className="mb-8 border-b border-[hsl(var(--page-edge))] pb-7">
-      <p className="prose-serif text-[19px] leading-[1.65] text-[hsl(var(--ink))]">
+    <div className="mb-7 border-b border-line pb-6">
+      <p className="prose-serif text-[17.5px] leading-[1.6] text-ink">
         This page writes your world&apos;s morning briefing, but only from what you can prove.
         Nothing has been checked yet today.
       </p>
-      <ol className="mt-4 flex flex-col gap-2 text-[13.5px] leading-relaxed text-[hsl(var(--ink-soft))]">
+      <ol className="mt-4 flex flex-col gap-2 text-[13px] leading-relaxed text-ink-soft">
         <Step n={1}>
-          Read the <strong className="font-medium text-[hsl(var(--ink))]">world board</strong> at
-          the Adventurer&apos;s Guild, first floor up, near Charos. It lists every mini world
-          change running right now.
+          Read the <strong className="font-medium text-ink">world board</strong> at the
+          Adventurer&apos;s Guild, first floor up, near Charos. It lists every mini world change
+          running right now.
         </Step>
         <Step n={2}>
-          Greet any <strong className="font-medium text-[hsl(var(--ink))]">guide</strong>, say{" "}
-          <span className="font-mono text-[12.5px]">world change</span>, then a keyword. The
+          Greet any <strong className="font-medium text-ink">guide</strong>, say{" "}
+          <span className="font-mono text-[12px]">world change</span>, then a keyword. The
           Everything view lists all fourteen.
         </Step>
         <Step n={3}>
-          Paste whatever they told you into the box below. The dispatch fills itself in, and
-          anything still missing shows up as a gap you can click.
+          Paste whatever they told you into the game log beside this document. The dispatch
+          fills itself in, and anything still missing shows up as a gap you can click.
         </Step>
       </ol>
     </div>
@@ -413,7 +480,7 @@ function Invitation() {
 function Step({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <li className="flex gap-2.5">
-      <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[hsl(var(--gold)/0.25)] text-[10.5px] font-semibold text-[hsl(var(--ink))]">
+      <span className="mt-[2px] flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full bg-gold-tint text-[10px] font-semibold text-gold">
         {n}
       </span>
       <span>{children}</span>
@@ -441,45 +508,11 @@ function DayRolloverBanner({
   if (liveDayKey === currentDayKey) return null;
 
   return (
-    <div
-      role="status"
-      className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-[hsl(var(--gold))]/10 px-4 py-3 text-[12.5px] text-[hsl(var(--foreground))] ring-1 ring-inset ring-[hsl(var(--gold))]/30"
-    >
-      <Sunrise className="h-4 w-4 shrink-0 text-[hsl(var(--gold))]" aria-hidden="true" />
-      <span>
-        Server save has passed. The world reset, so everything below is from before it.
-      </span>
+    <Notice tone="gold" icon={<Sunrise className="h-4 w-4 shrink-0 text-gold" aria-hidden="true" />}>
+      <span>Server save has passed. The world reset, so everything below is from before it.</span>
       <Button variant="outline" size="sm" onClick={onStartNewDay}>
         Start today&apos;s dispatch
       </Button>
-    </div>
+    </Notice>
   );
-}
-
-/**
- * A Radix Switch renders a `<button role="switch">`, and a wrapping `<label>` gives a button
- * no accessible name — so both of these toggles were announced as "switch, not pressed" with
- * no indication of what they controlled.
- */
-function LabelledSwitch({
-  label,
-  checked,
-  onCheckedChange,
-}: {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  return (
-    <span className="flex items-center gap-2 text-[12.5px] text-[hsl(var(--muted-foreground))]">
-      <Switch aria-label={label} checked={checked} onCheckedChange={onCheckedChange} />
-      <span aria-hidden="true">{label}</span>
-    </span>
-  );
-}
-
-/** "the world list", "boosted creature and boss and market prices" — for a sentence. */
-function formatList(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? "";
-  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }

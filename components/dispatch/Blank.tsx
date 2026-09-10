@@ -47,7 +47,7 @@ export function Blank({
           data-blank-target={segment.target}
           className={cn(
             "font-medium",
-            filled ? "filled text-[hsl(var(--ink))]" : "blank",
+            filled ? "filled text-ink" : "blank",
           )}
           data-state={open ? "open" : "closed"}
         >
@@ -74,11 +74,11 @@ function Options({
     <PopoverContent
       align="start"
       className={cn(
-        "border-[hsl(var(--page-edge))] bg-[hsl(var(--popover))] p-1.5 text-[hsl(var(--ink))] shadow-xl",
+        "p-1.5",
         segment.spatial ? "w-[19rem]" : "w-[15rem]",
       )}
     >
-      <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[hsl(var(--ink-faint))]">
+      <p className="px-2 pb-1.5 pt-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
         {segment.ask}
       </p>
       <div
@@ -101,11 +101,9 @@ function Options({
                 if (!segment.multi) close();
               }}
               className={cn(
-                "flex items-center gap-1.5 rounded px-2 py-2 text-left text-[13.5px] leading-snug transition-colors",
-                "hover:bg-[hsl(var(--gold)/0.22)]",
-                isChosen
-                  ? "bg-[hsl(var(--gold)/0.28)] font-medium"
-                  : "text-[hsl(var(--ink-soft))]",
+                "flex items-center gap-1.5 rounded-md px-2 py-2 text-left text-[13px] leading-snug transition-colors",
+                "hover:bg-accent hover:text-ink",
+                isChosen ? "bg-gold-tint font-medium text-gold" : "text-ink-soft",
               )}
             >
               {segment.multi && (
@@ -123,7 +121,7 @@ function Options({
         <button
           type="button"
           onClick={close}
-          className="mt-1 w-full rounded px-2 py-1.5 text-[12.5px] font-medium text-[hsl(var(--ink-soft))] transition-colors hover:bg-[hsl(var(--gold)/0.14)] hover:text-[hsl(var(--ink))]"
+          className="mt-1 w-full rounded-md border border-line px-2 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-accent hover:text-ink"
         >
           Done
         </button>

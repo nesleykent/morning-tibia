@@ -39,17 +39,17 @@ export function Dispatch({
   invitation: React.ReactNode;
 }) {
   return (
-    <article className="page-sheet rounded-xl px-6 py-8 sm:px-12 sm:py-12">
+    <article className="sheet px-5 py-6 sm:px-9 sm:py-8">
       {invitation}
 
       {stanzas.map((stanza) => (
-        <section key={stanza.id} className="settle mb-8 last:mb-0">
+        <section key={stanza.id} className="settle mb-7 last:mb-0">
           {stanza.heading && (
-            <h2 className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ink-faint))]">
+            <h2 className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
               {stanza.heading}
             </h2>
           )}
-          <div className="prose-serif flex flex-col gap-2.5 text-[18px] leading-[1.6] text-[hsl(var(--ink))] sm:text-[19px]">
+          <div className="prose-serif flex flex-col gap-2.5 text-[16.5px] leading-[1.62] text-ink sm:text-[17.5px]">
             {stanza.lines.map((line, index) => (
               <p key={index} className="text-pretty">
                 {/* An unfilled blank already ends the sentence with "?", so the clause's own
@@ -71,32 +71,32 @@ export function Dispatch({
       ))}
 
       {opportunities.length > 0 && (
-        <section className="settle mb-8 border-t border-[hsl(var(--page-edge))] pt-7">
-          <h2 className="mb-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ink-faint))]">
+        <section className="settle mb-7 border-t border-line pt-6">
+          <h2 className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
             Worth doing before it ends
           </h2>
           <ul className="flex flex-col gap-3.5">
             {opportunities.map(({ definition, conditionName, conditionState }) => (
               <li key={definition.id}>
-                <p className="prose-serif text-[18px] leading-snug text-[hsl(var(--ink))]">
+                <p className="prose-serif text-[16.5px] leading-snug text-ink sm:text-[17.5px]">
                   <a
                     href={definition.sources[0]}
                     target="_blank"
                     rel="noreferrer"
-                    className="underline decoration-[hsl(var(--ink-faint))]/40 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--ink))]"
+                    className="underline decoration-line-strong underline-offset-[3px] transition-colors hover:decoration-gold"
                   >
                     {definition.subject}
                   </a>
                   <Meta>{opportunityMeta(definition)}</Meta>
                 </p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-[hsl(var(--ink-soft))]">
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-soft">
                   {definition.detail.en}{" "}
-                  <span className="text-[hsl(var(--ink-faint))]">
+                  <span className="text-ink-faint">
                     Because {conditionName}
                     {conditionState ? `: ${conditionState}` : " is running"}.
                   </span>
                   {definition.prerequisites?.length ? (
-                    <span className="text-[hsl(var(--ink-faint))]">
+                    <span className="text-ink-faint">
                       {" "}Needs first: {definition.prerequisites.join(", ")}.
                     </span>
                   ) : null}
@@ -105,14 +105,14 @@ export function Dispatch({
                     today" and "today moves this one step of five" — leaving it out is how an
                     opportunity gets oversold. */}
                 {definition.caveat && (
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--ink-faint))]">
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">
                     Note: {definition.caveat.en}
                   </p>
                 )}
                 {/* Marked as a tip, never folded into the facts above: a recommended level is
                     somebody's judgement, and the reader is entitled to know which is which. */}
                 {definition.advisory && (
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--ink-faint))]">
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">
                     Tip: {definition.advisory.en}
                   </p>
                 )}
@@ -154,7 +154,7 @@ function opportunityMeta(definition: Opportunity["definition"]): string {
 /** Small trailing metadata on a line of prose — present, precise, visually subordinate. */
 function Meta({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-2 align-[0.15em] text-[10px] font-semibold uppercase tracking-[0.1em] text-[hsl(var(--ink-faint))]">
+    <span className="ml-2 align-[0.15em] text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-faint">
       {children}
     </span>
   );
@@ -169,14 +169,14 @@ function SegmentView({
 }) {
   if (segment.kind === "text") return <>{segment.text}</>;
   if (segment.kind === "em")
-    return <span className="text-[hsl(var(--ink-soft))]">{segment.text}</span>;
+    return <span className="text-ink-soft">{segment.text}</span>;
   if (segment.kind === "link")
     return (
       <a
         href={segment.href}
         target="_blank"
         rel="noreferrer"
-        className="underline decoration-[hsl(var(--ink-faint))]/35 underline-offset-[3px] transition-colors hover:decoration-[hsl(var(--ink))]"
+        className="underline decoration-line-strong underline-offset-[3px] transition-colors hover:decoration-gold"
       >
         {segment.text}
       </a>
@@ -194,9 +194,9 @@ export interface NumbersProps {
 }
 
 const TREND = {
-  up: { glyph: "↑", tone: "text-[hsl(var(--live-ink))]" },
-  down: { glyph: "↓", tone: "text-[hsl(var(--danger-ink))]" },
-  unchanged: { glyph: "→", tone: "text-[hsl(var(--ink-faint))]" },
+  up: { glyph: "↑", tone: "text-live" },
+  down: { glyph: "↓", tone: "text-danger" },
+  unchanged: { glyph: "→", tone: "text-ink-faint" },
 } as const;
 
 const BASIS_LABEL: Record<MarketTrendBasis, string> = {
@@ -234,18 +234,18 @@ function Numbers({
   const isStale = newestTimestamp !== null && nowMs > 0 && nowMs - newestTimestamp > STALE_PRICE_MS;
 
   return (
-    <footer className="mt-8 grid grid-cols-1 gap-x-10 gap-y-5 border-t border-[hsl(var(--page-edge))] pt-6 sm:grid-cols-2">
+    <footer className="mt-7 grid grid-cols-1 gap-x-10 gap-y-5 border-t border-line pt-5 sm:grid-cols-2">
       {warzones.length > 0 && (
         <div>
-          <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--ink-faint))]">
+          <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
             Warzones
           </h3>
-          <p className="tnum flex flex-wrap gap-x-3.5 gap-y-1 text-[14px] text-[hsl(var(--ink))]">
+          <p className="tnum flex flex-wrap gap-x-3.5 gap-y-1 text-[14px] text-ink">
             {warzones.map((w) => (
               <span key={w.id}>
                 {w.time}
                 {w.sequence && (
-                  <span className="ml-1 text-[11px] text-[hsl(var(--ink-faint))]">{w.sequence}</span>
+                  <span className="ml-1 text-[11px] text-ink-faint">{w.sequence}</span>
                 )}
               </span>
             ))}
@@ -256,7 +256,7 @@ function Numbers({
       {(priceEntries.length > 0 || marketUnavailable) && (
         <div>
           <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[hsl(var(--ink-faint))]">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
               Market
             </h3>
             {priceEntries.length > 0 && (
@@ -279,8 +279,8 @@ function Numbers({
                     className={cn(
                       "rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors",
                       marketBasis === basis
-                        ? "bg-[hsl(var(--gold)/0.28)] text-[hsl(var(--ink))]"
-                        : "text-[hsl(var(--ink-faint))] hover:bg-[hsl(var(--gold)/0.14)] hover:text-[hsl(var(--ink))]",
+                        ? "bg-gold-tint text-gold"
+                        : "text-ink-faint hover:bg-accent hover:text-ink",
                     )}
                   >
                     {BASIS_LABEL[basis]}
@@ -291,7 +291,7 @@ function Numbers({
           </div>
 
           {marketUnavailable && priceEntries.length === 0 ? (
-            <p className="text-[12.5px] text-[hsl(var(--ink-soft))]">
+            <p className="text-[12.5px] text-ink-soft">
               Market data couldn&apos;t be loaded.
             </p>
           ) : (
@@ -304,10 +304,10 @@ function Numbers({
                   const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
                   return (
                     <div key={id} className="flex items-baseline justify-between gap-2">
-                      <dt className="truncate text-[12.5px] text-[hsl(var(--ink-soft))]">
+                      <dt className="truncate text-[12.5px] text-ink-soft">
                         {shortPriceLabel(id)}
                       </dt>
-                      <dd className="tnum shrink-0 text-[13.5px] text-[hsl(var(--ink))]">
+                      <dd className="tnum shrink-0 text-[13.5px] text-ink">
                         {Math.round(shown).toLocaleString("en-US")}
                         <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
                       </dd>
@@ -316,7 +316,7 @@ function Numbers({
                 })}
               </dl>
               {ageLabel && (
-                <p className="mt-1.5 text-[11px] text-[hsl(var(--ink-faint))]">
+                <p className="mt-1.5 text-[11px] text-ink-faint">
                   tibiamarket.top, {ageLabel}
                   {isStale && (
                     <span className="ml-1.5 font-semibold uppercase tracking-[0.08em]">
@@ -346,7 +346,7 @@ function ServerSaveLine() {
   if (nowMs === 0) return null;
   const msLeft = getNextServerSave(new Date(nowMs)).getTime() - nowMs;
   return (
-    <p className="text-[12.5px] text-[hsl(var(--ink-faint))] sm:col-span-2">
+    <p className="text-[12.5px] text-ink-faint sm:col-span-2">
       Everything here resets at server save, in{" "}
       <span className="tnum">{formatCountdownClock(msLeft)}</span>.
     </p>

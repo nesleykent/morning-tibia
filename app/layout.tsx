@@ -8,7 +8,12 @@ import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 // A text serif with real colour on screen — the dispatch is meant to be read, not scanned.
-const serif = Spectral({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-serif", display: "swap" });
+const serif = Spectral({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Morning Tibia: Daily World Briefing",
@@ -17,14 +22,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0b0d16",
+  themeColor: "#f5f0e6",
   width: "device-width",
   initialScale: 1,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Fetched here too (not just in app/page.tsx) since the status bar's Drome countdown
-  // lives in the layout, above the page — Next.js dedupes identical build-time fetches.
+  // lives in the chrome, above the page — Next.js dedupes identical build-time fetches.
   const drome = await fetchDromeRotation(new Date());
 
   return (
@@ -32,18 +37,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ViewerSettingsProvider>
           <div className="flex min-h-dvh flex-col">
-            {/* No backdrop-blur here: Safari has a well-known bug where backdrop-filter on a
-                position:sticky ancestor corrupts hit-testing/paint order for portalled
-                popover content (our Select/Popover dropdowns render via a body-level
-                Portal) — a solid background avoids it entirely. */}
-            {/* Transparent: the dawn field is the page, and a filled bar would cut it. */}
-            <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-5 pt-6 sm:px-8">
-              <span className="flex items-center gap-2">
-                <Sunrise className="h-4 w-4 text-gold" />
-                <span className="text-[13px] font-medium tracking-[-0.01em]">Morning Tibia</span>
-              </span>
-              <TopStatusBar drome={drome} />
-            </div>
+            {/* The application's only chrome: a hairline strip that names the product and
+                carries the two countdowns and the timezone, since those are true no matter
+                which view is open.
+
+                Opaque, never blurred. WebKit corrupts hit-testing and paint order for
+                body-portalled popover content when a `backdrop-filter` sits on a sticky
+                ancestor, and every dropdown in this app is portalled. */}
+            <header className="sticky top-0 z-40 border-b border-line bg-surface">
+              <div className="mx-auto flex h-[var(--appbar-h)] w-full max-w-[1200px] items-center justify-between gap-4 px-5 lg:px-7">
+                <span className="flex shrink-0 items-center gap-2">
+                  <Sunrise className="h-[15px] w-[15px] text-gold" aria-hidden="true" />
+                  <span className="prose-serif text-[15px] font-medium tracking-[-0.005em] text-ink">
+                    Morning Tibia
+                  </span>
+                </span>
+                <TopStatusBar drome={drome} />
+              </div>
+            </header>
             <main className="flex-1">{children}</main>
           </div>
         </ViewerSettingsProvider>
