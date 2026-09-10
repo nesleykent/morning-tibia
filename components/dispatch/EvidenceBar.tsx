@@ -114,7 +114,7 @@ export function EvidenceBar({
       setPasteError(null);
       textareaRef.current?.focus();
     } catch {
-      setPasteError("Couldn't read the clipboard — paste into the box instead.");
+      setPasteError("Couldn't read the clipboard. Paste into the box instead.");
       textareaRef.current?.focus();
     }
   };
@@ -132,7 +132,7 @@ export function EvidenceBar({
       </h2>
       <p id={hintId} className="mt-1 text-[12.5px] leading-relaxed text-[hsl(var(--muted-foreground))]">
         The world board at the Adventurer&apos;s Guild, a guide&apos;s reply, or a towncryer
-        shout — in any combination. Only a whole board reading can rule anything out, so say
+        shout, in any combination. Only a whole board reading can rule anything out, so say
         below when that is what you pasted.
       </p>
 
@@ -176,7 +176,7 @@ export function EvidenceBar({
         <span>
           This is the whole world board
           <span className="text-[hsl(var(--muted-foreground))]/70">
-            {" "}— everything it printed, so anything it did not mention is not running.
+            {": "}everything it printed, so anything it did not mention is not running.
           </span>
         </span>
       </label>
@@ -209,13 +209,13 @@ export function EvidenceBar({
         {receipt && !pasteError && (
           <p className="text-[12.5px] text-[hsl(var(--muted-foreground))]">
             {receipt.parsed.isEmpty ? (
-              "Nothing recognised in that text — check you copied the message itself, not just the timestamp."
+              "Nothing recognised in that text. Check you copied the message itself, not just the timestamp."
             ) : receipt.parsed.isCompleteBoardReading ? (
-              <>Whole board reading — {summarise(receipt)}.</>
+              <>Whole board reading: {summarise(receipt)}.</>
             ) : (
               <>
-                Added {summarise(receipt)}. Nothing was ruled out — only a whole board reading
-                can prove that.
+                Added {summarise(receipt)}. Nothing was ruled out, because only a whole board
+                reading can prove that.
               </>
             )}
           </p>

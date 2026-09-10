@@ -177,3 +177,34 @@ describe("World Change catalog", () => {
     }
   });
 });
+
+describe("copy the reader sees", () => {
+  const BANNED = ["\u2022", "\u00B7", "\u25CF", "\u25CB", "\u25AA", "\u25AB", "\u25E6", "\u2023", "\u25B8", "\u2014"];
+
+  /** Every player-facing string a catalog entry can put on the page. */
+  const copyOf = (entry: Record<string, unknown>): string[] =>
+    ["name", "shortLabel", "location", "description", "howToCheck", "alternativeSource"]
+      .map((key) => entry[key])
+      .filter((value): value is string => typeof value === "string")
+      .concat(
+        Array.isArray(entry.reference) ? (entry.reference as string[]) : [],
+        Array.isArray(entry.states)
+          ? (entry.states as { label: string }[]).map((state) => state.label)
+          : [],
+        Array.isArray(entry.variants)
+          ? (entry.variants as { label: string }[]).map((variant) => variant.label)
+          : [],
+      );
+
+  it("uses no bullet glyphs, middle dots or em dashes", () => {
+    // Enforced on the catalogs as well as on the bulletin, because these strings reach the
+    // page directly and are the bulletin's fallback wording when a state has no narrative.
+    for (const definition of [...MINI_WORLD_CHANGE_DEFINITIONS, ...WORLD_CHANGE_DEFINITIONS]) {
+      for (const text of copyOf(definition as unknown as Record<string, unknown>)) {
+        for (const banned of BANNED) {
+          expect(text, `${definition.id}: ${text}`).not.toContain(banned);
+        }
+      }
+    }
+  });
+});

@@ -49,14 +49,22 @@ function expectWellFormed(message: string, context: string) {
   expect(message, context).toBe(message.trim());
   expect(message, context).not.toContain("**");
 
+  // Bullet glyphs, middle dots and em dashes are banned outright. They are how generated text
+  // gives itself away, and the bulletin is forwarded to people who did not generate it: the
+  // moment it looks assembled rather than written, they stop reading it as a report about
+  // their world. Ordinary punctuation says the same things.
+  for (const banned of ["\u2022", "\u00B7", "\u25CF", "\u25CB", "\u25AA", "\u25AB", "\u25E6", "\u2023", "\u25B8", "\u2014"]) {
+    expect(message, `${context}: contains ${JSON.stringify(banned)}`).not.toContain(banned);
+  }
+
   for (const line of message.split("\n")) {
     expect(line, `${context}: indented — "${line}"`).toBe(line.trimStart());
     expect(line, `${context}: trailing space — "${line}"`).toBe(line.trimEnd());
     expect((line.match(/\*/g) ?? []).length % 2, `${context}: unbalanced * — "${line}"`).toBe(0);
     expect((line.match(/_/g) ?? []).length % 2, `${context}: unbalanced _ — "${line}"`).toBe(0);
     // A dangling separator means a chip resolved to nothing.
-    expect(line, `${context}: dangling separator — "${line}"`).not.toMatch(/(·|—)\s*$/);
-    expect(line, `${context}: doubled separator — "${line}"`).not.toMatch(/·\s*·/);
+    expect(line, `${context}: dangling separator in "${line}"`).not.toMatch(/[,:;(]\s*$/);
+    expect(line, `${context}: doubled separator in "${line}"`).not.toMatch(/,\s*,/);
   }
 }
 
@@ -75,7 +83,7 @@ describe("every World Change state", () => {
 
           const rich = generateBriefingMessage(input);
           expectWellFormed(rich, context);
-          expect(rich, context).toContain(`${definition.emoji} *${definition.shortLabel}* — `);
+          expect(rich, context).toContain(`${definition.emoji} *${definition.shortLabel}*: `);
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
       }
@@ -104,7 +112,7 @@ describe("every Mini World Change, with and without its variant", () => {
           // "the mine changed again" is not news until the player has been down there.
           const reportable = definition.detection !== "always-active" || variantId !== null;
           if (reportable) {
-            expect(rich, context).toContain(`${definition.emoji} *${definition.name}* — `);
+            expect(rich, context).toContain(`${definition.emoji} *${definition.name}*: `);
           }
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
@@ -125,7 +133,7 @@ describe("every Mini World Change, with and without its variant", () => {
       const message = generateBriefingMessage(input);
       expectWellFormed(message, `inactive/${language}`);
       expect(message, language).toContain("🎲");
-      expect(message, language).toContain("*Kingsday* — ");
+      expect(message, language).toContain("*Kingsday*: ");
     }
   });
 });

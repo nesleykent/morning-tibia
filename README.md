@@ -478,17 +478,24 @@ their head until the second arrived. Merged, each change is named once and every
 appears once: a full day went from 165 lines to about 90.
 
 **Opportunities that only restate the change are dropped.** A hunting ground, an access
-route and an NPC service *are* what the state sentence above already says — Spirit Grounds'
-only offer is "a spirit gate is open". The concrete kinds (bestiary, boss, mount,
-achievement, quest, item, World Change progress) name something separable, so they earn a
-`▸` line. Two per change, plus any deadline-bound line, which is admitted on top of the cap
-because it is the only tier that is worthless read tomorrow.
+route and an NPC service are what the state sentence above already says: Spirit Grounds' only
+offer is "a spirit gate is open". The concrete kinds (bestiary, boss, mount, achievement,
+quest, item, World Change progress) name something separable, so they get a line of their own,
+with no prefix. Two per change, plus any deadline-bound line, which is admitted on top of the
+cap because it is the only tier that is worthless read tomorrow.
+
+**No bullet glyphs, middle dots or em dashes, anywhere the reader looks.** They are how
+generated text gives itself away, and the bulletin is forwarded to people who did not generate
+it. An opportunity reads `Nomad (Blue): 500 kills, 15 Charm Points`, a change reads
+`Fire from the Earth: the volcano is erupting`, and a qualifier that would make a comma list
+ambiguous goes in parentheses. Enforced by tests over both the bulletin and the catalogs.
 
 **Markup is the intersection of the two clients.** `*bold*` is WhatsApp's; Discord reads it
 as italic, which is a graceful degradation. Discord's `**bold**` arrives in WhatsApp as
-literal asterisks, so it is never used. Leading whitespace is collapsed in chat clients, so
-nesting is a `▸` prefix. Names keep their own casing — upper-casing them shouted, and
-mangled official Tibia names the app is otherwise careful to reproduce exactly.
+literal asterisks, so it is never used. Leading whitespace is collapsed in chat clients, so an
+opportunity line carries no prefix at all; the change's own line is the one with the emoji and
+the bold name. Names keep their own casing, since upper-casing them shouted and mangled the
+official Tibia names the app is otherwise careful to reproduce exactly.
 
 The formatter is isolated from React:
 

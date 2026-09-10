@@ -21,7 +21,7 @@ function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
  * deliberately not rendered here: printed under a state sentence that has already said where
  * you are and what is happening, they repeated it. "Fire from the Earth: the Hellgore volcano
  * is erupting, bringing stronger creatures along with the lava" followed by "Hellgore volcano
- * — hunt · only in this state: in place of the usual Stone Golems come Demons, Dragons…" is
+ * — hunt, only in this state: in place of the usual Stone Golems come Demons, Dragons…" is
  * one fact spending five lines.
  */
 
@@ -112,57 +112,87 @@ function exclusiveMarker(language: BriefingLanguage): string {
 }
 
 export interface OpportunityLine {
-  /** `Starving Wolf — 500 kills · 15 Charm Points · só neste estado` */
+  /** `Starving Wolf: 500 kills, 15 Charm Points, só neste estado` */
   text: string;
   /** Kept so a deadline-bound line can survive the per-change cap. */
   availability: OpportunityDefinition["availability"];
 }
 
+/**
+ * `Subject: what it is, how much of it (qualifier), and any catch.`
+ *
+ * Ordinary punctuation, deliberately. The facts used to be chips strung together with middle
+ * dots, which is the house style of generated output and reads as such — the line announced
+ * that a machine had assembled it before it announced anything about Tibia. A colon after the
+ * subject and commas between the facts say the same thing in the reader's own writing system.
+ *
+ * The qualifier goes in parentheses rather than into the comma list because several of them
+ * contain commas of their own ("Chopper, Fleshslicer, Maw…"), and a flat comma list would run
+ * the six Hive bosses together with the entry's own attributes into one unreadable string. It
+ * attaches to whatever it qualifies: the kind for "achievement (10 Ice Flower Seeds)", and the
+ * whole entry for a bestiary line, whose two numbers must not be split apart by it.
+ */
 export function formatOpportunityLine(
   opportunity: Opportunity,
   language: BriefingLanguage,
 ): OpportunityLine {
   const { definition } = opportunity;
-  const chips: string[] = [];
+  const facts: string[] = [];
+
+  const qualifier = definition.qualifier?.[language];
+  const parenthesised = qualifier ? ` (${qualifier})` : "";
+  let qualifierPlaced = false;
 
   const kindLabel = pick(KIND_LABEL, language)[definition.kind];
-  if (kindLabel) chips.push(kindLabel);
+  // A boss's Bosstiary category qualifies the word "boss" rather than standing beside it.
+  const opener =
+    definition.kind === "boss" && kindLabel && definition.bosstiary
+      ? `${kindLabel} ${definition.bosstiary}`
+      : (kindLabel ?? definition.bosstiary);
+  if (opener) {
+    facts.push(`${opener}${parenthesised}`);
+    qualifierPlaced = true;
+  }
 
   // A bestiary entry needs no "bestiary" label: a kill count next to a Charm Points figure
   // means one thing in Tibia, and the label would only push the numbers further from the name.
   if (definition.bestiary) {
-    chips.push(killsPhrase(definition.bestiary.kills, language));
-    chips.push(`${definition.bestiary.charmPoints} Charm Points`);
+    facts.push(killsPhrase(definition.bestiary.kills, language));
+    facts.push(`${definition.bestiary.charmPoints} Charm Points`);
   }
 
   if (definition.achievement) {
     if (definition.kind === "achievement") {
-      chips.push(pointsPhrase(definition.achievement.points, language));
-      if (definition.achievement.premium) chips.push("Premium");
+      facts.push(pointsPhrase(definition.achievement.points, language));
+      if (definition.achievement.premium) facts.push("Premium");
     } else {
       // Riding along with something else, so name it — the subject line does not.
       const label = pick(
         { pt: "achievement", en: "achievement", es: "achievement", pl: "osiągnięcie" },
         language,
       );
-      chips.push(`${label} ${definition.achievement.name}`);
+      facts.push(`${label} ${definition.achievement.name}`);
     }
   }
 
-  if (definition.bosstiary) chips.push(definition.bosstiary);
-  if (definition.qualifier) chips.push(definition.qualifier[language]);
-  if (definition.exclusive) chips.push(exclusiveMarker(language));
+  const markers: string[] = [];
+  if (definition.exclusive) markers.push(exclusiveMarker(language));
 
-  // "progresso · só progresso hoje" said it twice. When the kind label already carries the
+  // "progresso, só progresso hoje" said it twice. When the kind label already carries the
   // idea, the marker adds nothing but width.
   const marker =
     definition.kind === "progress" && definition.availability === "progressable-today"
       ? null
       : availabilityMarker(definition.availability, language);
-  if (marker) chips.push(marker);
+  if (marker) markers.push(marker);
+
+  // With no kind label to attach to — a bestiary-only line — the qualifier trails the facts,
+  // where it qualifies the entry as a whole instead of wedging between kills and Charm Points.
+  const described = qualifierPlaced ? facts.join(", ") : `${facts.join(", ")}${parenthesised}`;
+  const tail = [described, ...markers].filter(Boolean).join(", ");
 
   return {
-    text: chips.length > 0 ? `${definition.subject} — ${chips.join(" · ")}` : definition.subject,
+    text: tail ? `${definition.subject}: ${tail}` : definition.subject,
     availability: definition.availability,
   };
 }

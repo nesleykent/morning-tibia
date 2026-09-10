@@ -48,6 +48,26 @@ function makeInput(language: BriefingInput["language"] = "pt"): BriefingInput {
   return input;
 }
 
+const isHeading = (line: string) => /^\*[^*]+\*$/.test(line);
+const isAside = (line: string) => /^_.+_$/.test(line);
+/** A change's own line, which is the only one carrying an emoji and a bold name. */
+const isStateLine = (line: string) => /^\S+ \*[^*]+\*: /.test(line);
+
+/**
+ * The opportunity lines the bulletin printed, across every change.
+ *
+ * Found structurally rather than by punctuation: inside a change's block the first line is
+ * the state and everything after it belongs to that change. Keying on the separator would
+ * make the helper a second implementation of the format, free to disagree with the first.
+ */
+function opportunityLines(message: string): string[] {
+  return message
+    .split("\n\n")
+    .map((block) => block.split("\n").filter((line) => !isHeading(line)))
+    .filter((lines) => lines.some(isStateLine))
+    .flatMap((lines) => lines.filter((line) => !isStateLine(line) && !isAside(line)));
+}
+
 function setMini(input: BriefingInput, id: string, variantId: string | null = null) {
   input.overrides.miniWorldChanges[id] = { id, status: "active", variantId, updatedAt: null };
 }
@@ -133,8 +153,8 @@ function everyScenario(): { name: string; input: BriefingInput }[] {
 
 describe("bulletin structure", () => {
   it("leads with the world and the date on one line", () => {
-    expect(generateBriefingMessage(makeInput())).toMatch(/^📅 \*Ustebra\* · 17\/08\/2026\n/);
-    expect(generatePlainTextBriefing(makeInput())).toMatch(/^Ustebra · 17\/08\/2026\n/);
+    expect(generateBriefingMessage(makeInput())).toMatch(/^📅 \*Ustebra\*, 17\/08\/2026\n/);
+    expect(generatePlainTextBriefing(makeInput())).toMatch(/^Ustebra, 17\/08\/2026\n/);
   });
 
   it("puts a change's state and what it is worth in the same entry", () => {
@@ -147,7 +167,7 @@ describe("bulletin structure", () => {
 
     const entry = message.split("\n\n").find((block) => block.includes("*Overhunting*"))!;
     expect(entry).toContain("Starving Wolves rondam");
-    expect(entry).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
+    expect(entry).toContain("Starving Wolf: 500 kills, 15 Charm Points");
     // …and the change is named exactly once in the whole bulletin.
     expect(message.match(/\*Overhunting\*/g)).toHaveLength(1);
   });
@@ -171,7 +191,7 @@ describe("bulletin structure", () => {
   it("orders changes that offer something above the ones that only report", () => {
     const input = makeInput();
     setMini(input, "stampede"); // has opportunities
-    setMini(input, "spirit-grounds", "ghostlands"); // ambient only, so no ▸ lines
+    setMini(input, "spirit-grounds", "ghostlands"); // ambient only, so it contributes no lines
     const message = generateBriefingMessage(input);
     expect(message.indexOf("*Stampede*")).toBeLessThan(message.indexOf("*Spirit Grounds*"));
   });
@@ -257,12 +277,12 @@ describe("today's numbers", () => {
     expect(message).toContain("🗺️ Região: Venore");
     expect(message).toContain("🏛️ Drome: rotação #134 até 02/09");
     // Several execution times are a list, not a run-on sentence, and not four lines either.
-    expect(message).toContain("⚔️ Warzones: 12:00 (1-2-3) · 20:00 (1-3-2)");
+    expect(message).toContain("⚔️ Warzones: 12:00 (1-2-3), 20:00 (1-3-2)");
   });
 
   it("puts both sides of a market price on the item's own line, buy first", () => {
     const message = generateBriefingMessage(withMarket(makeInput()));
-    expect(message).toContain("🪙 Tibia Coin: compra 39.900 ⬇️ · venda 41.500 ⬆️");
+    expect(message).toContain("🪙 Tibia Coin: compra 39.900 ⬇️, venda 41.500 ⬆️");
     // The source is an aside under the numbers, not a heading for a section that never existed.
     expect(message).toMatch(/_Preços de tibiamarket\.top, .+\._/);
     expect(message).not.toContain("TIBIAMARKET");
@@ -327,7 +347,7 @@ describe("what the reader is told, and what they are not", () => {
     const input = emptyInput();
     setWorld(input, "twisted-waters", "clean");
     const message = generateBriefingMessage(input);
-    expect(message).toContain("*Twisted Waters* — O grande lago perto de Port Hope está limpo.");
+    expect(message).toContain("*Twisted Waters*: O grande lago perto de Port Hope está limpo.");
     expect(message).toMatch(/_Ainda sem resposta do Guide: .*Steamship.*_/);
   });
 
@@ -345,7 +365,7 @@ describe("opportunities, under the change that created them", () => {
     const message = generateBriefingMessage(input);
     const entry = message.split("\n\n").find((block) => block.includes("*Spirit Grounds*"))!;
     expect(entry).toContain("Um Spirit Gate está aberto em Ghostlands.");
-    expect(entry).not.toContain("▸");
+    expect(entry.split("\n").filter((line) => !isHeading(line) && !isStateLine(line))).toEqual([]);
   });
 
   it("caps a change at two lines but always keeps its deadline line", () => {
@@ -357,26 +377,28 @@ describe("opportunities, under the change that created them", () => {
       .split("\n\n")
       .find((block) => block.includes("*Awash*"))!;
 
-    const bullets = entry.split("\n").filter((line) => line.startsWith("▸"));
-    expect(bullets).toHaveLength(3);
-    expect(bullets.at(-1)).toContain("vale após o Server Save");
+    const opportunities = entry
+      .split("\n")
+      .filter((line) => !isHeading(line) && !isStateLine(line) && !isAside(line));
+    expect(opportunities).toHaveLength(3);
+    expect(opportunities.at(-1)).toContain("vale após o Server Save");
   });
 
   it("marks anything that is not available today", () => {
     const input = makeInput();
     setWorld(input, "steamship", "not-running");
     const message = generateBriefingMessage(input);
-    expect(message).toContain("▸ Coal — progresso · 200 unidades para Junkar · vale após o Server Save");
+    expect(message).toContain("Coal: progresso (200 unidades para Junkar), vale após o Server Save");
   });
 
   it("gives every line something to act on beyond the name", () => {
     // "Slug Drug — item" names a thing without saying what to do with it, which is the one
     // thing a reader needs at eight in the morning.
     for (const { name, input } of everyScenario()) {
-      for (const line of generateBriefingMessage(input).split("\n")) {
-        if (!line.startsWith("▸")) continue;
-        expect(line, `${name}: ${line}`).toContain(" — ");
-        expect(line.split(" — ")[1]!.length, `${name}: ${line}`).toBeGreaterThan(6);
+      for (const line of opportunityLines(generateBriefingMessage(input))) {
+        expect(line, `${name}: ${line}`).toContain(": ");
+        const said = line.slice(line.indexOf(": ") + 2);
+        expect(said.length, `${name}: ${line}`).toBeGreaterThan(6);
       }
     }
   });
@@ -406,7 +428,7 @@ describe("language", () => {
     const english = generateBriefingMessage(input);
     expect(english).toContain("👾 Creature: Gore Horn");
     expect(english).toContain("*🌍 WORLD CHANGES*");
-    expect(english).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
+    expect(english).toContain("Starving Wolf: 500 kills, 15 Charm Points");
 
     const portuguese = generateBriefingMessage(makeInput());
     expect(portuguese).toContain("👾 Criatura: Gore Horn");

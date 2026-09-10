@@ -34,8 +34,10 @@ export { BRIEFING_LANGUAGES } from "./translations";
  *   gracefully — still emphasis, still readable — whereas Discord's `**bold**` arrives in
  *   WhatsApp as literal asterisks. So single `*` for headings and `_` for asides, which both
  *   clients agree on, and nothing else.
- * - **No indentation.** Leading spaces are collapsed or shown inconsistently, so nesting is a
- *   `▸` prefix rather than whitespace.
+ * - **No indentation, and no bullet glyphs either.** Leading spaces are collapsed or shown
+ *   inconsistently by chat clients, and a bullet character reads as generated output. A
+ *   change's own line carries an emoji and a bold name; the lines beneath it carry neither,
+ *   which is enough to show they belong to it.
  *
  * Names keep their own casing. Upper-casing them was noise — a column of `FIRE FROM THE EARTH`
  * reads as shouting — and it mangles official Tibia names the app is otherwise careful to
@@ -82,14 +84,14 @@ function stripGp(value: string): string {
 /**
  * One change: what is true, then what that makes worth doing.
  *
- * The `▸` lines are the format's only nesting, and they exist because an opportunity is
- * subordinate to the state that created it. Printed as siblings in their own section, they
- * made the bulletin read as two unrelated lists that happened to name the same places.
+ * The opportunity lines carry no prefix at all. They are subordinate to the state above them,
+ * and the heading's emoji and bold name already say which of the two a line is; adding a
+ * bullet glyph to make the point would trade a real distinction for a decorative one.
  */
 function changeBlock(style: Style, line: ChangeLine): string {
   const name = style.markup ? `*${line.name}*` : line.name;
-  const head = `${style.emoji ? `${line.emoji} ` : ""}${name} — ${line.state}`;
-  return joinLines([head, ...line.opportunities.map((opportunity) => `▸ ${opportunity.text}`)]);
+  const head = `${style.emoji ? `${line.emoji} ` : ""}${name}: ${line.state}`;
+  return joinLines([head, ...line.opportunities.map((opportunity) => opportunity.text)]);
 }
 
 /**
@@ -130,7 +132,7 @@ function marketLines(model: BriefingModel, style: Style): string[] {
         (price) =>
           `${model.t.marketOffer(price.id)} ${stripGp(price.valueLabel)} ${price.trendSymbol}`,
       )
-      .join(" · ");
+      .join(", ");
 
     return [field(style, "🪙", item, values)];
   });
@@ -142,7 +144,7 @@ function render(model: BriefingModel, style: Style): string {
   // World and date on one line. A date line, a greeting line and a blank was three lines of
   // chrome before any information, on the first screen that is the only one many readers see.
   const worldName = style.markup ? `*${model.worldName}*` : model.worldName;
-  const header = `${style.emoji ? "📅 " : ""}${worldName} · ${model.dateLabel}`;
+  const header = `${style.emoji ? "📅 " : ""}${worldName}, ${model.dateLabel}`;
 
   const status = joinLines([
     model.boostedCreatureLabel
@@ -154,10 +156,10 @@ function render(model: BriefingModel, style: Style): string {
       : null,
     ...model.activeEventLines.map((line) => field(style, line.emoji, line.title, line.detail)),
     model.dromeLine ? field(style, "🏛️", t.tibiaDrome, model.dromeLine) : null,
-    // The model joins several executions with "; "; a middle dot reads as a list of times
-    // rather than as a sentence that lost its way.
+    // The model joins several executions with "; ", which inside a field value reads as a
+    // sentence that lost its way; a comma list is what it actually is.
     model.warzoneLine
-      ? field(style, "⚔️", t.warzoneToday, model.warzoneLine.split("; ").join(" · "))
+      ? field(style, "⚔️", t.warzoneToday, model.warzoneLine.split("; ").join(", "))
       : null,
   ]);
 

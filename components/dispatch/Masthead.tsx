@@ -52,11 +52,11 @@ export function Masthead({
                 {detail.playersOnline.toLocaleString("pt-BR")}
               </span>
               <span>online</span>
-              <Dot /> <span>{detail.pvpType}</span>
-              <Dot /> <span>{detail.location}</span>
+              <Separator /> <span>{detail.pvpType}</span>
+              <Separator /> <span>{detail.location}</span>
               {detail.battlEyeProtected && (
                 <>
-                  <Dot /> <span className="text-[hsl(var(--gold))]">BattlEye</span>
+                  <Separator /> <span className="text-[hsl(var(--gold))]">BattlEye</span>
                 </>
               )}
             </p>
@@ -110,7 +110,7 @@ function Boosted({
           />
         ) : (
           <span className="text-2xl text-[hsl(var(--muted-foreground))]" aria-hidden="true">
-            {failed ? "—" : "?"}
+            {failed ? "!" : "?"}
           </span>
         )}
       </div>
@@ -137,7 +137,7 @@ function Boosted({
               )
             ) : (
               <span className="text-[hsl(var(--muted-foreground))]">
-                {failed ? "Couldn't load" : "—"}
+                {failed ? "Couldn't load" : "Not announced today"}
               </span>
             )}
           </p>
@@ -147,6 +147,14 @@ function Boosted({
   );
 }
 
-function Dot() {
-  return <span aria-hidden="true" className="text-[hsl(var(--muted-foreground))]/70">·</span>;
+/**
+ * A comma, not a middle dot.
+ *
+ * The strip is a list of facts about one world — "342 online, Optional PvP, South America" —
+ * and reading it aloud is the test: ordinary punctuation is what a person writes, and a dot
+ * separator is what a template emits. It stays `aria-hidden` because a screen reader gets the
+ * separation from the element boundaries already.
+ */
+function Separator() {
+  return <span aria-hidden="true" className="-ml-2 text-[hsl(var(--muted-foreground))]/70">,</span>;
 }

@@ -11,7 +11,7 @@ const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap
 const serif = Spectral({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-serif", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Morning Tibia — Daily World Briefing",
+  title: "Morning Tibia: Daily World Briefing",
   description:
     "Check today's Tibia world conditions and generate a polished daily briefing for WhatsApp, Discord, Telegram or your guild channel.",
 };

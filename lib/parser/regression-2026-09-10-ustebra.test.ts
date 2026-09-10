@@ -243,7 +243,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
 
   it("keeps every one of the fourteen recognised World Changes", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}* — `);
+      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}*: `);
     }
     // Six of these were previously deleted for being "quiet" states.
     for (const label of [
@@ -263,7 +263,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   it("keeps every one of the seven announced Mini World Changes", () => {
     for (const id of Object.keys(EXPECTED_MINI)) {
       const def = MINI_WORLD_CHANGE_DEFINITIONS.find((d) => d.id === id)!;
-      expect(message, id).toContain(`${def.emoji} *${def.name}* — `);
+      expect(message, id).toContain(`${def.emoji} *${def.name}*: `);
     }
   });
 
@@ -286,23 +286,23 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   });
 
   it("surfaces the state-specific opportunity the blocked content hid", () => {
-    expect(message).toContain("🦌 *Overhunting* — ");
-    expect(message).toContain("▸ Starving Wolf — 500 kills · 15 Charm Points");
+    expect(message).toContain("🦌 *Overhunting*: ");
+    expect(message).toContain("Starving Wolf: 500 kills, 15 Charm Points");
   });
 
   it("offers more than achievements", () => {
     // The old catalog could only express achievements, so a state whose whole value was a
     // bestiary entry, a boss or a mount reported nothing at all.
     expect(message).toContain("Charm Points");
-    expect(message).toContain("— boss ·");
-    expect(message).toContain("— montaria ·");
-    expect(message).toContain("— progresso ·");
-    expect(message).toContain("— achievement ·");
+    expect(message).toContain(": boss ");
+    expect(message).toContain(": montaria ");
+    expect(message).toContain(": progresso ");
+    expect(message).toContain(": achievement,");
   });
 
   it("marks availability honestly, in all three tiers", () => {
     // Available today carries no marker — the bulletin is already about today.
-    expect(message).toContain("▸ Deepling Scout — 1.000 kills · 25 Charm Points · só neste estado");
+    expect(message).toContain("Deepling Scout: 1.000 kills, 25 Charm Points, só neste estado");
     expect(message).toContain("só progresso hoje");
     expect(message).toContain("vale após o Server Save");
     expect(message).not.toContain("undefined");

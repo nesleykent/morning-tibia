@@ -142,13 +142,13 @@ function opportunityMeta(definition: Opportunity["definition"]): string {
     // Name it unless the subject already is the achievement — a bare "1 pt" hanging off
     // "Mamma Longlegs" tells the reader a point exists without saying what earns it.
     const label = definition.kind === "achievement" ? "" : `${name}, `;
-    parts.push(`${label}${points} ${points === 1 ? "pt" : "pts"}${premium ? " · Premium" : ""}`);
+    parts.push(`${label}${points} ${points === 1 ? "pt" : "pts"}${premium ? ", Premium" : ""}`);
   }
   if (definition.bosstiary) parts.push(definition.bosstiary);
   if (definition.exclusive) parts.push("only in this state");
   if (definition.availability === "progressable-today") parts.push("progress only");
   if (definition.availability === "unlocks-future") parts.push("after server save");
-  return parts.join(" · ");
+  return parts.join(", ");
 }
 
 /** Small trailing metadata on a line of prose — present, precise, visually subordinate. */
@@ -317,10 +317,10 @@ function Numbers({
               </dl>
               {ageLabel && (
                 <p className="mt-1.5 text-[11px] text-[hsl(var(--ink-faint))]">
-                  tibiamarket.top · {ageLabel}
+                  tibiamarket.top, {ageLabel}
                   {isStale && (
                     <span className="ml-1.5 font-semibold uppercase tracking-[0.08em]">
-                      · stale
+                      (stale)
                     </span>
                   )}
                 </p>

@@ -34,9 +34,9 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
       "Pharaoh Horestis' cycle: he slumbers, rises to be killed, is desecrated, and his curse then fades.",
     states: [
       { id: "slumbering", label: "Slumbering in his tomb", quiet: true },
-      { id: "risen", label: "Risen — killable" },
-      { id: "desecrated", label: "Desecrated — curse over Ankrahmun" },
-      { id: "curse-ended", label: "Curse ended — minions recovering" },
+      { id: "risen", label: "Risen, killable" },
+      { id: "desecrated", label: "Desecrated, curse over Ankrahmun" },
+      { id: "curse-ended", label: "Curse ended, minions recovering" },
     ],
   },
   {
@@ -49,8 +49,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description:
       "The Raging Mage holds the dimensional portal open while he lives; killing him collapses it until the next server save.",
     states: [
-      { id: "portal-open", label: "Mage at his tower — portal open" },
-      { id: "mage-slain", label: "Mage slain — portal closing", quiet: true },
+      { id: "portal-open", label: "Mage at his tower, portal open" },
+      { id: "mage-slain", label: "Mage slain, portal closing", quiet: true },
     ],
   },
   {
@@ -62,8 +62,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     location: "Mad Mage Dungeon, Edron",
     description: "Whether the slime-covered servant tower on Edron can be entered.",
     states: [
-      { id: "passable", label: "Covered in slime — passable" },
-      { id: "impassable", label: "Severe slime outbreak — impassable", quiet: true },
+      { id: "passable", label: "Covered in slime, passable" },
+      { id: "impassable", label: "Severe slime outbreak, impassable", quiet: true },
     ],
   },
   {
@@ -75,7 +75,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     location: "Venore",
     description:
       "Whether Venore's swamp fever is contained. Medicine pouches handed to Ottokar each day keep it under control.",
-    states: [{ id: "under-control", label: "Under control — medicine for everyone", quiet: true }],
+    states: [{ id: "under-control", label: "Under control, medicine for everyone", quiet: true }],
   },
   {
     id: "thornfire",
@@ -89,7 +89,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     alternativeSource: "Pyro Peter in Venore also reports the state of Shadowthorn.",
     states: [
       { id: "guarded", label: "Firestarters safely guarded", quiet: true },
-      { id: "breaking-out", label: "Guards slain — breaking out" },
+      { id: "breaking-out", label: "Guards slain, breaking out" },
       { id: "burning", label: "Shadowthorn burns" },
       { id: "being-fought", label: "Burning, but the fire is being fought back" },
     ],
@@ -104,9 +104,9 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description: "How polluted the great lake near Port Hope is, which decides whether shimmer swimmers appear.",
     states: [
       { id: "clean", label: "Clean", quiet: true },
-      { id: "turning", label: "Corpses piling up — about to turn dirty" },
-      { id: "dirty-swimmers", label: "Dirty — shimmer swimmers present" },
-      { id: "dirty-exhausted", label: "Dirty — no shimmer swimmers left" },
+      { id: "turning", label: "Corpses piling up, about to turn dirty" },
+      { id: "dirty-swimmers", label: "Dirty, shimmer swimmers present" },
+      { id: "dirty-exhausted", label: "Dirty, no shimmer swimmers left" },
     ],
   },
   {
@@ -119,11 +119,11 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description:
       "Whether the Kazordoon mine tunnels are drained, which opens the Deepling Scout mines and the Kazordoon boat routes.",
     states: [
-      { id: "flooded", label: "Flooded — coal needed", quiet: true },
-      { id: "flooded-coal-delivered", label: "Flooded — coal delivered, pumps running" },
-      { id: "drained-quota-met", label: "Drained — today's deepling quota met" },
-      { id: "drained-quota-open", label: "Drained — deeplings trying to reflood" },
-      { id: "overrun", label: "Overrun — the tunnels will flood" },
+      { id: "flooded", label: "Flooded, coal needed", quiet: true },
+      { id: "flooded-coal-delivered", label: "Flooded, coal delivered, pumps running" },
+      { id: "drained-quota-met", label: "Drained, today's deepling quota met" },
+      { id: "drained-quota-open", label: "Drained, deeplings trying to reflood" },
+      { id: "overrun", label: "Overrun, the tunnels will flood" },
     ],
   },
   {
@@ -135,8 +135,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     location: "Thais",
     description: "Whether the Thais–Kazordoon steamship is running.",
     states: [
-      { id: "not-running", label: "Not running — coal needed", quiet: true },
-      { id: "coal-delivered", label: "Coal delivered — starts tomorrow" },
+      { id: "not-running", label: "Not running, coal needed", quiet: true },
+      { id: "coal-delivered", label: "Coal delivered, starts tomorrow" },
     ],
   },
   {
@@ -147,10 +147,10 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     guideKeyword: "Horses",
     location: "East of Thais, west of Venore",
     description:
-      "Either the horses are confined and rentable, or they have escaped — while they are loose, wild horses spawn and can be tamed.",
+      "Either the horses are confined and rentable, or they have escaped. While they are loose, wild horses spawn and can be tamed.",
     states: [
       { id: "normal", label: "Service running normally", quiet: true },
-      { id: "escaped", label: "Horses on the loose — service on hold" },
+      { id: "escaped", label: "Horses on the loose, service on hold" },
     ],
   },
   {
@@ -163,10 +163,10 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description:
       "The white deer population cycle. Overhunt them and they leave, and starving wolves take their place.",
     states: [
-      { id: "stable", label: "White deer roaming — population stable" },
+      { id: "stable", label: "White deer roaming, population stable" },
       { id: "dwindling", label: "Population dwindling" },
-      { id: "leaving", label: "Overhunted — deer leaving the region" },
-      { id: "wolves", label: "Starving wolves — no deer will return" },
+      { id: "leaving", label: "Overhunted, deer leaving the region" },
+      { id: "wolves", label: "Starving wolves, no deer will return" },
     ],
   },
   {
@@ -195,8 +195,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description: "The Fire-Feathered Serpent's sleep cycle at the Seacrest Grounds.",
     states: [
       { id: "asleep", label: "Fast asleep", quiet: true },
-      { id: "dreaming", label: "Dreaming — the earth bleeds lava" },
-      { id: "awake", label: "Awake — Renegade Quara control sunken Oramond" },
+      { id: "dreaming", label: "Dreaming, the earth bleeds lava" },
+      { id: "awake", label: "Awake, Renegade Quara control sunken Oramond" },
     ],
   },
   {
@@ -223,8 +223,8 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     description: "How far the hive's defences at Quirefang have been broken down.",
     states: [
       { id: "defended", label: "Hive well defended", quiet: true },
-      { id: "breached", label: "Defences breached — east structure open" },
-      { id: "fallen", label: "Defences fallen — all structures open" },
+      { id: "breached", label: "Defences breached, east structure open" },
+      { id: "fallen", label: "Defences fallen, all structures open" },
     ],
   },
 ];

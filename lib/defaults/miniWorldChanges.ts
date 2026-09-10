@@ -123,7 +123,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "A fiery gate to the Fury Dungeon opens near one of ten cities. Neither the World Board nor the Towncryer says which one — you find out by going to look.",
+      "A fiery gate to the Fury Dungeon opens near one of ten cities. Neither the World Board nor the Towncryer says which one. You find out by going to look.",
   },
   {
     id: "hive-outpost",
@@ -250,7 +250,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     detection: "announced",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
-    description: "The witch Wyda is bored and worth visiting — she may have a surprise.",
+    description: "The witch Wyda is bored and worth visiting. She may have a surprise.",
   },
   {
     id: "noodles-is-gone",
@@ -264,7 +264,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "The king's dog has left the castle. He wanders the whole Thaian peninsula, so there is no fixed spot to record — get a leash from King Tibianus and go find him.",
+      "The king's dog has left the castle. He wanders the whole Thaian peninsula, so there is no fixed spot to record. Get a leash from King Tibianus and go find him.",
     reference: NOODLES_SPAWN_POINTS,
   },
   {
@@ -339,7 +339,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     boardNamesVariant: false,
     towncryerNamesVariant: true,
     description:
-      "Hunters and dworcs fight over Trapwood's holy grounds; the winner decides the creatures and the possible boss (Arthom the Hunter or Oodok Witchmaster). The World Board doesn't say who is winning — the Towncryer does.",
+      "Hunters and dworcs fight over Trapwood's holy grounds; the winner decides the creatures and the possible boss (Arthom the Hunter or Oodok Witchmaster). The World Board doesn't say who is winning. The Towncryer does.",
   },
   {
     id: "grimvale",
@@ -379,7 +379,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "Banks in the main coastal towns are robbed at the same time — the thieves hide out in the Dwarf Mines, the Ghostlands, the Ancient Temple and Shadowthorn respectively.",
+      "Banks in the main coastal towns are robbed at the same time. The thieves hide out in the Dwarf Mines, the Ghostlands, the Ancient Temple and Shadowthorn respectively.",
   },
   {
     id: "river-runs-deep",
@@ -436,7 +436,7 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "The Giant Beavers break out of their pen at Silvertides. Nothing announces this — the World Board and the Towncryer are both silent on it, so a complete board reading says nothing either way.",
+      "The Giant Beavers break out of their pen at Silvertides. Nothing announces this. The World Board and the Towncryer are both silent on it, so a complete board reading says nothing either way.",
   },
   {
     id: "shipwrecked",
@@ -450,11 +450,11 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     variantKind: null,
     detection: "silent",
     howToCheck:
-      "Go and look at the north coast of Krailos — or, with Krailos fully revealed by the Measuring Tibia Quest, check the map for active pirate respawns on the Krailos Steppe.",
+      "Go and look at the north coast of Krailos. Or, with Krailos fully revealed by the Measuring Tibia Quest, check the map for active pirate respawns on the Krailos Steppe.",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "A wrecked pirate ship washes up on Krailos' north coast, filling the steppe with pirates — the game's best Pirate Corsair respawn while it lasts. Neither announcement source reports it.",
+      "A wrecked pirate ship washes up on Krailos' north coast, filling the steppe with pirates. The game's best Pirate Corsair respawn while it lasts. Neither announcement source reports it.",
   },
   {
     id: "forsaken",
@@ -473,11 +473,11 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     variantKind: "phase",
     detection: "always-active",
     howToCheck:
-      "Enter the mine and look down from the first floor before descending — the second floor's creatures tell you which rotation is in effect.",
+      "Enter the mine and look down from the first floor before descending. The second floor's creatures tell you which rotation is in effect.",
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
-      "The Forsaken Mine's inhabitants rotate at every server save between four creature sets. It is never 'off' — the only question is which set is down there, and only looking answers it. The Drillworm/Lost Dwarf rotation is far harder than the other three.",
+      "The Forsaken Mine's inhabitants rotate at every server save between four creature sets. It is never 'off'. The only question is which set is down there, and only looking answers it. The Drillworm/Lost Dwarf rotation is far harder than the other three.",
   },
   {
     id: "chyllfroest",

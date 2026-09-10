@@ -179,19 +179,19 @@ const NARRATIVES: Record<string, Resolver> = {
     pt: (city) =>
       city
         ? `Um fiery fury gate se abriu perto de ${city}.`
-        : "Um fiery fury gate se abriu perto de uma das grandes cidades — ainda não se sabe qual.",
+        : "Um fiery fury gate se abriu perto de uma das grandes cidades; ainda não se sabe qual.",
     en: (city) =>
       city
         ? `A fiery fury gate has opened near ${city}.`
-        : "A fiery fury gate has opened near one of the major cities — which one isn't known yet.",
+        : "A fiery fury gate has opened near one of the major cities; which one isn't known yet.",
     es: (city) =>
       city
         ? `Se abrió una fiery fury gate cerca de ${city}.`
-        : "Se abrió una fiery fury gate cerca de una de las grandes ciudades — todavía no se sabe cuál.",
+        : "Se abrió una fiery fury gate cerca de una de las grandes ciudades; todavía no se sabe cuál.",
     pl: (city) =>
       city
         ? `W pobliżu ${city} otworzyła się fiery fury gate.`
-        : "W pobliżu jednego z większych miast otworzyła się fiery fury gate — nie wiadomo jeszcze którego.",
+        : "W pobliżu jednego z większych miast otworzyła się fiery fury gate, nie wiadomo jeszcze którego.",
   }),
   "hive-outpost": simple({
     pt: "Uma infestação da Hive foi avistada a sudoeste de Liberty Bay.",
@@ -203,19 +203,19 @@ const NARRATIVES: Record<string, Resolver> = {
     pt: (place) =>
       place
         ? `Bibby Bloodbath e sua tripulação estão acampadas ${place}.`
-        : "Bibby Bloodbath e sua tripulação estão em marcha — o acampamento pode estar em um de três lugares.",
+        : "Bibby Bloodbath e sua tripulação estão em marcha. O acampamento pode estar em um de três lugares.",
     en: (place) =>
       place
         ? `Bibby Bloodbath and her crew are camped ${place}.`
-        : "Bibby Bloodbath and her crew are on the warpath — the camp could be at any of three places.",
+        : "Bibby Bloodbath and her crew are on the warpath. The camp could be at any of three places.",
     es: (place) =>
       place
         ? `Bibby Bloodbath y su tripulación acampan ${place}.`
-        : "Bibby Bloodbath y su tripulación están en marcha — el campamento puede estar en uno de tres lugares.",
+        : "Bibby Bloodbath y su tripulación están en marcha. El campamento puede estar en uno de tres lugares.",
     pl: (place) =>
       place
         ? `Bibby Bloodbath i jej załoga obozują ${place}.`
-        : "Bibby Bloodbath i jej załoga są na wojennej ścieżce — obóz może być w jednym z trzech miejsc.",
+        : "Bibby Bloodbath i jej załoga są na wojennej ścieżce. Obóz może być w jednym z trzech miejsc.",
   }),
   "devovorgas-essence": simple({
     pt: "Devovorga's essence está disponível em Vengoth para entrar em sua guarida.",
@@ -263,19 +263,19 @@ const NARRATIVES: Record<string, Resolver> = {
     pt: (camp) =>
       camp
         ? `Os nômades acamparam em Kha'labal, ${camp}.`
-        : "Os nômades acamparam em algum lugar de Kha'labal — um dos quatro acampamentos possíveis.",
+        : "Os nômades acamparam em algum lugar de Kha'labal, um dos quatro acampamentos possíveis.",
     en: (camp) =>
       camp
         ? `The nomads have camped in Kha'labal, ${camp}.`
-        : "The nomads have camped somewhere in Kha'labal — one of the four possible camps.",
+        : "The nomads have camped somewhere in Kha'labal, one of the four possible camps.",
     es: (camp) =>
       camp
         ? `Los nómadas acamparon en Kha'labal, ${camp}.`
-        : "Los nómadas acamparon en algún lugar de Kha'labal — uno de los cuatro campamentos posibles.",
+        : "Los nómadas acamparon en algún lugar de Kha'labal, uno de los cuatro campamentos posibles.",
     pl: (camp) =>
       camp
         ? `Nomadzi rozbili obóz w Kha'labal, ${camp}.`
-        : "Nomadzi rozbili obóz gdzieś w Kha'labal — w jednym z czterech możliwych miejsc.",
+        : "Nomadzi rozbili obóz gdzieś w Kha'labal, w jednym z czterech możliwych miejsc.",
   }),
   bored: simple({
     pt: "A bruxa Wyda está entediada e recebe visitas.",
@@ -284,15 +284,15 @@ const NARRATIVES: Record<string, Resolver> = {
     pl: "Wiedźma Wyda się nudzi i przyjmuje gości.",
   }),
   "noodles-is-gone": simple({
-    pt: "Noodles fugiu do castelo — pegue uma coleira com King Tibianus e procure pela península de Thais.",
-    en: "Noodles has left the castle — get a leash from King Tibianus and search the Thaian peninsula.",
-    es: "Noodles se escapó del castillo — pide una correa a King Tibianus y busca por la península de Thais.",
-    pl: "Noodles uciekł z zamku — weź smycz od King Tibianus i przeszukaj półwysep Thais.",
+    pt: "Noodles fugiu do castelo. Pegue uma coleira com King Tibianus e procure pela península de Thais.",
+    en: "Noodles has left the castle. Get a leash from King Tibianus and search the Thaian peninsula.",
+    es: "Noodles se escapó del castillo. Pide una correa a King Tibianus y busca por la península de Thais.",
+    pl: "Noodles uciekł z zamku. Weź smycz od King Tibianus i przeszukaj półwysep Thais.",
   }),
   kingsday: simple({
-    pt: "É Kingsday em Thais — a celebração está em andamento.",
-    en: "It's Kingsday in Thais — the celebration is underway.",
-    es: "Es Kingsday en Thais — la celebración está en curso.",
+    pt: "É Kingsday em Thais. A celebração está em andamento.",
+    en: "It's Kingsday in Thais. The celebration is underway.",
+    es: "Es Kingsday en Thais. La celebración está en curso.",
     pl: "W Thais trwa Kingsday.",
   }),
   thawing: simple({
@@ -302,10 +302,10 @@ const NARRATIVES: Record<string, Resolver> = {
     pl: "W pobliżu Svargrond stopiło się wystarczająco dużo śniegu, by odsłonić Ice Flowers.",
   }),
   "spider-nest": simple({
-    pt: "Um ninho inteiro de aranhas precisa ser exterminado — Mamma Longlegs está à solta.",
-    en: "A whole nest of spiders needs exterminating — Mamma Longlegs is on the loose.",
-    es: "Todo un nido de arañas necesita ser exterminado — Mamma Longlegs anda suelta.",
-    pl: "Całe gniazdo pająków wymaga eksterminacji — Mamma Longlegs jest na wolności.",
+    pt: "Um ninho inteiro de aranhas precisa ser exterminado. Mamma Longlegs está à solta.",
+    en: "A whole nest of spiders needs exterminating. Mamma Longlegs is on the loose.",
+    es: "Todo un nido de arañas necesita ser exterminado. Mamma Longlegs anda suelta.",
+    pl: "Całe gniazdo pająków wymaga eksterminacji. Mamma Longlegs jest na wolności.",
   }),
   "poacher-caves": byVariant({
     pt: (phase) =>
@@ -315,7 +315,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Caçadores furtivos estão devastando a vida selvagem ao norte do Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves e Gloom Wolves tomaram o lugar dos animais ao norte do Green Claw Swamp."
-            : "Há uma disputa nas cavernas ao norte do Green Claw Swamp — ainda não se sabe quem domina.",
+            : "Há uma disputa nas cavernas ao norte do Green Claw Swamp; ainda não se sabe quem domina.",
     en: (phase) =>
       phase === "game"
         ? "Wild animals dominate the area north of the Green Claw Swamp."
@@ -323,7 +323,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Poachers are ravaging the wildlife north of the Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves and Gloom Wolves have taken over north of the Green Claw Swamp."
-            : "The caves north of the Green Claw Swamp are contested — who holds them isn't known yet.",
+            : "The caves north of the Green Claw Swamp are contested; who holds them isn't known yet.",
     es: (phase) =>
       phase === "game"
         ? "Los animales salvajes dominan la zona al norte del Green Claw Swamp."
@@ -331,7 +331,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Los cazadores furtivos devastan la fauna al norte del Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Los Ghost Wolves y Gloom Wolves han tomado el control al norte del Green Claw Swamp."
-            : "Las cuevas al norte del Green Claw Swamp están en disputa — todavía no se sabe quién domina.",
+            : "Las cuevas al norte del Green Claw Swamp están en disputa; todavía no se sabe quién domina.",
     pl: (phase) =>
       phase === "game"
         ? "Dzikie zwierzęta dominują na terenie na północ od Green Claw Swamp."
@@ -339,7 +339,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Kłusownicy dziesiątkują dziką przyrodę na północ od Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves i Gloom Wolves przejęły teren na północ od Green Claw Swamp."
-            : "Jaskinie na północ od Green Claw Swamp są sporne — nie wiadomo jeszcze, kto je trzyma.",
+            : "Jaskinie na północ od Green Claw Swamp są sporne; nie wiadomo jeszcze, kto je trzyma.",
   }),
   "jungle-camp": byVariant({
     pt: (side) =>
@@ -347,25 +347,25 @@ const NARRATIVES: Record<string, Resolver> = {
         ? "Os caçadores dominam as terras sagradas de Trapwood."
         : side === "dworcs"
           ? "Os dworcs dominam as terras sagradas de Trapwood."
-          : "Caçadores e dworcs disputam as terras sagradas de Trapwood — o World Board não diz quem está ganhando.",
+          : "Caçadores e dworcs disputam as terras sagradas de Trapwood. O World Board não diz quem está ganhando.",
     en: (side) =>
       side === "hunters"
         ? "The hunters hold Trapwood's holy grounds."
         : side === "dworcs"
           ? "The dworcs hold Trapwood's holy grounds."
-          : "Hunters and dworcs are fighting over Trapwood's holy grounds — the World Board doesn't say who's winning.",
+          : "Hunters and dworcs are fighting over Trapwood's holy grounds. The World Board doesn't say who's winning.",
     es: (side) =>
       side === "hunters"
         ? "Los cazadores dominan las tierras sagradas de Trapwood."
         : side === "dworcs"
           ? "Los dworcs dominan las tierras sagradas de Trapwood."
-          : "Cazadores y dworcs luchan por las tierras sagradas de Trapwood — el World Board no dice quién gana.",
+          : "Cazadores y dworcs luchan por las tierras sagradas de Trapwood. El World Board no dice quién gana.",
     pl: (side) =>
       side === "hunters"
         ? "Myśliwi kontrolują święte ziemie Trapwood."
         : side === "dworcs"
           ? "Dworcowie kontrolują święte ziemie Trapwood."
-          : "Myśliwi i dworcowie walczą o święte ziemie Trapwood — World Board nie mówi, kto wygrywa.",
+          : "Myśliwi i dworcowie walczą o święte ziemie Trapwood. World Board nie mówi, kto wygrywa.",
   }),
   grimvale: simple({
     pt: "A lua cheia tem um efeito estranho sobre a ilha de Grimvale.",
@@ -386,10 +386,10 @@ const NARRATIVES: Record<string, Resolver> = {
     pl: "W głównych nadmorskich miastach napadane są banki.",
   }),
   "river-runs-deep": simple({
-    pt: "O rio de Zao Steppe está cheio — há mais peixes que o normal.",
-    en: "The Zao Steppe river runs deep — there's more fish than usual.",
-    es: "El río de Zao Steppe está crecido — hay más peces de lo normal.",
-    pl: "Rzeka w Zao Steppe jest pełna — ryb jest więcej niż zwykle.",
+    pt: "O rio de Zao Steppe está cheio. Há mais peixes que o normal.",
+    en: "The Zao Steppe river runs deep. There's more fish than usual.",
+    es: "El río de Zao Steppe está crecido. Hay más peces de lo normal.",
+    pl: "Rzeka w Zao Steppe jest pełna. Ryb jest więcej niż zwykle.",
   }),
   lumberjack: simple({
     pt: "As árvores reais da Rainha estão sendo derrubadas.",
@@ -404,34 +404,34 @@ const NARRATIVES: Record<string, Resolver> = {
     pl: "Rzeka na południe od obozu banitów zalewa małą wyspę, teraz dostępną.",
   }),
   "beaver-breakout": simple({
-    pt: "Os Giant Beavers estão soltos em Silvertides, Marapur — dá para domar a montaria.",
-    en: "The Giant Beavers are loose at Silvertides in Marapur — the mount can be tamed.",
-    es: "Los Giant Beavers están sueltos en Silvertides, Marapur — se puede domar la montura.",
-    pl: "Giant Beavery są na wolności w Silvertides w Marapur — można oswoić wierzchowca.",
+    pt: "Os Giant Beavers estão soltos em Silvertides, Marapur. Dá para domar a montaria.",
+    en: "The Giant Beavers are loose at Silvertides in Marapur. The mount can be tamed.",
+    es: "Los Giant Beavers están sueltos en Silvertides, Marapur. Se puede domar la montura.",
+    pl: "Giant Beavery są na wolności w Silvertides w Marapur. Można oswoić wierzchowca.",
   }),
   shipwrecked: simple({
-    pt: "Um navio pirata naufragou na costa norte de Krailos — o melhor respawn de Pirate Corsair do jogo.",
-    en: "A pirate ship has wrecked on Krailos' north coast — the game's best Pirate Corsair respawn.",
-    es: "Un barco pirata naufragó en la costa norte de Krailos — el mejor respawn de Pirate Corsair del juego.",
-    pl: "Statek piracki rozbił się na północnym wybrzeżu Krailos — najlepszy respawn Pirate Corsair w grze.",
+    pt: "Um navio pirata naufragou na costa norte de Krailos, o melhor respawn de Pirate Corsair do jogo.",
+    en: "A pirate ship has wrecked on Krailos' north coast, the game's best Pirate Corsair respawn.",
+    es: "Un barco pirata naufragó en la costa norte de Krailos, el mejor respawn de Pirate Corsair del juego.",
+    pl: "Statek piracki rozbił się na północnym wybrzeżu Krailos, najlepszy respawn Pirate Corsair w grze.",
   }),
   forsaken: byNamedVariant(FORSAKEN_SETS, {
     pt: (set) =>
       set
         ? `A Forsaken Mine está tomada por ${set}.`
-        : "A Forsaken Mine mudou de habitantes no server save — olhe do primeiro andar antes de descer.",
+        : "A Forsaken Mine mudou de habitantes no server save. Olhe do primeiro andar antes de descer.",
     en: (set) =>
       set
         ? `The Forsaken Mine is inhabited by ${set} today.`
-        : "The Forsaken Mine's inhabitants rotated at server save — look down from the first floor before descending.",
+        : "The Forsaken Mine's inhabitants rotated at server save. Look down from the first floor before descending.",
     es: (set) =>
       set
         ? `La Forsaken Mine está ocupada por ${set}.`
-        : "La Forsaken Mine cambió de habitantes en el server save — mira desde el primer piso antes de bajar.",
+        : "La Forsaken Mine cambió de habitantes en el server save. Mira desde el primer piso antes de bajar.",
     pl: (set) =>
       set
         ? `Forsaken Mine zamieszkują dziś ${set}.`
-        : "Mieszkańcy Forsaken Mine zmienili się po server save — zajrzyj z pierwszego piętra przed zejściem.",
+        : "Mieszkańcy Forsaken Mine zmienili się po server save. Zajrzyj z pierwszego piętra przed zejściem.",
   }),
   chyllfroest: simple({
     pt: "Uma ponte de gelo liga Svargrond a uma ilha congelada onde monstros foram avistados.",

@@ -136,7 +136,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   const handleShare = async () => {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: `Morning Tibia — ${state.world}`, text: briefing });
+        await navigator.share({ title: `Morning Tibia: ${state.world}`, text: briefing });
         setCopyFailed(false);
         return;
       } catch { /* cancelled, or unavailable — fall through to the clipboard */ }
@@ -323,7 +323,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
               <div role="status" aria-live="polite" className="mt-2 empty:mt-0">
                 {copyFailed && (
                   <p className="text-[12.5px] text-[hsl(var(--danger))]">
-                    Couldn&apos;t copy — select the text below and copy it manually.
+                    Couldn&apos;t copy. Select the text below and copy it manually.
                   </p>
                 )}
                 {copied && !copyFailed && (
@@ -333,7 +333,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                 )}
                 {state.liveData.hasFailure && (
                   <p className="text-[12.5px] text-[hsl(var(--muted-foreground))]">
-                    This briefing leaves out {formatList(state.liveData.failures)} — the app
+                    This briefing leaves out {formatList(state.liveData.failures)}. The app
                     couldn&apos;t load {state.liveData.failures.length === 1 ? "it" : "them"}, so
                     nothing is claimed about {state.liveData.failures.length === 1 ? "it" : "them"}.
                   </p>
@@ -387,7 +387,7 @@ function Invitation() {
   return (
     <div className="mb-8 border-b border-[hsl(var(--page-edge))] pb-7">
       <p className="prose-serif text-[19px] leading-[1.65] text-[hsl(var(--ink))]">
-        This page writes your world&apos;s morning briefing — but only from what you can prove.
+        This page writes your world&apos;s morning briefing, but only from what you can prove.
         Nothing has been checked yet today.
       </p>
       <ol className="mt-4 flex flex-col gap-2 text-[13.5px] leading-relaxed text-[hsl(var(--ink-soft))]">
@@ -398,7 +398,7 @@ function Invitation() {
         </Step>
         <Step n={2}>
           Greet any <strong className="font-medium text-[hsl(var(--ink))]">guide</strong>, say{" "}
-          <span className="font-mono text-[12.5px]">world change</span>, then a keyword — the
+          <span className="font-mono text-[12.5px]">world change</span>, then a keyword. The
           Everything view lists all fourteen.
         </Step>
         <Step n={3}>
@@ -447,7 +447,7 @@ function DayRolloverBanner({
     >
       <Sunrise className="h-4 w-4 shrink-0 text-[hsl(var(--gold))]" aria-hidden="true" />
       <span>
-        Server save has passed — the world reset, so everything below is from before it.
+        Server save has passed. The world reset, so everything below is from before it.
       </span>
       <Button variant="outline" size="sm" onClick={onStartNewDay}>
         Start today&apos;s dispatch

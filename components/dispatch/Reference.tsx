@@ -120,7 +120,7 @@ export function Reference({
                     ? variant?.label ?? "running"
                     : value.status === "inactive"
                       ? "not running"
-                      : "—"}
+                      : "not checked"}
                 </span>
               )}
             </Row>
@@ -319,7 +319,7 @@ function MiniDetails({ definition }: { definition: MiniWorldChangeDefinition }) 
       )}
       {definition.reference?.length ? (
         // Deliberately a hint, never a claim — the board never says where Noodles is.
-        <Detail term="Known spots">{definition.reference.join(" · ")}</Detail>
+        <Detail term="Known spots">{definition.reference.join("; ")}</Detail>
       ) : null}
       <WikiLink href={href} />
     </dl>
