@@ -60,7 +60,15 @@ export function Reference({
   const visibleEvents = upcomingEvents.filter((e) => e.daysUntil <= windowDays);
 
   return (
-    <div className="grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-2">
+    /* Two columns from 768px, not 1024px. A browser beside the Tibia client is commonly
+       860-1000px wide, and at `lg` that fell back to one column: forty rows with the name
+       hard left, its state hard right, ~600px of dead space between. Two columns cut that
+       gap to 174px at 860px, and the page from 2.3 screens to 1.46.
+
+       Not three columns at `xl` — tried and measured. The gap improves, but the columns
+       hold 26, 14 and 3 rows, so the third renders ~80% empty. An even margin outside the
+       content beats a hollow column inside it. */
+    <div className="grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-2">
       <Column title="World board & towncryer" count={`${mini.length} tracked`}>
         {mini.map(({ definition: d, value }) => {
           const variant = d.variants.find((v) => v.id === value.variantId);
@@ -120,6 +128,8 @@ export function Reference({
         })}
       </Column>
 
+      {/* Guide NPC and Events stay stacked in the second column: together they roughly match
+          the 26-row Mini World Change list, so the two columns end up close to even. */}
       <div className="flex flex-col gap-10">
         <Column
           title="Guide NPC"

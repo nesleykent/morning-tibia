@@ -162,6 +162,9 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
       <div
         className={cn(
           "mx-auto px-5 pb-32 pt-8 transition-[max-width] duration-300 sm:px-8 sm:pb-16 sm:pt-14",
+          // Today keeps its 760px measure at every width — it is prose. The catalog stops at
+          // 1060px for a related reason: past ~480px per column, the gap between a row's name
+          // and its state grows faster than the extra width helps.
           view === "today" ? "max-w-[760px]" : "max-w-[1060px]",
         )}
       >
