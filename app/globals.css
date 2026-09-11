@@ -296,13 +296,6 @@ body {
 @container (min-width: 40rem) {
   .dispatch-numbers { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
-.dispatch-market-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.dispatch-market-table th, .dispatch-market-table td { padding: .4rem 0; white-space: nowrap; }
-.dispatch-market-table thead { color: hsl(var(--ink-soft)); font-size: 12px; border-bottom: 1px solid hsl(var(--line)); }
-.dispatch-market-table thead th { font-weight: 400; }
-.dispatch-market-table th:first-child { text-align: left; }
-.dispatch-market-table tbody th { font-weight: 600; }
-.dispatch-market-table td, .dispatch-market-table th:not(:first-child) { text-align: right; padding-left: .65rem; font-variant-numeric: tabular-nums; }
 .dispatch-market-source { margin-top: .25rem; padding-top: .4rem; border-top: 1px solid hsl(var(--line)); font-size: 11px; color: hsl(var(--ink-faint)); }
 @media (min-width: 640px) {
   .dashboard-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }

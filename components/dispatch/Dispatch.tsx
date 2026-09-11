@@ -198,7 +198,7 @@ function Numbers({
 
   return (
     <section aria-label="Daily numbers" className="dispatch-numbers">
-      <div>
+      <div className="sheet p-3">
       {warzones.length > 0 && (
         <div>
           <h2 className="dispatch-section-title">
@@ -224,7 +224,7 @@ function Numbers({
       </div>
 
       {(priceEntries.length > 0 || marketUnavailable) && (
-        <div>
+        <div className="sheet p-3">
           <div className="dispatch-market-heading">
             <h2 className="dispatch-section-title">
               Market
@@ -266,29 +266,36 @@ function Numbers({
             </p>
           ) : (
             <>
-              <table className="dispatch-market-table">
-                <caption className="sr-only">Market prices and trends by asset</caption>
-                <thead><tr><th scope="col">Asset</th><th scope="col">Venda</th><th scope="col">Compra</th></tr></thead>
-                <tbody>
-                  {MARKET_ASSETS.map(({ name, ids }) => {
-                    if (!priceEntries.some(([id]) => ids.includes(id))) return null;
-                    return <tr key={name}>
-                      <th scope="row">{name}</th>
-                      {[ids[0], ids[1]].map((id, index) => {
-                        const price = id ? prices[id] : undefined;
-                        if (!price || price.value === null) return <td key={index}><span aria-label="Not available" className="text-ink-faint">—</span></td>;
-                        const direction = computeTrendForBasis(price.history, entryCount);
-                        const trend = TREND[direction];
-                        const shown = averageOfLastEntries(price.history, entryCount) ?? price.value;
-                        return <td key={index}>
-                          {Math.round(shown).toLocaleString("pt-BR")}
-                          <span aria-label={direction} className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
-                        </td>;
-                      })}
-                    </tr>;
-                  })}
-                </tbody>
-              </table>
+              <div className="dispatch-market-assets grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] items-start gap-x-4 gap-y-3">
+                {MARKET_ASSETS.map(({ name, ids }) => {
+                  const entries = priceEntries.filter(([id]) => ids.includes(id));
+                  if (entries.length === 0) return null;
+                  return (
+                    <section key={name} aria-label={name} className="min-w-max">
+                      <h4 className="mb-1 whitespace-nowrap text-[13.5px] font-semibold text-ink">
+                        {name}
+                      </h4>
+                      <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-1">
+                        {entries.map(([id, price]) => {
+                          const trend = TREND[computeTrendForBasis(price.history, entryCount)];
+                          const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
+                          return (
+                            <div key={id} className="contents">
+                              <dt className="whitespace-nowrap text-[12.5px] text-ink-soft">
+                                {id === "tibiaCoinBuy" ? "Compra" : "Venda"}
+                              </dt>
+                              <dd className="tnum whitespace-nowrap text-right text-[13.5px] text-ink">
+                                {Math.round(shown).toLocaleString("pt-BR")}
+                                <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
+                              </dd>
+                            </div>
+                          );
+                        })}
+                      </dl>
+                    </section>
+                  );
+                })}
+              </div>
               {ageLabel && (
                 <p className="dispatch-market-source">
                   tibiamarket.top, {ageLabel}
