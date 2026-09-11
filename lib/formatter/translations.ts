@@ -38,7 +38,11 @@ export interface BriefingTranslation {
   marketOffer: (id: MarketPriceId) => string;
   /** "Em 2 dias" / "Hoje" — how far off a scheduled event is, opening its own line. */
   inDays: (days: number) => string;
-  /** Attribution for the market numbers, with their age when one is known. */
+  /**
+   * Attribution for the market numbers, with their age when one is known. Parenthesised and
+   * lower case: it is an aside about the numbers under it, not a sentence of its own, and the
+   * renderer already sets it in italics.
+   */
   marketSource: (source: string, age: string | null) => string;
   /** A Mini World Change confirmed running, when no narrative sentence is authored. */
   running: string;
@@ -86,7 +90,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     marketOffer: (id) => (id === "tibiaCoinBuy" ? "Compra" : "Venda"),
     inDays: (days) =>
       days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Em ${days} dias`,
-    marketSource: (source, age) => (age ? `Preços de ${source}, ${age}.` : `Preços de ${source}.`),
+    marketSource: (source, age) =>
+      age ? `(preços de ${source}, ${age})` : `(preços de ${source})`,
     running: "Está ativa.",
     notRunning: "Não está acontecendo.",
     notCheckedToday: "Não conferido hoje.",
@@ -113,7 +118,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     tibiaDrome: "Tibia Drome",
     marketOffer: (id) => (id === "tibiaCoinBuy" ? "Buy" : "Sell"),
     inDays: (days) => (days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`),
-    marketSource: (source, age) => (age ? `Prices from ${source}, ${age}.` : `Prices from ${source}.`),
+    marketSource: (source, age) =>
+      age ? `(prices from ${source}, ${age})` : `(prices from ${source})`,
     running: "Running.",
     notRunning: "Not running.",
     notCheckedToday: "Not checked today.",
@@ -140,7 +146,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     tibiaDrome: "Tibia Drome",
     marketOffer: (id) => (id === "tibiaCoinBuy" ? "Compra" : "Venta"),
     inDays: (days) => (days <= 0 ? "Hoy" : days === 1 ? "Mañana" : `En ${days} días`),
-    marketSource: (source, age) => (age ? `Precios de ${source}, ${age}.` : `Precios de ${source}.`),
+    marketSource: (source, age) =>
+      age ? `(precios de ${source}, ${age})` : `(precios de ${source})`,
     running: "Está activa.",
     notRunning: "No está ocurriendo.",
     notCheckedToday: "Sin comprobar hoy.",
@@ -167,7 +174,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     tibiaDrome: "Tibia Drome",
     marketOffer: (id) => (id === "tibiaCoinBuy" ? "Kupno" : "Sprzedaż"),
     inDays: (days) => (days <= 0 ? "Dziś" : days === 1 ? "Jutro" : `Za ${days} dni`),
-    marketSource: (source, age) => (age ? `Ceny z ${source}, ${age}.` : `Ceny z ${source}.`),
+    marketSource: (source, age) =>
+      age ? `(ceny z ${source}, ${age})` : `(ceny z ${source})`,
     running: "Aktywna.",
     notRunning: "Nieaktywna.",
     notCheckedToday: "Dziś niesprawdzone.",

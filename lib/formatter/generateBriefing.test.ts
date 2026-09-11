@@ -307,8 +307,9 @@ describe("today's numbers", () => {
     // not what topping up would cost.
     const message = generateBriefingMessage(withMarket(makeInput()));
     expect(message).toContain("🪙 *Tibia Coin*\n*Venda: 41.500 ⬆️*\n*Compra: 39.900 ⬇️*");
-    // The source heads the section, because it is the provenance of every number under it.
-    expect(message).toMatch(/📈 \*MARKET\*\n_Preços de tibiamarket\.top, .+\._/);
+    // The source heads the section, because it is the provenance of every number under it, and
+    // it reads as an aside rather than a sentence: parenthesised, lower case, no full stop.
+    expect(message).toMatch(/📈 \*MARKET\*\n_\(preços de tibiamarket\.top, .+\)_/);
     expect(message).not.toContain("TIBIAMARKET");
   });
 
