@@ -140,6 +140,40 @@ export function formatUpcomingEventDate(event: UpcomingEvent, language: Briefing
   return notes.length > 0 ? `${date} (${notes.join(", ")})` : date;
 }
 
+/**
+ * "Appears on 13 September." — a date that lives inside an event's own window.
+ *
+ * Several events have something that happens on a fixed day of the month rather than on the
+ * day the event opens: Feroxa always spawns on the 13th, whatever day Grimvale starts. That
+ * day is the single most useful thing the preview can say, and it is worked out here from the
+ * occurrence's start date rather than written into the catalog, so nobody has to edit a
+ * sentence every month.
+ *
+ * The day is read as "the next time that day comes round from the start", which is how an
+ * event window works: a 13th named against a window that opens on the 12th is this month's,
+ * and one named against a window that opens on the 28th is next month's.
+ */
+export function formatEventInternalDate(
+  startAt: string,
+  dayOfMonth: number,
+  language: BriefingLanguage,
+): string {
+  const start = new Date(startAt);
+  const year = start.getUTCFullYear();
+  const month = start.getUTCMonth() + (dayOfMonth < start.getUTCDate() ? 1 : 0);
+  const date = new Date(Date.UTC(year, month, dayOfMonth));
+  const spoken = formatLongDateUTC(date, language);
+  return pick(
+    {
+      pt: `Aparece em ${spoken}.`,
+      en: `Appears on ${spoken}.`,
+      es: `Aparece el ${spoken}.`,
+      pl: `Pojawia się ${spoken}.`,
+    },
+    language,
+  );
+}
+
 export function formatUpcomingEventLine(event: UpcomingEvent, language: BriefingLanguage): string {
   const shortDate = formatShortDateUTC(new Date(event.startAt));
   const withinThreshold = event.daysUntil <= UPCOMING_COUNTDOWN_THRESHOLD_DAYS;

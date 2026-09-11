@@ -102,21 +102,20 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
       },
     }),
     "mage-slain": simple({
+      // No countdown, on purpose. The portal collapses about five minutes after the kill, but
+      // the Guide reply carries no timestamp, so the app does not know when that was and
+      // cannot say how long is left. It also cannot say the portal has already shut.
       pt: {
-        headline: "O Raging Mage foi derrotado e o portal na torre em Zao está se fechando.",
-        body: "Ele só volta a abrir depois do próximo Server Save.",
+        headline: "O Raging Mage foi derrotado e o portal dimensional está entrando em colapso.",
       },
       en: {
-        headline: "The Raging Mage has been slain and the portal in the Zao tower is collapsing.",
-        body: "It only opens again after the next server save.",
+        headline: "The Raging Mage has been defeated and the dimensional portal is collapsing.",
       },
       es: {
-        headline: "El Raging Mage fue derrotado y el portal en la torre de Zao se está cerrando.",
-        body: "Solo vuelve a abrirse tras el próximo Server Save.",
+        headline: "El Raging Mage fue derrotado y el portal dimensional se está derrumbando.",
       },
       pl: {
-        headline: "Raging Mage został pokonany, a portal w wieży w Zao się zamyka.",
-        body: "Otworzy się ponownie dopiero po następnym server save.",
+        headline: "Raging Mage został pokonany, a wymiarowy portal się zapada.",
       },
     }),
   },
@@ -125,19 +124,19 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "passable": simple({
       pt: {
         headline: "A torre dos servos em Edron está coberta de slime.",
-        body: "O fungo precisa ser limpo antes que as ondas de servos comecem.",
+        body: "Limpar o fungo dispara as ondas de servos e libera o Mad Mage.",
       },
       en: {
         headline: "The servants' tower in Edron is covered in slime.",
-        body: "The fungus has to be cleared before the servant waves begin.",
+        body: "Clearing the fungus triggers the servant waves and unlocks the Mad Mage.",
       },
       es: {
         headline: "La torre de los sirvientes en Edron está cubierta de slime.",
-        body: "Hay que limpiar el hongo antes de que empiecen las oleadas de sirvientes.",
+        body: "Limpiar el hongo dispara las oleadas de sirvientes y desbloquea al Mad Mage.",
       },
       pl: {
         headline: "Wieża sług w Edron jest pokryta slime'em.",
-        body: "Grzyb trzeba usunąć, zanim ruszą fale sług.",
+        body: "Usunięcie grzyba uruchamia fale sług i odblokowuje Mad Mage'a.",
       },
     }),
     "impassable": simple({
@@ -175,16 +174,30 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         headline: "Gorączka bagienna w Venore jest pod kontrolą. Leków starcza dla wszystkich.",
       },
     }),
+    "spreading": simple({
+      pt: {
+        headline: "A febre do pântano se espalha por Venore. Faltam remédios no abrigo dos pobres.",
+      },
+      en: {
+        headline: "The swamp fever is spreading through Venore. The poor house is short of medicine.",
+      },
+      es: {
+        headline: "La fiebre del pantano se extiende por Venore. Falta medicina en la casa de los pobres.",
+      },
+      pl: {
+        headline: "Gorączka bagienna rozprzestrzenia się po Venore. W przytułku brakuje leków.",
+      },
+    }),
   },
 
   thornfire: {
     "guarded": simple({
       pt: {
-        headline: "Os incendiários seguem presos nas celas sob Shadowthorn, ainda sob vigilância segura.",
+        headline: "Os incendiários continuam presos sob Shadowthorn.",
       },
-      en: { headline: "The firestarters remain locked in their cells beneath Shadowthorn, still safely guarded." },
-      es: { headline: "Los incendiarios siguen encerrados en sus celdas bajo Shadowthorn, todavía vigilados." },
-      pl: { headline: "Podpalacze wciąż siedzą zamknięci w celach pod Shadowthorn, pod pilną strażą." },
+      en: { headline: "The firestarters are still imprisoned beneath Shadowthorn." },
+      es: { headline: "Los incendiarios siguen presos bajo Shadowthorn." },
+      pl: { headline: "Podpalacze wciąż są uwięzieni pod Shadowthorn." },
     }),
     "breaking-out": (stateId, language) => {
       const recovering = stateId === "being-fought";
@@ -290,10 +303,10 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
 
   "twisted-waters": {
     "clean": simple({
-      pt: { headline: "O grande lago perto de Port Hope está limpo." },
-      en: { headline: "The great lake near Port Hope is clean." },
-      es: { headline: "El gran lago cerca de Port Hope está limpio." },
-      pl: { headline: "Wielkie jezioro w pobliżu Port Hope jest czyste." },
+      pt: { headline: "O lago perto de Port Hope está limpo no momento." },
+      en: { headline: "The lake near Port Hope is currently clean." },
+      es: { headline: "El lago cerca de Port Hope está limpio ahora mismo." },
+      pl: { headline: "Jezioro w pobliżu Port Hope jest obecnie czyste." },
     }),
     "turning": simple({
       pt: {
@@ -342,37 +355,37 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
     "drained-quota-met": simple({
       pt: {
-        headline: "A água das minas foi drenada. O acesso aos Deepling Scouts está liberado.",
+        headline: "A mina perto de Kazordoon está drenada, dando acesso aos Eyes of the Deep.",
         body: "Deeplings suficientes já foram mortos hoje, então a mina continuará aberta após o próximo Server Save.",
       },
       en: {
-        headline: "The mine water has been drained. Deepling Scouts are accessible.",
+        headline: "The mine near Kazordoon is currently drained, giving access to the Eyes of the Deep.",
         body: "Enough Deeplings have already been killed today, so the mine will stay open after the next server save.",
       },
       es: {
-        headline: "El agua de la mina fue drenada. Hay acceso a los Deepling Scouts.",
+        headline: "La mina cerca de Kazordoon está drenada, dando acceso a los Eyes of the Deep.",
         body: "Ya se mataron suficientes Deeplings hoy, así que la mina seguirá abierta tras el próximo Server Save.",
       },
       pl: {
-        headline: "Woda w kopalni została odpompowana. Dostępni są Deepling Scouts.",
+        headline: "Kopalnia przy Kazordoon jest osuszona, co otwiera dostęp do Eyes of the Deep.",
         body: "Dziś zabito już wystarczająco Deeplingów, więc kopalnia pozostanie otwarta po następnym server save.",
       },
     }),
     "drained-quota-open": simple({
       pt: {
-        headline: "A água das minas foi drenada. O acesso aos Deepling Scouts está liberado.",
+        headline: "A mina perto de Kazordoon está drenada, dando acesso aos Eyes of the Deep.",
         body: "Ainda é preciso matar mais Deeplings hoje para a mina continuar aberta após o próximo Server Save.",
       },
       en: {
-        headline: "The mine water has been drained. Deepling Scouts are accessible.",
+        headline: "The mine near Kazordoon is currently drained, giving access to the Eyes of the Deep.",
         body: "More Deeplings still need to be killed today for the mine to stay open after the next server save.",
       },
       es: {
-        headline: "El agua de la mina fue drenada. Hay acceso a los Deepling Scouts.",
+        headline: "La mina cerca de Kazordoon está drenada, dando acceso a los Eyes of the Deep.",
         body: "Aún hace falta matar más Deeplings hoy para que la mina siga abierta tras el próximo Server Save.",
       },
       pl: {
-        headline: "Woda w kopalni została odpompowana. Dostępni są Deepling Scouts.",
+        headline: "Kopalnia przy Kazordoon jest osuszona, co otwiera dostęp do Eyes of the Deep.",
         body: "Trzeba dziś zabić jeszcze więcej Deeplingów, by kopalnia została otwarta po następnym server save.",
       },
     }),
@@ -461,25 +474,33 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
             headline: leaving
               ? "White Deer demais já foram abatidos perto de Ab'Dendriel. A população vai deixar a região em breve."
               : "A população de White Deer perto de Ab'Dendriel está diminuindo.",
-            body: leaving ? "Lobos famintos devem aparecer no próximo Server Save." : "Se continuar assim, lobos famintos podem aparecer.",
+            body: leaving
+              ? "Se muitos forem mortos hoje, eles somem no próximo Server Save e os Starving Wolves tomam o lugar deles."
+              : "Se muitos forem mortos hoje, eles podem sumir no próximo Server Save e os Starving Wolves tomam o lugar deles.",
           },
           en: {
             headline: leaving
               ? "Too many White Deer have already been slain near Ab'Dendriel. The population will leave soon."
               : "The White Deer population near Ab'Dendriel is dwindling.",
-            body: leaving ? "Starving wolves are expected at the next server save." : "If that continues, starving wolves may show up.",
+            body: leaving
+              ? "If too many are killed today, they disappear after the next server save and Starving Wolves take their place."
+              : "If too many are killed today, they may disappear after the next server save and Starving Wolves will take their place.",
           },
           es: {
             headline: leaving
               ? "Ya se han cazado demasiados White Deer cerca de Ab'Dendriel. La población se irá pronto."
               : "La población de White Deer cerca de Ab'Dendriel está disminuyendo.",
-            body: leaving ? "Se esperan lobos hambrientos en el próximo Server Save." : "Si continúa así, podrían aparecer lobos hambrientos.",
+            body: leaving
+              ? "Si se matan demasiados hoy, desaparecen tras el próximo Server Save y los Starving Wolves ocupan su lugar."
+              : "Si se matan demasiados hoy, pueden desaparecer tras el próximo Server Save y los Starving Wolves ocuparán su lugar.",
           },
           pl: {
             headline: leaving
               ? "Zbyt wiele White Deer zostało już zabitych w pobliżu Ab'Dendriel. Populacja wkrótce opuści region."
               : "Populacja White Deer w pobliżu Ab'Dendriel maleje.",
-            body: leaving ? "Przy najbliższym server save spodziewane są głodne wilki." : "Jeśli tak dalej pójdzie, mogą pojawić się głodne wilki.",
+            body: leaving
+              ? "Jeśli dziś zginie ich zbyt wiele, znikną po następnym server save, a ich miejsce zajmą Starving Wolves."
+              : "Jeśli dziś zginie ich zbyt wiele, mogą zniknąć po następnym server save, a ich miejsce zajmą Starving Wolves.",
           },
         },
         language,
@@ -493,25 +514,33 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
             headline: leaving
               ? "White Deer demais já foram abatidos perto de Ab'Dendriel. A população vai deixar a região em breve."
               : "A população de White Deer perto de Ab'Dendriel está diminuindo.",
-            body: leaving ? "Lobos famintos devem aparecer no próximo Server Save." : "Se continuar assim, lobos famintos podem aparecer.",
+            body: leaving
+              ? "Se muitos forem mortos hoje, eles somem no próximo Server Save e os Starving Wolves tomam o lugar deles."
+              : "Se muitos forem mortos hoje, eles podem sumir no próximo Server Save e os Starving Wolves tomam o lugar deles.",
           },
           en: {
             headline: leaving
               ? "Too many White Deer have already been slain near Ab'Dendriel. The population will leave soon."
               : "The White Deer population near Ab'Dendriel is dwindling.",
-            body: leaving ? "Starving wolves are expected at the next server save." : "If that continues, starving wolves may show up.",
+            body: leaving
+              ? "If too many are killed today, they disappear after the next server save and Starving Wolves take their place."
+              : "If too many are killed today, they may disappear after the next server save and Starving Wolves will take their place.",
           },
           es: {
             headline: leaving
               ? "Ya se han cazado demasiados White Deer cerca de Ab'Dendriel. La población se irá pronto."
               : "La población de White Deer cerca de Ab'Dendriel está disminuyendo.",
-            body: leaving ? "Se esperan lobos hambrientos en el próximo Server Save." : "Si continúa así, podrían aparecer lobos hambrientos.",
+            body: leaving
+              ? "Si se matan demasiados hoy, desaparecen tras el próximo Server Save y los Starving Wolves ocupan su lugar."
+              : "Si se matan demasiados hoy, pueden desaparecer tras el próximo Server Save y los Starving Wolves ocuparán su lugar.",
           },
           pl: {
             headline: leaving
               ? "Zbyt wiele White Deer zostało już zabitych w pobliżu Ab'Dendriel. Populacja wkrótce opuści region."
               : "Populacja White Deer w pobliżu Ab'Dendriel maleje.",
-            body: leaving ? "Przy najbliższym server save spodziewane są głodne wilki." : "Jeśli tak dalej pójdzie, mogą pojawić się głodne wilki.",
+            body: leaving
+              ? "Jeśli dziś zginie ich zbyt wiele, znikną po następnym server save, a ich miejsce zajmą Starving Wolves."
+              : "Jeśli dziś zginie ich zbyt wiele, mogą zniknąć po następnym server save, a ich miejsce zajmą Starving Wolves.",
           },
         },
         language,
@@ -540,20 +569,20 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
   "demon-war": {
     "stalemate": simple({
       pt: {
-        headline: "A guerra entre os demônios está em impasse. Nenhuma facção tem vantagem.",
-        body: "Sem vantagem, nenhum Lord ou Prince nasce nas torres.",
+        headline: "A guerra entre Shaburak e Askarak está em impasse.",
+        body: "As duas facções ocupam suas torres, sem nenhum Lord ou Prince presente.",
       },
       en: {
-        headline: "The demon war is in a stalemate. Neither faction has the advantage.",
-        body: "With no advantage, no Lords or Princes spawn in either tower.",
+        headline: "The war between the Shaburak and Askarak is currently in a stalemate.",
+        body: "Both factions occupy their towers, with no Lords or Princes present.",
       },
       es: {
-        headline: "La guerra entre demonios está estancada. Ninguna facción tiene ventaja.",
-        body: "Sin ventaja, no aparece ningún Lord ni Prince en las torres.",
+        headline: "La guerra entre Shaburak y Askarak está estancada.",
+        body: "Ambas facciones ocupan sus torres, sin ningún Lord ni Prince presente.",
       },
       pl: {
-        headline: "Wojna demonów utknęła w martwym punkcie. Żadna frakcja nie ma przewagi.",
-        body: "Bez przewagi w wieżach nie pojawiają się żadni Lordowie ani Princes.",
+        headline: "Wojna między Shaburak a Askarak utknęła w martwym punkcie.",
+        body: "Obie frakcje zajmują swoje wieże, bez żadnych Lordów ani Princes.",
       },
     }),
     "shaburak-advantage": (stateId, language) => {
@@ -666,10 +695,22 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
 
   "sea-serpent": {
     "asleep": simple({
-      pt: { headline: "A Fire-Feathered Serpent está profundamente adormecida." },
-      en: { headline: "The Fire-Feathered Serpent is fast asleep." },
-      es: { headline: "La Fire-Feathered Serpent está profundamente dormida." },
-      pl: { headline: "Fire-Feathered Serpent jest pogrążony w głębokim śnie." },
+      pt: {
+        headline: "A Fire-Feathered Serpent está profundamente adormecida.",
+        body: "Os Seacrest Grounds seguem com as Quaras comuns, os Sea Serpents e os Seacrest Serpents.",
+      },
+      en: {
+        headline: "The Fire-Feathered Serpent is fast asleep.",
+        body: "The Seacrest Grounds still hold the regular Quaras, Sea Serpents and Seacrest Serpents.",
+      },
+      es: {
+        headline: "La Fire-Feathered Serpent está profundamente dormida.",
+        body: "Los Seacrest Grounds siguen con las Quaras comunes, los Sea Serpents y los Seacrest Serpents.",
+      },
+      pl: {
+        headline: "Fire-Feathered Serpent jest pogrążony w głębokim śnie.",
+        body: "W Seacrest Grounds wciąż są zwykłe Quary, Sea Serpenty i Seacrest Serpenty.",
+      },
     }),
     "dreaming": simple({
       pt: { headline: "A Fire-Feathered Serpent sonha e a terra sangra lava." },
@@ -680,15 +721,19 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     "awake": simple({
       pt: {
         headline: "A Fire-Feathered Serpent está desperta.",
+        body: "Os Renegade Quara tomaram as regiões submersas de Oramond no lugar das criaturas de sempre.",
       },
       en: {
         headline: "The Fire-Feathered Serpent is awake.",
+        body: "Renegade Quara have taken the sunken regions of Oramond in place of the usual creatures.",
       },
       es: {
         headline: "La Fire-Feathered Serpent está despierta.",
+        body: "Los Renegade Quara tomaron las regiones sumergidas de Oramond en lugar de las criaturas habituales.",
       },
       pl: {
         headline: "Fire-Feathered Serpent się obudził.",
+        body: "Renegade Quara przejęły zatopione regiony Oramond w miejsce zwykłych stworzeń.",
       },
     }),
   },
@@ -702,24 +747,38 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
     }),
     "floodgates-open": simple({
       pt: {
-        headline: "God-king Qjell parece satisfeito. As comportas para a Drowned Library foram abertas.",
+        headline: "God-king Qjell parece satisfeito. A Drowned Library está aberta.",
+        body: "O servidor está preparando a passagem para as cavernas mais profundas.",
       },
-      en: { headline: "God-king Qjell seems pleased. The floodgates to the Drowned Library have opened." },
-      es: { headline: "El God-king Qjell parece complacido. Se abrieron las compuertas hacia la Drowned Library." },
-      pl: { headline: "God-king Qjell wydaje się zadowolony. Bramy do Drowned Library zostały otwarte." },
+      en: {
+        headline: "God-king Qjell seems pleased. The Drowned Library is open.",
+        body: "The server is currently preparing a passage into the deeper caves.",
+      },
+      es: {
+        headline: "El God-king Qjell parece complacido. La Drowned Library está abierta.",
+        body: "El servidor está preparando el paso hacia las cuevas más profundas.",
+      },
+      pl: {
+        headline: "God-king Qjell wydaje się zadowolony. Drowned Library jest otwarta.",
+        body: "Serwer przygotowuje właśnie przejście do głębszych jaskiń.",
+      },
     }),
     "arcanum-breached": simple({
       pt: {
         headline: "O Inner Arcanum das profundezas foi rompido.",
+        body: "A terceira área de Fiehonja está aberta, com os Deepling Guardians e os Manta Rays.",
       },
       en: {
         headline: "The inner arcanum of the deep has been breached.",
+        body: "The third area of Fiehonja is open, with the Deepling Guardians and the Manta Rays.",
       },
       es: {
         headline: "El Inner Arcanum de las profundidades ha sido violado.",
+        body: "La tercera área de Fiehonja está abierta, con los Deepling Guardians y las Manta Rays.",
       },
       pl: {
         headline: "Inner Arcanum głębin zostało przełamane.",
+        body: "Trzeci obszar Fiehonji jest otwarty, z Deepling Guardians i Manta Rayami.",
       },
     }),
   },

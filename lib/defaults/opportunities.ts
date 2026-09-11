@@ -51,17 +51,27 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Ornate Canopic Jar",
     availability: "progressable-today",
     trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    // The hourly rule is the half everyone gets wrong, so it is in `detail` rather than in a
+    // caveat the bulletin never prints. The cooldown starts on a FAILED attempt; a successful
+    // break leaves you free to walk to the next jar immediately, which is what makes clearing
+    // several in one visit possible at all.
     detail: {
-      pt: "Quebre os cinco Ornate Canopic Jars no túmulo: cada um quebrado te dá uma entrada permanente para enfrentar Horestis, e o quinto o acorda.",
-      en: "Break the five Ornate Canopic Jars in the tomb: each break banks you one permanent entry to face Horestis, and the fifth wakes him.",
-      es: "Rompe los cinco Ornate Canopic Jars en la tumba: cada uno te da una entrada permanente para enfrentar a Horestis, y el quinto lo despierta.",
-      pl: "Rozbij pięć Ornate Canopic Jars w grobowcu: każdy daje jedno stałe wejście do walki z Horestisem, a piąty go budzi.",
+      pt: "São cinco jars: cada um quebrado dá uma entrada permanente para enfrentar Horestis, e o quinto o acorda. Só a falha trava o personagem por uma hora real, então depois de quebrar um você vai direto ao próximo.",
+      en: "There are five jars: each break banks one permanent entry to face Horestis, and the fifth wakes him. Only a failed attempt locks the character out for a real-time hour, so after a successful break you go straight to the next jar.",
+      es: "Son cinco jars: cada uno roto da una entrada permanente para enfrentar a Horestis, y el quinto lo despierta. Solo el fallo bloquea al personaje una hora real, así que tras romper uno vas directo al siguiente.",
+      pl: "Dzbanów jest pięć: każdy rozbity daje stałe wejście do walki z Horestisem, a piąty go budzi. Tylko nieudana próba blokuje postać na godzinę, więc po udanym rozbiciu idziesz prosto do następnego.",
     },
     caveat: {
-      pt: "Cada personagem só pode tentar quebrar um jar por hora real após uma falha; leva de 10 a 80 tentativas.",
-      en: "After a failed attempt each character must wait a real-time hour; a jar takes 10–80 tries.",
-      es: "Tras un intento fallido cada personaje espera una hora real; romper un jar lleva de 10 a 80 intentos.",
-      pl: "Po nieudanej próbie każda postać czeka godzinę; rozbicie zajmuje 10–80 prób.",
+      pt: "Costuma levar de 10 a 80 tentativas por jar.",
+      en: "It usually takes 10 to 80 tries per jar.",
+      es: "Suele llevar de 10 a 80 intentos por jar.",
+      pl: "Zwykle potrzeba 10 do 80 prób na jeden dzban.",
+    },
+    label: {
+      pt: "Ornate Canopic Jars",
+      en: "Ornate Canopic Jars",
+      es: "Ornate Canopic Jars",
+      pl: "Ornate Canopic Jars",
     },
     qualifier: {
       pt: "cada jar quebrado é uma entrada",
@@ -94,6 +104,68 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     },
     sources: [wc("The_Mummy's_Curse"), `${WIKI}/Horestis`],
   },
+  {
+    id: "horestis-fearless",
+    kind: "achievement",
+    subject: "Fearless",
+    availability: "progressable-today",
+    achievement: {
+      name: "Fearless",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Quebre 50 Ornate Canopic Jars",
+        en: "Break 50 Ornate Canopic Jars",
+        es: "Rompe 50 Ornate Canopic Jars",
+        pl: "Rozbij 50 Ornate Canopic Jars",
+      },
+    },
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    detail: {
+      pt: "Os 50 jars somam entre todos os ciclos da World Change, cinco por vez.",
+      en: "The 50 jars add up across every cycle of the World Change, five at a time.",
+      es: "Los 50 jars se acumulan entre todos los ciclos de la World Change, de cinco en cinco.",
+      pl: "Te 50 dzbanów sumuje się przez wszystkie cykle World Change, po pięć naraz.",
+    },
+    sources: [`${WIKI}/Fearless`],
+  },
+  {
+    id: "horestis-scorpion-king",
+    kind: "mount",
+    subject: "Scorpion King",
+    availability: "available-today",
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    detail: {
+      pt: "Use um Scorpion Sceptre em um Sandstone Scorpion do túmulo de Horestis.",
+      en: "Use a Scorpion Sceptre on a Sandstone Scorpion in the Horestis Tomb.",
+      es: "Usa un Scorpion Sceptre en un Sandstone Scorpion de la tumba de Horestis.",
+      pl: "Użyj Scorpion Sceptre na Sandstone Scorpionie w grobowcu Horestisa.",
+    },
+    caveat: {
+      pt: "O Scorpion Sceptre pode quebrar no uso, como todo item de domesticação.",
+      en: "The Scorpion Sceptre can break on use, like every taming item.",
+      es: "El Scorpion Sceptre puede romperse al usarlo, como todo objeto de domesticación.",
+      pl: "Scorpion Sceptre może pęknąć przy użyciu, jak każdy przedmiot do oswajania.",
+    },
+    prerequisites: ["A Scorpion Sceptre"],
+    sources: [`${WIKI}/Scorpion_King`, `${WIKI}/Scorpion_Sceptre`],
+  },
+  {
+    id: "horestis-sandstone-scorpion",
+    kind: "bestiary",
+    subject: "Sandstone Scorpion",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    detail: {
+      pt: "Vivem nas Ankrahmun Pharaoh Tombs, o túmulo em que Horestis dorme.",
+      en: "They live in the Ankrahmun Pharaoh Tombs, the tomb Horestis sleeps in.",
+      es: "Viven en las Ankrahmun Pharaoh Tombs, la tumba donde duerme Horestis.",
+      pl: "Żyją w Ankrahmun Pharaoh Tombs, grobowcu, w którym śpi Horestis.",
+    },
+    sources: [`${WIKI}/Sandstone_Scorpion`],
+  },
 
   // ══ WORLD CHANGE: The Mage's Tower ═════════════════════════════════════════
   {
@@ -119,7 +191,15 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "available-today",
     exclusive: true,
     bestiary: bestiaryProfile("Medium", "Common"),
-    trigger: { kind: "world-change", changeId: "mage-tower", stateIds: ["portal-open"] },
+    // Both states, because the Another Dimension does not shut the instant the mage dies: it
+    // destabilises and collapses a few minutes later. The qualifier is what keeps the
+    // collapsing state honest, since the app has no timestamp for the kill and so cannot say
+    // whether those minutes are gone.
+    trigger: {
+      kind: "world-change",
+      changeId: "mage-tower",
+      stateIds: ["portal-open", "mage-slain"],
+    },
     detail: {
       pt: "Só existem na outra dimensão, acessível enquanto o portal estiver aberto.",
       en: "They exist only in the other dimension, reachable while the portal is open.",
@@ -177,6 +257,68 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     },
     sources: [wc("The_Mage's"), `${WIKI}/Raging_Mage`],
   },
+  {
+    id: "mage-tower-mageslayer",
+    kind: "achievement",
+    subject: "Mageslayer",
+    availability: "progressable-today",
+    achievement: {
+      name: "Mageslayer",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Derrote o Energized Raging Mage duas vezes",
+        en: "Defeat the Energized Raging Mage twice",
+        es: "Derrota al Energized Raging Mage dos veces",
+        pl: "Pokonaj Energized Raging Mage'a dwa razy",
+      },
+    },
+    // Only while the mage is at his tower. The Energized form stands on the top floor from the
+    // moment the portal opens, and stops existing the moment it becomes the weakened Raging
+    // Mage and dies; offering this achievement in the collapsing stage would be sending
+    // somebody to Zao for a boss that is not there.
+    trigger: { kind: "world-change", changeId: "mage-tower", stateIds: ["portal-open"] },
+    detail: {
+      pt: "O Energized Raging Mage ressuscita na hora enquanto o mundo não tiver matado 2.000 Yielothaxes; depois disso ele enfraquece e vira o Raging Mage.",
+      en: "The Energized Raging Mage resurrects at once until the world has killed 2,000 Yielothaxes; after that he weakens and becomes the Raging Mage.",
+      es: "El Energized Raging Mage resucita al instante mientras el mundo no haya matado 2.000 Yielothaxes; después se debilita y se vuelve el Raging Mage.",
+      pl: "Energized Raging Mage od razu się odradza, dopóki świat nie zabije 2000 Yielothaxów; potem słabnie i staje się Raging Mage'em.",
+    },
+    sources: [wc("The_Mage's"), `${WIKI}/Mageslayer`, `${WIKI}/Energized_Raging_Mage`],
+  },
+  {
+    id: "mage-tower-slain",
+    kind: "boss",
+    subject: "Raging Mage",
+    availability: "progressable-today",
+    bosstiary: "Archfoe",
+    trigger: { kind: "world-change", changeId: "mage-tower", stateIds: ["mage-slain"] },
+    detail: {
+      pt: "Já foi derrotado neste ciclo.",
+      en: "Already defeated this cycle.",
+      es: "Ya fue derrotado en este ciclo.",
+      pl: "Już pokonany w tym cyklu.",
+    },
+    sources: [wc("The_Mage's"), `${WIKI}/Raging_Mage`],
+  },
+  {
+    id: "mage-tower-portal-collapsing",
+    kind: "timing",
+    subject: "Another Dimension",
+    availability: "unlocks-future",
+    trigger: { kind: "world-change", changeId: "mage-tower", stateIds: ["mage-slain"] },
+    // No figure and no clock. The wiki puts the collapse about five minutes after the kill, but
+    // the Guide reply carries no timestamp, so "5 minutes left" would be invented; and the
+    // reply saying "collapsing" is not the same as the portal already being shut.
+    detail: {
+      pt: "O portal se fecha pouco depois da morte do Raging Mage. Fechado, a Another Dimension volta a ficar disponível no próximo ciclo.",
+      en: "The portal closes shortly after the Raging Mage is defeated. Once closed, the Another Dimension becomes available again in the next cycle.",
+      es: "El portal se cierra poco después de la muerte del Raging Mage. Una vez cerrado, la Another Dimension vuelve a estar disponible en el próximo ciclo.",
+      pl: "Portal zamyka się krótko po śmierci Raging Mage'a. Po zamknięciu Another Dimension znów będzie dostępny w kolejnym cyklu.",
+    },
+    sources: [wc("The_Mage's")],
+  },
 
   // ══ WORLD CHANGE: Their Master's Voice ═════════════════════════════════════
   {
@@ -185,11 +327,17 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Slime Gobbler",
     availability: "available-today",
     trigger: { kind: "world-change", changeId: "masters-voice", stateIds: ["passable"] },
+    label: {
+      pt: "Limpar o fungo",
+      en: "Clear the fungus",
+      es: "Limpiar el hongo",
+      pl: "Usunąć grzyb",
+    },
     detail: {
-      pt: "Pegue um Slime Gobbler com o Servant Sentry e limpe o fungo: são 350 tiles no total, e 25 seus para poder enfrentar o Mad Mage.",
-      en: "Take a Slime Gobbler from the Servant Sentry and clear the fungus: 350 tiles in all, and 25 of your own to be eligible for the Mad Mage.",
-      es: "Toma un Slime Gobbler con el Servant Sentry y limpia el hongo: 350 tiles en total, y 25 tuyos para poder enfrentar al Mad Mage.",
-      pl: "Weź Slime Gobbler od Servant Sentry i wyczyść grzyb: 350 pól łącznie i 25 własnych, by móc stanąć do walki z Mad Mage.",
+      pt: "Limpe pelo menos 25 Slime Fungi com o Slime Gobbler do Servant Sentry para se qualificar para o Mad Mage. Quando os 350 tiles caírem, começam as ondas de servos.",
+      en: "Clear at least 25 Slime Fungi with the Servant Sentry's Slime Gobbler to qualify for the Mad Mage. Once all 350 tiles are cleared, the servant waves begin.",
+      es: "Limpia al menos 25 Slime Fungi con el Slime Gobbler del Servant Sentry para clasificar al Mad Mage. Cuando caigan los 350 tiles, empiezan las oleadas de sirvientes.",
+      pl: "Usuń co najmniej 25 Slime Fungi Slime Gobblerem od Servant Sentry, by zakwalifikować się do Mad Mage'a. Gdy zniknie wszystkie 350 pól, ruszają fale sług.",
     },
     caveat: {
       pt: "Só é possível remover um fungo a cada 5 segundos, leve companhia.",
@@ -259,13 +407,15 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Mad Mage",
     availability: "available-today",
     exclusive: true,
-    bosstiary: "Bane",
+    // No `bosstiary`: the Mad Mage's TibiaWiki page has no bosstiaryclass, so he is a boss that
+    // is not a Bosstiary entry. Claiming a class here would have the bulletin promise Bane
+    // points that the game does not pay.
     trigger: { kind: "world-change", changeId: "masters-voice", stateIds: ["passable"] },
     detail: {
-      pt: "Só aparece depois que todas as ondas de servos forem eliminadas, e só para quem limpou 25 fungos.",
-      en: "He only appears once every servant wave has been killed, and only for players who gobbled 25 fungus tiles.",
-      es: "Solo aparece tras eliminar todas las oleadas de sirvientes, y solo para quien limpió 25 hongos.",
-      pl: "Pojawia się dopiero po zabiciu wszystkich fal sług i tylko dla tych, którzy usunęli 25 grzybów.",
+      pt: "Aparece depois da última onda de servos, para quem tiver limpado 25 Slime Fungi.",
+      en: "Appears after the last servant wave, for anyone who cleared 25 Slime Fungi.",
+      es: "Aparece tras la última oleada de sirvientes, para quien haya limpiado 25 Slime Fungi.",
+      pl: "Pojawia się po ostatniej fali sług, dla tych, którzy usunęli 25 Slime Fungi.",
     },
     qualifier: {
       pt: "depois do fungo e de todas as ondas",
@@ -274,6 +424,38 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "po grzybie i wszystkich falach",
     },
     sources: [wc("Their_Master's_Voice"), `${WIKI}/Mad_Mage`],
+  },
+  {
+    id: "masters-voice-slimer",
+    kind: "achievement",
+    subject: "Slimer",
+    availability: "progressable-today",
+    achievement: {
+      name: "Slimer",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Limpe 500 Slime Fungi",
+        en: "Clear 500 Slime Fungi",
+        es: "Limpia 500 Slime Fungi",
+        pl: "Usuń 500 Slime Fungi",
+      },
+    },
+    trigger: { kind: "world-change", changeId: "masters-voice", stateIds: ["passable"] },
+    detail: {
+      pt: "A masmorra tem 350 tiles de fungo por ciclo, então os 500 somam entre visitas.",
+      en: "The dungeon holds 350 fungus tiles per cycle, so the 500 add up across visits.",
+      es: "La mazmorra tiene 350 tiles de hongo por ciclo, así que los 500 se acumulan entre visitas.",
+      pl: "Loch ma 350 pól grzyba na cykl, więc te 500 sumuje się przez wiele wizyt.",
+    },
+    caveat: {
+      pt: "Só dá para remover um fungo a cada 5 segundos.",
+      en: "Only one fungus every 5 seconds.",
+      es: "Solo un hongo cada 5 segundos.",
+      pl: "Tylko jeden grzyb co 5 sekund.",
+    },
+    sources: [wc("Their_Master's_Voice"), `${WIKI}/Slimer`],
   },
 
   // ══ WORLD CHANGE: Swamp Fever ══════════════════════════════════════════════
@@ -284,10 +466,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "available-today",
     trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control"] },
     detail: {
-      pt: "Troque Medicine Pouches com Ottokar por Belongings of a Deceased, que raramente contêm o Slug Drug usado para domar a montaria Tiger Slug.",
-      en: "Trade Medicine Pouches to Ottokar for Belongings of a Deceased, which rarely hold the Slug Drug that tames the Tiger Slug mount.",
-      es: "Cambia Medicine Pouches con Ottokar por Belongings of a Deceased, que rara vez contienen el Slug Drug que doma la montura Tiger Slug.",
-      pl: "Wymień Medicine Pouches u Ottokara na Belongings of a Deceased. Rzadko kryją Slug Drug do oswojenia wierzchowca Tiger Slug.",
+      pt: "Troque Medicine Pouches com Ottokar por Belongings of a Deceased, que podem conter o Slug Drug usado para domar um Slug e ganhar a montaria Tiger Slug.",
+      en: "Trade Medicine Pouches to Ottokar for Belongings of a Deceased, which can contain the Slug Drug used to tame a Slug for the Tiger Slug mount.",
+      es: "Cambia Medicine Pouches con Ottokar por Belongings of a Deceased, que pueden contener el Slug Drug usado para domar un Slug y ganar la montura Tiger Slug.",
+      pl: "Wymień Medicine Pouches u Ottokara na Belongings of a Deceased. Mogą kryć Slug Drug, którym oswoisz Sluga na wierzchowca Tiger Slug.",
     },
     caveat: {
       pt: "O Slug Drug é um resultado muito raro da bolsa, e quebra em cerca de 30% dos usos.",
@@ -304,25 +486,62 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [wc("Swamp_Fever"), `${WIKI}/Belongings_of_a_deceased`, `${WIKI}/Slug_Drug`],
   },
   {
+    id: "swamp-fever-doctor",
+    kind: "achievement",
+    subject: "Doctor! Doctor!",
+    availability: "progressable-today",
+    achievement: {
+      name: "Doctor! Doctor!",
+      grade: 1,
+      points: 2,
+      premium: false,
+      requirement: {
+        pt: "Entregue 100 Medicine Pouches a Ottokar",
+        en: "Deliver 100 Medicine Pouches to Ottokar",
+        es: "Entrega 100 Medicine Pouches a Ottokar",
+        pl: "Dostarcz Ottokarowi 100 Medicine Pouches",
+      },
+    },
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control", "spreading"] },
+    detail: {
+      pt: "As bolsas vêm dos Swamp Trolls ao sul de Venore e em Port Hope, e somam entre os dias.",
+      en: "The pouches come from the Swamp Trolls south of Venore and at Port Hope, and add up across days.",
+      es: "Las bolsas vienen de los Swamp Trolls al sur de Venore y en Port Hope, y se acumulan entre días.",
+      pl: "Torby wypadają ze Swamp Trolli na południe od Venore i w Port Hope, a liczba sumuje się przez dni.",
+    },
+    sources: [wc("Swamp_Fever"), `${WIKI}/Doctor!_Doctor!`],
+  },
+  {
     id: "swamp-fever-feverish-citizen",
     kind: "bestiary",
     subject: "Feverish Citizen",
     availability: "available-today",
     bestiary: bestiaryProfile("Easy", "Rare"),
-    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control"] },
+    // The spreading stage only. Their spawn interval is set by how much medicine Ottokar has
+    // been given, so in the contained stage they are throttled to an hour or more apart, and
+    // sending a reader to Venore to farm them is sending them to wait.
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["spreading"] },
     detail: {
-      pt: "Surgem por Venore enquanto a febre existir; largam os panos do Afflicted Outfits Quest.",
-      en: "They turn up around Venore while the fever lasts, and drop the cloth pieces for the Afflicted Outfits Quest.",
-      es: "Aparecen por Venore mientras dure la fiebre y sueltan las telas del Afflicted Outfits Quest.",
-      pl: "Pojawiają się w Venore, póki trwa gorączka, i upuszczają tkaniny do Afflicted Outfits Quest.",
-    },
-    caveat: {
-      pt: "Quanto mais Medicine Pouches forem entregues, mais raro fica o spawn.",
-      en: "The more Medicine Pouches are handed in, the rarer they spawn.",
-      es: "Cuantos más Medicine Pouches se entreguen, más raro es su spawn.",
-      pl: "Im więcej Medicine Pouches oddano, tym rzadziej się pojawiają.",
+      pt: "Surgem por Venore em raides enquanto faltar remédio, cada vez mais raros conforme as Medicine Pouches são entregues.",
+      en: "They raid Venore while the medicine is short, growing rarer as Medicine Pouches are handed in.",
+      es: "Aparecen por Venore en raids mientras falte medicina, cada vez más raros conforme se entregan Medicine Pouches.",
+      pl: "Najeżdżają Venore, póki brakuje leków, i pojawiają się tym rzadziej, im więcej Medicine Pouches oddano.",
     },
     sources: [wc("Swamp_Fever"), `${WIKI}/Feverish_Citizen`],
+  },
+  {
+    id: "swamp-fever-afflicted-cloth",
+    kind: "outfit",
+    subject: "Afflicted Outfits Quest",
+    availability: "progressable-today",
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["spreading"] },
+    detail: {
+      pt: "Os Feverish Citizens largam os panos usados nos Afflicted Outfits, e só aparecem enquanto a febre estiver se espalhando.",
+      en: "Feverish Citizens drop the cloth pieces used for the Afflicted Outfits, and only turn up while the fever is spreading.",
+      es: "Los Feverish Citizens sueltan las telas usadas en los Afflicted Outfits, y solo aparecen mientras la fiebre se extiende.",
+      pl: "Feverish Citizens upuszczają tkaniny do Afflicted Outfits i pojawiają się tylko, gdy gorączka się rozprzestrzenia.",
+    },
+    sources: [wc("Swamp_Fever"), `${WIKI}/Afflicted_Outfits_Quest`],
   },
 
   // ══ WORLD CHANGE: Thornfire ════════════════════════════════════════════════
@@ -349,10 +568,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "thornfire", stateIds: ["guarded", "breaking-out"] },
     detail: {
-      pt: "Mate os três Elf Overseers e todos os elfos de Shadowthorn para tirar o musgo das grades e libertar os firestarters. A vila queima no próximo Server Save.",
-      en: "Kill the three Elf Overseers and every elf in Shadowthorn to strip the moss from the bars and free the firestarters. The village burns at the next server save.",
-      es: "Mata a los tres Elf Overseers y a todos los elfos de Shadowthorn para quitar el musgo de las rejas y liberar a los firestarters. La aldea arde en el próximo Server Save.",
-      pl: "Zabij trzech Elf Overseers i wszystkie elfy w Shadowthorn, by zdjąć mech z krat i uwolnić firestarterów. Wioska spłonie po następnym server save.",
+      pt: "Mate os três Elf Overseers e todos os outros elfos de Shadowthorn para libertar os firestarters. Uma vez libertados, Shadowthorn queima depois do próximo Server Save.",
+      en: "Kill the three Elf Overseers and all other elves in Shadowthorn to free the firestarters. Once they are freed, Shadowthorn will burn after the next server save.",
+      es: "Mata a los tres Elf Overseers y a todos los demás elfos de Shadowthorn para liberar a los firestarters. Una vez libres, Shadowthorn arderá tras el próximo Server Save.",
+      pl: "Zabij trzech Elf Overseers i wszystkie pozostałe elfy w Shadowthorn, by uwolnić podpalaczy. Gdy będą wolni, Shadowthorn spłonie po następnym server save.",
     },
     qualifier: {
       pt: "mate os Elf Overseers e todos os elfos",
@@ -427,7 +646,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Firefighter",
     availability: "progressable-today",
-    achievement: { name: "Firefighter", grade: 1, points: 2, premium: false },
+    achievement: {
+      name: "Firefighter",
+      grade: 1,
+      points: 2,
+      premium: false,
+      requirement: {
+        pt: "Apague 500 fogos em Shadowthorn",
+        en: "Extinguish 500 fires in Shadowthorn",
+        es: "Apaga 500 fuegos en Shadowthorn",
+        pl: "Ugaś 500 ognisk w Shadowthorn",
+      },
+    },
     trigger: { kind: "world-change", changeId: "thornfire", stateIds: ["burning", "being-fought"] },
     detail: {
       pt: "Apague 500 fogos com Buckets of Bog Water; o incêndio reinicia 8h e 16h após o Server Save, dando novas chances no mesmo dia.",
@@ -459,10 +689,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "twisted-waters", stateIds: ["clean"] },
     detail: {
-      pt: "Jogue corpos no lago ao norte de Port Hope: 1000 no servidor deixam a água suja no próximo Server Save e trazem os Shimmer Swimmers.",
-      en: "Dump corpses into the lake north of Port Hope: 1000 server-wide turn the water dirty at the next server save and bring the Shimmer Swimmers.",
-      es: "Arroja cadáveres al lago al norte de Port Hope: 1000 en el servidor ensucian el agua en el próximo Server Save y traen los Shimmer Swimmers.",
-      pl: "Wrzucaj zwłoki do jeziora na północ od Port Hope: 1000 na serwerze zabrudzi wodę po następnym server save i sprowadzi Shimmer Swimmery.",
+      pt: "Jogue corpos no lago para contaminá-lo. Depois de 1.000 corpos no servidor, a água fica suja no próximo Server Save e os Shimmer Swimmers aparecem.",
+      en: "Throw corpses into the lake to contaminate it. Once 1,000 corpses have been thrown in server-wide, the lake will become dirty after the next server save, making Shimmer Swimmers available.",
+      es: "Arroja cadáveres al lago para contaminarlo. Tras 1.000 cadáveres en el servidor, el agua se ensucia en el próximo Server Save y aparecen los Shimmer Swimmers.",
+      pl: "Wrzucaj zwłoki do jeziora, by je zanieczyścić. Po 1000 zwłok na serwerze woda zabrudzi się po następnym server save i pojawią się Shimmer Swimmery.",
     },
     qualifier: {
       pt: "jogue corpos no lago",
@@ -498,7 +728,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Biodegradable",
     availability: "progressable-today",
-    achievement: { name: "Biodegradable", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Biodegradable",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Pesque 50 Shimmer Swimmers",
+        en: "Fish 50 Shimmer Swimmers",
+        es: "Pesca 50 Shimmer Swimmers",
+        pl: "Złów 50 Shimmer Swimmerów",
+      },
+    },
     trigger: { kind: "world-change", changeId: "twisted-waters", stateIds: ["dirty-swimmers"] },
     detail: {
       pt: "São 50 Shimmer Swimmers no total, no ritmo de um a cada 20 horas por personagem.",
@@ -569,12 +810,23 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       stateIds: ["drained-quota-met", "drained-quota-open"],
     },
     detail: {
-      pt: "Aparece no lado leste das Sunken Mines, no máximo uma vez por Server Save, e dá o achievement Eye of the Deep.",
-      en: "He turns up on the east side of the Sunken Mines, at most once per server save, and grants the Eye of the Deep achievement.",
-      es: "Aparece en el lado este de las Sunken Mines, como mucho una vez por Server Save, y da el achievement Eye of the Deep.",
-      pl: "Pojawia się po wschodniej stronie Sunken Mines, najwyżej raz na server save, i daje osiągnięcie Eye of the Deep.",
+      pt: "Pode aparecer no lado leste das Sunken Mines enquanto a mina estiver drenada, no máximo uma vez por Server Save.",
+      en: "Can appear on the east side of the Sunken Mines while the mine is drained, at most once per server save.",
+      es: "Puede aparecer en el lado este de las Sunken Mines mientras la mina esté drenada, como mucho una vez por Server Save.",
+      pl: "Może pojawić się po wschodniej stronie Sunken Mines, gdy kopalnia jest osuszona, najwyżej raz na server save.",
     },
-    achievement: { name: "Eye of the Deep", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Eye of the Deep",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Derrote Groam",
+        en: "Defeat Groam",
+        es: "Derrota a Groam",
+        pl: "Pokonaj Groama",
+      },
+    },
     sources: [wc("Awash"), `${WIKI}/Groam`, `${WIKI}/Eye_of_the_Deep`],
   },
   {
@@ -596,22 +848,52 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [wc("Awash")],
   },
   {
+    id: "awash-invader-of-the-deep",
+    kind: "achievement",
+    subject: "Invader of the Deep",
+    availability: "progressable-today",
+    achievement: {
+      name: "Invader of the Deep",
+      grade: 1,
+      points: 2,
+      premium: false,
+      requirement: {
+        pt: "Mate 300 Deepling Scouts",
+        en: "Kill 300 Deepling Scouts",
+        es: "Mata 300 Deepling Scouts",
+        pl: "Zabij 300 Deepling Scoutów",
+      },
+    },
+    trigger: {
+      kind: "world-change",
+      changeId: "awash",
+      stateIds: ["drained-quota-met", "drained-quota-open"],
+    },
+    detail: {
+      pt: "As mortes somam entre os dias, mas só acontecem enquanto a mina estiver aberta.",
+      en: "The kills add up across days, but can only be made while the mine is open.",
+      es: "Las muertes se acumulan entre días, pero solo pueden hacerse mientras la mina esté abierta.",
+      pl: "Zabójstwa sumują się przez dni, ale można je zdobyć tylko przy otwartej kopalni.",
+    },
+    sources: [wc("Awash"), `${WIKI}/Invader_of_the_Deep`],
+  },
+  {
     id: "awash-hold-quota",
     kind: "progress",
     subject: "Deepling Scout",
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "awash", stateIds: ["drained-quota-open"] },
-    detail: {
-      pt: "Ainda faltam mortes de Deepling Scouts hoje: sem elas, o túnel volta a inundar no próximo Server Save.",
-      en: "Today's Deepling Scout quota is still open: without it the tunnel floods again at the next server save.",
-      es: "La cuota de Deepling Scouts de hoy sigue abierta: sin ella el túnel vuelve a inundarse en el próximo Server Save.",
-      pl: "Dzisiejszy limit Deepling Scoutów wciąż otwarty: bez niego tunel znów zaleje po server save.",
+    label: {
+      pt: "Manter a mina aberta",
+      en: "Keep the mine open",
+      es: "Mantener la mina abierta",
+      pl: "Utrzymać kopalnię otwartą",
     },
-    qualifier: {
-      pt: "a cota de hoje ainda está aberta",
-      en: "today's quota is still open",
-      es: "la cuota de hoy sigue abierta",
-      pl: "dzisiejszy limit wciąż otwarty",
+    detail: {
+      pt: "Mate Deepling Scouts suficientes hoje para a mina continuar drenada depois do próximo Server Save. Caso contrário, o túnel inunda de novo.",
+      en: "Kill enough Deepling Scouts today to keep the mine drained after the next server save. Otherwise, the tunnel will flood again.",
+      es: "Mata suficientes Deepling Scouts hoy para que la mina siga drenada tras el próximo Server Save. Si no, el túnel vuelve a inundarse.",
+      pl: "Zabij dziś wystarczająco Deepling Scoutów, by kopalnia została osuszona po następnym server save. Inaczej tunel znów się zaleje.",
     },
     sources: [wc("Awash")],
   },
@@ -623,23 +905,33 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Coal",
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "steamship", stateIds: ["not-running"] },
+    label: {
+      pt: "Reativar o Steamship",
+      en: "Restart the Steamship",
+      es: "Reactivar el Steamship",
+      pl: "Uruchomić Steamship",
+    },
     detail: {
-      pt: "O servidor precisa entregar 200 unidades de Coal a Junkar, sob o Ancient Temple de Thais; Firestarters, The Lost e Stonerefiners largam carvão em quantidade.",
-      en: "The server needs to deliver 200 pieces of Coal to Junkar beneath Thais' Ancient Temple; Firestarters, The Lost and Stonerefiners drop coal in quantity.",
-      es: "El servidor necesita entregar 200 unidades de Coal a Junkar, bajo el Ancient Temple de Thais; Firestarters, The Lost y Stonerefiners sueltan carbón en cantidad.",
-      pl: "Serwer musi dostarczyć Junkarowi 200 sztuk Coal pod Ancient Temple w Thais; Firestarters, The Lost i Stonerefiners upuszczają węgiel w dużych ilościach.",
+      pt: "Entregue Coal a Junkar, sob o Ancient Temple de Thais. O servidor precisa de 200 unidades no total.",
+      en: "Deliver Coal to Junkar beneath Thais' Ancient Temple. The server needs 200 pieces of Coal in total.",
+      es: "Entrega Coal a Junkar, bajo el Ancient Temple de Thais. El servidor necesita 200 unidades en total.",
+      pl: "Dostarcz Coal Junkarowi pod Ancient Temple w Thais. Serwer potrzebuje łącznie 200 sztuk.",
     },
+    // Not "ask a Guide whether the target is met": the bulletin is *built* from Guide replies,
+    // so telling its reader to go and ask one is the generator asking someone else to do its
+    // own job. What is worth saying is the part a Guide cannot fix, which is that Junkar keeps
+    // taking coal after the target is already met.
     caveat: {
-      pt: "Junkar aceita carvão mesmo depois de já ter o bastante. Só um Guide NPC diz quando chegou lá.",
-      en: "Junkar accepts coal even once he has enough. Only a Guide NPC will say when the target is met.",
-      es: "Junkar acepta carbón incluso cuando ya tiene suficiente. Solo un Guide NPC dice cuándo se alcanzó.",
-      pl: "Junkar przyjmuje węgiel nawet gdy ma już dość. Tylko Guide NPC powie, kiedy cel osiągnięto.",
+      pt: "Junkar aceita carvão mesmo depois de já ter o bastante, e o barco só parte no próximo Server Save.",
+      en: "Junkar accepts coal even once he has enough, and the boat only leaves at the next server save.",
+      es: "Junkar acepta carbón incluso cuando ya tiene suficiente, y el barco solo sale en el próximo Server Save.",
+      pl: "Junkar przyjmuje węgiel nawet gdy ma już dość, a łódź wypływa dopiero po następnym server save.",
     },
-    qualifier: {
-      pt: "200 unidades para Junkar",
-      en: "200 pieces for Junkar",
-      es: "200 unidades para Junkar",
-      pl: "200 sztuk dla Junkara",
+    advisory: {
+      pt: "Firestarters, The Lost e Stonerefiners são boas fontes de Coal.",
+      en: "Firestarters, The Lost and Stonerefiners are good sources of Coal.",
+      es: "Firestarters, The Lost y Stonerefiners son buenas fuentes de Coal.",
+      pl: "Firestarters, The Lost i Stonerefiners to dobre źródła Coal.",
     },
     sources: [wc("Steamship")],
   },
@@ -681,24 +973,38 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     exclusive: true,
     trigger: { kind: "world-change", changeId: "horse-station", stateIds: ["escaped"] },
     detail: {
-      pt: "Use Sugar Oat em um Wild Horse perto do Horse Station de Thais; eles surgem a cada três horas desde o Server Save, em grupos de 0 a 3.",
-      en: "Use Sugar Oat on a Wild Horse near the Thaian Horse Station; they appear every three hours from server save, in groups of 0–3.",
-      es: "Usa Sugar Oat en un Wild Horse cerca del Horse Station de Thais; aparecen cada tres horas desde el Server Save, en grupos de 0 a 3.",
-      pl: "Użyj Sugar Oat na Wild Horse przy Horse Station pod Thais; pojawiają się co trzy godziny od server save, w grupach 0–3.",
+      pt: "Use Sugar Oat ou uma Music Box em um Wild Horse para domá-lo.",
+      en: "Use Sugar Oat or a Music Box on a Wild Horse to tame it.",
+      es: "Usa Sugar Oat o una Music Box en un Wild Horse para domarlo.",
+      pl: "Użyj Sugar Oat lub Music Box na Wild Horse, by go oswoić.",
     },
+    // The spawn interval and the 0-3 group size are true and are trivia: they change nothing a
+    // reader decides at eight in the morning, and in the bulletin they pushed the taming
+    // method, the mount and the achievement off the block. The catalog page still shows them.
     caveat: {
-      pt: "Cavalos comuns não podem ser domados, só os Wild Horses deste estado.",
-      en: "Ordinary horses cannot be tamed, only the Wild Horses of this state.",
-      es: "Los caballos comunes no pueden domarse, solo los Wild Horses de este estado.",
-      pl: "Zwykłych koni nie da się oswoić, tylko Wild Horse'y z tego stanu.",
+      pt: "Wild Horses surgem a cada três horas desde o Server Save, em grupos de 0 a 3; cavalos comuns não podem ser domados.",
+      en: "Wild Horses appear every three hours from server save, in groups of 0 to 3; ordinary horses cannot be tamed.",
+      es: "Los Wild Horses aparecen cada tres horas desde el Server Save, en grupos de 0 a 3; los caballos comunes no pueden domarse.",
+      pl: "Wild Horse'y pojawiają się co trzy godziny od server save, w grupach 0 do 3; zwykłych koni nie da się oswoić.",
     },
-    qualifier: {
-      pt: "Sugar Oat em um Wild Horse",
-      en: "Sugar Oat on a Wild Horse",
-      es: "Sugar Oat en un Wild Horse",
-      pl: "Sugar Oat na Wild Horse",
+    achievement: {
+      name: "Lucky Horseshoe",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Dome um Wild Horse",
+        en: "Tame a Wild Horse",
+        es: "Doma un Wild Horse",
+        pl: "Oswój Wild Horse'a",
+      },
     },
-    sources: [wc("Horse_Station"), `${WIKI}/Sugar_Oat`, `${WIKI}/Wild_Horse`],
+    sources: [
+      wc("Horse_Station"),
+      `${WIKI}/War_Horse`,
+      `${WIKI}/Sugar_Oat`,
+      `${WIKI}/Lucky_Horseshoe`,
+    ],
   },
   {
     id: "horse-station-wild-horse",
@@ -715,6 +1021,80 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Pojawiają się tylko przy koniach na wolności, blisko Thais Troll Cave.",
     },
     sources: [`${WIKI}/Wild_Horse`],
+  },
+  {
+    id: "horse-station-horse-brown",
+    kind: "bestiary",
+    subject: "Horse (Brown)",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Trivial", "Uncommon"),
+    trigger: { kind: "world-change", changeId: "horse-station", stateIds: ["escaped"] },
+    detail: {
+      pt: "Os cavalos comuns só saem do cercado enquanto estiverem soltos pela Horse Station de Thais.",
+      en: "The ordinary horses are only out of the pen while they are loose around the Thaian Horse Station.",
+      es: "Los caballos comunes solo están fuera del corral mientras andan sueltos por el Horse Station de Thais.",
+      pl: "Zwykłe konie są poza zagrodą tylko wtedy, gdy biegają wolno wokół Horse Station pod Thais.",
+    },
+    sources: [wc("Horse_Station"), `${WIKI}/Horse_(Brown)`],
+  },
+  {
+    id: "horse-station-horse-grey",
+    kind: "bestiary",
+    subject: "Horse (Grey)",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Trivial", "Uncommon"),
+    trigger: { kind: "world-change", changeId: "horse-station", stateIds: ["escaped"] },
+    detail: {
+      pt: "Uma das três variantes comuns que aparecem enquanto os cavalos estiverem soltos.",
+      en: "One of the three ordinary variants that appear while the horses are loose.",
+      es: "Una de las tres variantes comunes que aparecen mientras los caballos están sueltos.",
+      pl: "Jeden z trzech zwykłych wariantów, które pojawiają się, gdy konie są na wolności.",
+    },
+    sources: [wc("Horse_Station"), `${WIKI}/Horse_(Grey)`],
+  },
+  {
+    id: "horse-station-horse-taupe",
+    kind: "bestiary",
+    subject: "Horse (Taupe)",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Trivial", "Rare"),
+    trigger: { kind: "world-change", changeId: "horse-station", stateIds: ["escaped"] },
+    detail: {
+      pt: "A variante escura, chamada Horse (Taupe) na TibiaWiki. Só aparece com os cavalos soltos.",
+      en: "The dark variant, named Horse (Taupe) on TibiaWiki. It only appears while the horses are loose.",
+      es: "La variante oscura, llamada Horse (Taupe) en TibiaWiki. Solo aparece con los caballos sueltos.",
+      pl: "Ciemny wariant, na TibiaWiki nazwany Horse (Taupe). Pojawia się tylko przy koniach na wolności.",
+    },
+    sources: [wc("Horse_Station"), `${WIKI}/Horse_(Taupe)`],
+  },
+  {
+    id: "horse-station-restore",
+    kind: "progress",
+    subject: "Horse Station",
+    availability: "progressable-today",
+    trigger: { kind: "world-change", changeId: "horse-station", stateIds: ["escaped"] },
+    label: {
+      pt: "Restaurar o aluguel de cavalos",
+      en: "Restore horse rentals",
+      es: "Restaurar el alquiler de caballos",
+      pl: "Przywrócić wynajem koni",
+    },
+    detail: {
+      pt: "Leve os cavalos soltos de volta para o cercado da Horse Station de Thais.",
+      en: "Lure the escaped Horses back into the Thaian Horse Station.",
+      es: "Lleva los caballos sueltos de vuelta al corral del Horse Station de Thais.",
+      pl: "Zwab zbiegłe konie z powrotem do zagrody Horse Station pod Thais.",
+    },
+    caveat: {
+      pt: "Com os cavalos de volta no cercado, os Wild Horses param de aparecer.",
+      en: "With the horses back in the pen, Wild Horses stop spawning.",
+      es: "Con los caballos de vuelta en el corral, los Wild Horses dejan de aparecer.",
+      pl: "Gdy konie wrócą do zagrody, Wild Horse'y przestają się pojawiać.",
+    },
+    sources: [wc("Horse_Station")],
   },
 
   // ══ WORLD CHANGE: Overhunting ══════════════════════════════════════════════
@@ -750,10 +1130,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       stateIds: ["stable", "dwindling", "leaving"],
     },
     detail: {
-      pt: "Mate um White Deer para enfurecer outro e use um Golden Fir Cone no Enraged White Deer. Só é possível enquanto houver veados na região.",
-      en: "Kill a White Deer to enrage another, then use a Golden Fir Cone on the Enraged White Deer. Only possible while deer are in the region.",
-      es: "Mata un White Deer para enfurecer a otro y usa un Golden Fir Cone en el Enraged White Deer. Solo posible mientras haya venados en la región.",
-      pl: "Zabij White Deera, by rozwścieczyć innego, i użyj Golden Fir Cone na Enraged White Deer. Możliwe tylko, gdy jelenie są w regionie.",
+      pt: "Mate White Deer até aparecer um Enraged White Deer, então use um Golden Fir Cone ou uma Music Box para domá-lo.",
+      en: "Kill White Deer until an Enraged White Deer appears, then use a Golden Fir Cone or Music Box to tame it.",
+      es: "Mata White Deer hasta que aparezca un Enraged White Deer, y usa un Golden Fir Cone o una Music Box para domarlo.",
+      pl: "Zabijaj White Deery, aż pojawi się Enraged White Deer, potem oswój go Golden Fir Cone lub Music Boxem.",
     },
     caveat: {
       pt: "O Golden Fir Cone quebra em 25–33% dos usos; costumam ser precisos de 2 a 4.",
@@ -761,13 +1141,57 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El Golden Fir Cone se rompe en el 25–33% de los usos; suelen hacer falta de 2 a 4.",
       pl: "Golden Fir Cone pęka przy 25–33% użyć; zwykle potrzeba 2–4 sztuk.",
     },
-    qualifier: {
-      pt: "Golden Fir Cone em um Enraged White Deer",
-      en: "Golden Fir Cone on an Enraged White Deer",
-      es: "Golden Fir Cone en un Enraged White Deer",
-      pl: "Golden Fir Cone na Enraged White Deer",
+    achievement: {
+      name: "Friend of Elves",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Dome um Enraged White Deer",
+        en: "Tame an Enraged White Deer",
+        es: "Doma un Enraged White Deer",
+        pl: "Oswój Enraged White Deer",
+      },
     },
-    sources: [wc("Overhunting"), `${WIKI}/Kingly_Deer`, `${WIKI}/Golden_Fir_Cone`],
+    sources: [
+      wc("Overhunting"),
+      `${WIKI}/Kingly_Deer`,
+      `${WIKI}/Golden_Fir_Cone`,
+      `${WIKI}/Friend_of_Elves`,
+    ],
+  },
+  {
+    id: "overhunting-deer-hunt",
+    kind: "achievement",
+    subject: "Deer Hunt",
+    availability: "progressable-today",
+    achievement: {
+      name: "Deer Hunt",
+      grade: 1,
+      points: 1,
+      premium: false,
+      // 400 *Enraged or Desperate* deer, not 400 ordinary White Deer. Killing an ordinary one
+      // is what makes another turn enraged or desperate, so the two numbers look alike and are
+      // not: the achievement counts only the second kind.
+      requirement: {
+        pt: "Mate 400 Enraged ou Desperate White Deer no total",
+        en: "Kill 400 Enraged or Desperate White Deer in total",
+        es: "Mata 400 Enraged o Desperate White Deer en total",
+        pl: "Zabij łącznie 400 Enraged lub Desperate White Deer",
+      },
+    },
+    trigger: {
+      kind: "world-change",
+      changeId: "overhunting",
+      stateIds: ["stable", "dwindling", "leaving"],
+    },
+    detail: {
+      pt: "Enraged e Desperate White Deer nascem quando um White Deer comum é morto, e não têm entrada própria no Bestiary.",
+      en: "Enraged and Desperate White Deer appear when an ordinary White Deer is killed, and have no Bestiary entry of their own.",
+      es: "Los Enraged y Desperate White Deer aparecen al matar un White Deer común, y no tienen entrada propia en el Bestiary.",
+      pl: "Enraged i Desperate White Deer pojawiają się po zabiciu zwykłego White Deera i nie mają własnego wpisu w Bestiary.",
+    },
+    sources: [wc("Overhunting"), `${WIKI}/Deer_Hunt`],
   },
   {
     id: "overhunting-antlers",
@@ -780,10 +1204,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       stateIds: ["stable", "dwindling", "leaving"],
     },
     detail: {
-      pt: "Chifres e couro dos White Deer são vendidos a Cruleo, perto do Ferngrims Gate.",
-      en: "White Deer antlers and skin sell to Cruleo, near Ferngrims Gate.",
-      es: "Los cuernos y la piel de White Deer se venden a Cruleo, cerca de Ferngrims Gate.",
-      pl: "Poroże i skóry White Deerów sprzedasz Cruleo koło Ferngrims Gate.",
+      pt: "Os chifres e o couro dos veados são vendidos a Cruleo, perto do Ferngrims Gate.",
+      en: "The antlers and skin sell to Cruleo, near Ferngrims Gate.",
+      es: "Los cuernos y la piel se venden a Cruleo, cerca de Ferngrims Gate.",
+      pl: "Poroże i skóry sprzedasz Cruleo koło Ferngrims Gate.",
     },
     caveat: {
       pt: "Caçar demais hoje faz a população sumir amanhã.",
@@ -843,23 +1267,78 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   },
 
   // ══ WORLD CHANGE: Demon Wars ═══════════════════════════════════════════════
+  //
+  // The Demons are the base spawn of the Demonwar Crypt and are there in every stage; the
+  // Lords and the Princes are triggered spawns that each need their faction to be ahead. The
+  // stalemate used to render as a state sentence with nothing under it, which read as "nothing
+  // to do here" on a day with two 1,000-kill bestiary entries waiting.
+  {
+    id: "demon-war-askarak-demon",
+    kind: "bestiary",
+    subject: "Askarak Demon",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: {
+      kind: "world-change",
+      changeId: "demon-war",
+      stateIds: [
+        "stalemate",
+        "shaburak-advantage",
+        "shaburak-dominant",
+        "askarak-advantage",
+        "askarak-dominant",
+      ],
+    },
+    detail: {
+      pt: "Ocupam o lado leste da Demonwar Crypt em qualquer estágio da guerra.",
+      en: "They hold the eastern side of the Demonwar Crypt in every stage of the war.",
+      es: "Ocupan el lado este de la Demonwar Crypt en cualquier etapa de la guerra.",
+      pl: "Zajmują wschodnią część Demonwar Crypt na każdym etapie wojny.",
+    },
+    sources: [wc("Demon_Wars"), `${WIKI}/Askarak_Demon`],
+  },
+  {
+    id: "demon-war-shaburak-demon",
+    kind: "bestiary",
+    subject: "Shaburak Demon",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: {
+      kind: "world-change",
+      changeId: "demon-war",
+      stateIds: [
+        "stalemate",
+        "shaburak-advantage",
+        "shaburak-dominant",
+        "askarak-advantage",
+        "askarak-dominant",
+      ],
+    },
+    detail: {
+      pt: "Ocupam o lado oeste da Demonwar Crypt em qualquer estágio da guerra.",
+      en: "They hold the western side of the Demonwar Crypt in every stage of the war.",
+      es: "Ocupan el lado oeste de la Demonwar Crypt en cualquier etapa de la guerra.",
+      pl: "Zajmują zachodnią część Demonwar Crypt na każdym etapie wojny.",
+    },
+    sources: [wc("Demon_Wars"), `${WIKI}/Shaburak_Demon`],
+  },
   {
     id: "demon-war-break-stalemate",
     kind: "progress",
     subject: "Arak War",
     availability: "unlocks-future",
     trigger: { kind: "world-change", changeId: "demon-war", stateIds: ["stalemate"] },
-    detail: {
-      pt: "Uma diferença de 100 mortes entre as facções no Server Save move a guerra; a partir de 400 ela pula direto para a fase dos Princes.",
-      en: "A 100-kill difference between the factions at server save moves the war on; 400 or more jumps straight to the Princes stage.",
-      es: "Una diferencia de 100 muertes entre facciones en el Server Save mueve la guerra; a partir de 400 salta directo a la fase de los Princes.",
-      pl: "Różnica 100 zabójstw między frakcjami przy server save przesuwa wojnę; od 400 przeskakuje wprost do etapu Princes.",
+    label: {
+      pt: "Mudar o equilíbrio",
+      en: "Shift the balance",
+      es: "Cambiar el equilibrio",
+      pl: "Przechylić szalę",
     },
-    qualifier: {
-      pt: "100 mortes de diferença movem a guerra",
-      en: "a 100-kill difference moves the war",
-      es: "100 muertes de diferencia mueven la guerra",
-      pl: "różnica 100 zabójstw rusza wojnę",
+    detail: {
+      pt: "Uma vantagem de 100 mortes para qualquer das facções muda a guerra depois do próximo Server Save. Uma vantagem de 400 leva direto à fase dos Princes.",
+      en: "A 100-kill advantage for either faction changes the war after the next server save. A 400-kill advantage advances it directly to the Princes stage.",
+      es: "Una ventaja de 100 muertes para cualquiera de las facciones cambia la guerra tras el próximo Server Save. Una ventaja de 400 la lleva directo a la fase de los Princes.",
+      pl: "Przewaga 100 zabójstw dowolnej frakcji zmienia wojnę po następnym server save. Przewaga 400 przenosi ją wprost do etapu Princes.",
     },
     sources: [wc("Demon_Wars")],
   },
@@ -897,7 +1376,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Los Princes solo aparecen cuando la facción domina el complejo. En la fase de simple ventaja no existen.",
       pl: "Princes pojawiają się dopiero, gdy frakcja dominuje kompleks. Na etapie samej przewagi ich nie ma.",
     },
-    achievement: { name: "Shaburak Nemesis", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Shaburak Nemesis",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Mate 100 Shaburak Princes",
+        en: "Kill 100 Shaburak Princes",
+        es: "Mata 100 Shaburak Princes",
+        pl: "Zabij 100 Shaburak Princes",
+      },
+    },
     caveat: {
       pt: "O achievement Shaburak Nemesis pede 100 Princes, acumulados ao longo de vários dias favoráveis.",
       en: "The Shaburak Nemesis achievement wants 100 Princes, accumulated over several favourable days.",
@@ -940,7 +1430,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Los Princes solo aparecen cuando la facción domina el complejo. En la fase de simple ventaja no existen.",
       pl: "Princes pojawiają się dopiero, gdy frakcja dominuje kompleks. Na etapie samej przewagi ich nie ma.",
     },
-    achievement: { name: "Askarak Nemesis", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Askarak Nemesis",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Mate 100 Askarak Princes",
+        en: "Kill 100 Askarak Princes",
+        es: "Mata 100 Askarak Princes",
+        pl: "Zabij 100 Askarak Princes",
+      },
+    },
     caveat: {
       pt: "O achievement Askarak Nemesis pede 100 Princes, acumulados ao longo de vários dias favoráveis.",
       en: "The Askarak Nemesis achievement wants 100 Princes, accumulated over several favourable days.",
@@ -973,9 +1474,9 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "progressable-today",
     trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["asleep", "dreaming"] },
     detail: {
-      pt: "Cada 1000 Seacrest Serpents mortos no servidor avança a Serpent um estágio, e a mudança acontece na hora, sem esperar o Server Save.",
-      en: "Every 1000 Seacrest Serpents killed server-wide advances the Serpent a stage, and the change lands at once rather than waiting for server save.",
-      es: "Cada 1000 Seacrest Serpents muertos en el servidor avanza una etapa, y el cambio ocurre al instante, sin esperar al Server Save.",
+      pt: "Cada 1.000 Seacrest Serpents mortos no servidor avança a Serpent um estágio, e a mudança acontece na hora, sem esperar o Server Save.",
+      en: "Every 1,000 Seacrest Serpents killed server-wide advances the Serpent a stage, and the change lands at once rather than waiting for a server save.",
+      es: "Cada 1.000 Seacrest Serpents muertos en el servidor avanza una etapa, y el cambio ocurre al instante, sin esperar al Server Save.",
       pl: "Każde 1000 zabitych Seacrest Serpentów na serwerze przesuwa etap, a zmiana następuje od razu, bez czekania na server save.",
     },
     qualifier: {
@@ -985,6 +1486,41 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "1000 Seacrest Serpentów przesuwa etap",
     },
     sources: [wc("The_Fire-Feathered_Serpent")],
+  },
+  {
+    id: "sea-serpent-titanica",
+    kind: "mount",
+    subject: "Titanica",
+    availability: "progressable-today",
+    // The shrimp, not the crab, is what the Seacrest Grounds give you: Giant Shrimps drop from
+    // the Quara Pinchers and Predators there (and from their Renegade forms once the Serpent
+    // wakes). Crustacea Gigantica itself lives in the wet and sunken areas off Calassa and
+    // Treasure Island, so this entry says where the taming item comes from and stops short of
+    // claiming the creature is in the Seacrest Grounds too.
+    trigger: {
+      kind: "world-change",
+      changeId: "sea-serpent",
+      stateIds: ["asleep", "dreaming", "awake"],
+    },
+    detail: {
+      pt: "Use um Giant Shrimp em uma Crustacea Gigantica. O Giant Shrimp cai dos Quara Pinchers e Predators dos Seacrest Grounds.",
+      en: "Use a Giant Shrimp on a Crustacea Gigantica. The Giant Shrimp drops from the Quara Pinchers and Predators of the Seacrest Grounds.",
+      es: "Usa un Giant Shrimp en una Crustacea Gigantica. El Giant Shrimp cae de los Quara Pinchers y Predators de los Seacrest Grounds.",
+      pl: "Użyj Giant Shrimp na Crustacea Gigantica. Giant Shrimp wypada z Quara Pincherów i Predatorów z Seacrest Grounds.",
+    },
+    achievement: {
+      name: "Fried Shrimp",
+      grade: 1,
+      points: 2,
+      premium: true,
+      requirement: {
+        pt: "Dome uma Crustacea Gigantica",
+        en: "Tame a Crustacea Gigantica",
+        es: "Doma una Crustacea Gigantica",
+        pl: "Oswój Crustacea Gigantica",
+      },
+    },
+    sources: [`${WIKI}/Titanica`, `${WIKI}/Giant_Shrimp`, `${WIKI}/Seacrest_Grounds`],
   },
   {
     id: "sea-serpent-renegade-quara",
@@ -1022,6 +1558,35 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     },
     sources: [wc("The_Fire-Feathered_Serpent")],
   },
+  {
+    id: "sea-serpent-snake-charmer",
+    kind: "achievement",
+    subject: "Snake Charmer",
+    availability: "progressable-today",
+    achievement: {
+      name: "Snake Charmer",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Complete a Twenty Miles Beneath the Sea Quest",
+        en: "Complete the Twenty Miles Beneath the Sea Quest",
+        es: "Completa la Twenty Miles Beneath the Sea Quest",
+        pl: "Ukończ Twenty Miles Beneath the Sea Quest",
+      },
+    },
+    // Awake only. The quest's last mission is the Fire-Feathered Sea Serpent one, and that
+    // mission exists only while the Serpent is awake, so this is the one stage in which the
+    // achievement can actually be finished.
+    trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["awake"] },
+    detail: {
+      pt: "A missão final da quest é a do Fire-Feathered Sea Serpent, disponível só enquanto a Serpent estiver acordada.",
+      en: "The quest's final mission is the Fire-Feathered Sea Serpent one, available only while the Serpent is awake.",
+      es: "La misión final de la quest es la del Fire-Feathered Sea Serpent, disponible solo mientras la Serpent esté despierta.",
+      pl: "Ostatnia misja questa to ta z Fire-Feathered Sea Serpent, dostępna tylko gdy Serpent nie śpi.",
+    },
+    sources: [wc("The_Fire-Feathered_Serpent"), `${WIKI}/Snake_Charmer`],
+  },
 
   // ══ WORLD CHANGE: Deeplings ════════════════════════════════════════════════
   {
@@ -1052,25 +1617,60 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "unlocks-future",
     exclusive: true,
     trigger: { kind: "world-change", changeId: "deeplings", stateIds: ["floodgates-open"] },
+    label: {
+      pt: "Coral Mine",
+      en: "Coral Mine",
+      es: "Coral Mine",
+      pl: "Coral Mine",
+    },
     detail: {
-      pt: "Minere você mesmo 10 coral crates agora: é a única forma de ganhar acesso ao boss deepling, e ela não pode ser obtida depois, na fase 3.",
-      en: "Mine 10 coral crates yourself now: it is the only way to earn access to the deepling boss, and it cannot be earned later, in stage 3.",
-      es: "Mina tú mismo 10 coral crates ahora: es la única forma de ganar acceso al boss deepling, y no puede obtenerse después, en la fase 3.",
-      pl: "Wydobądź teraz samodzielnie 10 coral crates: to jedyny sposób na dostęp do bossa deeplingów, a w etapie 3 nie da się go już zdobyć.",
+      pt: "Minere suas próprias Crates Full of Coral e use-as para ajudar a construir a passagem. Minere pelo menos 10 crates para garantir acesso aos Deepling Guardians no próximo estágio.",
+      en: "Mine your own Crates Full of Coral and use them to help build the passage. Mine at least 10 crates to earn access to the Deepling Guardians during the next stage.",
+      es: "Mina tus propias Crates Full of Coral y úsalas para ayudar a construir el paso. Mina al menos 10 crates para ganar acceso a los Deepling Guardians en la próxima fase.",
+      pl: "Wydobądź własne Crates Full of Coral i użyj ich, by pomóc zbudować przejście. Wydobądź co najmniej 10 skrzyń, by zyskać dostęp do Deepling Guardians w następnym etapie.",
     },
     caveat: {
-      pt: "O acesso fica guardado entre ciclos, então não precisa ser usado nesta rotação.",
-      en: "The access is saved between cycles, so it need not be spent in this rotation.",
-      es: "El acceso se guarda entre ciclos, así que no hace falta usarlo en esta rotación.",
-      pl: "Dostęp zapisuje się między cyklami, więc nie trzeba go użyć w tej rotacji.",
-    },
-    qualifier: {
-      pt: "minere 10 crates você mesmo",
-      en: "mine 10 crates yourself",
-      es: "mina 10 crates tú mismo",
-      pl: "wydobądź 10 crates samodzielnie",
+      pt: "Terminada a passagem, o estágio 3 começa depois do próximo Server Save.",
+      en: "Once the passage is completed, stage 3 begins after the next server save.",
+      es: "Terminado el paso, la fase 3 empieza tras el próximo Server Save.",
+      pl: "Po ukończeniu przejścia etap 3 zaczyna się po następnym server save.",
     },
     sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
+  },
+  {
+    id: "deeplings-next-guardians",
+    kind: "boss",
+    subject: "Tanjis, Obujos and Jaul",
+    availability: "unlocks-future",
+    bosstiary: "Bane",
+    trigger: { kind: "world-change", changeId: "deeplings", stateIds: ["floodgates-open"] },
+    label: {
+      pt: "Próximo estágio",
+      en: "Next stage",
+      es: "Próxima fase",
+      pl: "Następny etap",
+    },
+    detail: {
+      pt: "Tanjis, Obujos e Jaul ficam disponíveis, com um Guardian acessível por dia.",
+      en: "Tanjis, Obujos and Jaul become available, with one Guardian accessible each day.",
+      es: "Tanjis, Obujos y Jaul quedan disponibles, con un Guardian accesible cada día.",
+      pl: "Tanjis, Obujos i Jaul stają się dostępni, po jednym Guardianie na dzień.",
+    },
+    sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
+  },
+  {
+    id: "deeplings-next-manta-ray",
+    kind: "mount",
+    subject: "Manta Ray",
+    availability: "unlocks-future",
+    trigger: { kind: "world-change", changeId: "deeplings", stateIds: ["floodgates-open"] },
+    detail: {
+      pt: "A área dos Manta Rays fica acessível no próximo estágio.",
+      en: "The Manta Ray area becomes accessible during the next stage.",
+      es: "El área de las Manta Rays queda accesible en la próxima fase.",
+      pl: "Obszar Manta Rayów staje się dostępny w następnym etapie.",
+    },
+    sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`, `${WIKI}/Manta_Ray`],
   },
   {
     id: "deeplings-drowned-library",
@@ -1090,16 +1690,19 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   {
     id: "deeplings-boss",
     kind: "boss",
-    subject: "Tanjis / Obujos / Jaul",
+    subject: "Deepling Guardian",
     availability: "available-today",
     exclusive: true,
     bosstiary: "Bane",
     trigger: { kind: "world-change", changeId: "deeplings", stateIds: ["arcanum-breached"] },
+    // "We haven't checked" rather than "it is unknown": the Guardian is re-rolled at every
+    // server save and anyone standing in Fiehonja can see which one is up, so the app not
+    // knowing is a gap in what has been looked at, not a fact nobody can have.
     detail: {
-      pt: "Um dos três é sorteado por Server Save, e só entra quem já minerou 10 coral crates na fase 2. Esse acesso não pode ser conquistado agora.",
-      en: "One of the three is drawn each server save, and only players who already mined 10 coral crates in stage 2 can enter. That access cannot be earned now.",
-      es: "Uno de los tres se sortea cada Server Save, y solo entra quien ya minó 10 coral crates en la fase 2. Ese acceso no puede conseguirse ahora.",
-      pl: "Jeden z trójki jest losowany co server save, a wejdzie tylko ten, kto wydobył 10 coral crates w etapie 2. Tego dostępu nie zdobędziesz teraz.",
+      pt: "Ainda não conferimos qual Deepling Guardian está disponível hoje. Pode ser Tanjis, Obujos ou Jaul, sorteado a cada Server Save. Só entra quem já minerou 10 Crates Full of Coral na fase 2.",
+      en: "We haven't checked which Deepling Guardian is available today. It can be Tanjis, Obujos or Jaul, re-rolled at every server save. Only players who mined 10 Crates Full of Coral in stage 2 can enter.",
+      es: "Todavía no comprobamos qué Deepling Guardian está disponible hoy. Puede ser Tanjis, Obujos o Jaul, sorteado en cada Server Save. Solo entra quien minó 10 Crates Full of Coral en la fase 2.",
+      pl: "Nie sprawdziliśmy jeszcze, który Deepling Guardian jest dziś dostępny. Może to być Tanjis, Obujos albo Jaul, losowany przy każdym server save. Wejdzie tylko ten, kto wydobył 10 Crates Full of Coral w etapie 2.",
     },
     caveat: {
       pt: "Abrir o baú de um boss revoga o acesso aos outros dois na mesma rotação.",
@@ -1108,13 +1711,41 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Otwarcie skrzyni jednego bossa odbiera dostęp do dwóch pozostałych w tej rotacji.",
     },
     prerequisites: ["10 coral crates mined during Deepling stage 2"],
-    qualifier: {
-      pt: "só com 10 coral crates da fase 2",
-      en: "only with 10 coral crates from stage 2",
-      es: "solo con 10 coral crates de la fase 2",
-      pl: "tylko z 10 coral crates z etapu 2",
-    },
     sources: [`${WIKI}/Liquid_Black_Quest/Spoiler`],
+  },
+  {
+    id: "deeplings-manta-ray-mount",
+    kind: "mount",
+    subject: "Manta Ray",
+    availability: "available-today",
+    exclusive: true,
+    trigger: { kind: "world-change", changeId: "deeplings", stateIds: ["arcanum-breached"] },
+    detail: {
+      pt: "Use um Foxtail em uma Manta Ray, na terceira área de Fiehonja. O Foxtail cai de Deepling Guards, Deepling Tyrants e Black Vixens.",
+      en: "Use a Foxtail on a Manta Ray in the third area of Fiehonja. The Foxtail drops from Deepling Guards, Deepling Tyrants and Black Vixens.",
+      es: "Usa un Foxtail en una Manta Ray, en la tercera área de Fiehonja. El Foxtail cae de Deepling Guards, Deepling Tyrants y Black Vixens.",
+      pl: "Użyj Foxtaila na Manta Rayu w trzecim obszarze Fiehonji. Foxtail wypada z Deepling Guardów, Deepling Tyrantów i Black Vixenów.",
+    },
+    caveat: {
+      pt: "A Manta Ray pode comer o Foxtail em vez de aceitar a domesticação.",
+      en: "The Manta Ray can eat the Foxtail instead of accepting the taming.",
+      es: "La Manta Ray puede comerse el Foxtail en lugar de aceptar la domesticación.",
+      pl: "Manta Ray może zjeść Foxtaila zamiast dać się oswoić.",
+    },
+    achievement: {
+      name: "Beneath the Sea",
+      grade: 1,
+      points: 3,
+      premium: true,
+      requirement: {
+        pt: "Dome uma Manta Ray",
+        en: "Tame a Manta Ray",
+        es: "Doma una Manta Ray",
+        pl: "Oswój Manta Raya",
+      },
+    },
+    prerequisites: ["A Foxtail"],
+    sources: [`${WIKI}/Manta_Ray_(Mount)`, `${WIKI}/Foxtail`, `${WIKI}/Beneath_the_Sea`],
   },
   {
     id: "deeplings-manta-ray",
@@ -1129,12 +1760,6 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       en: "They appear only in the third area of Fiehonja, which is open only in this stage.",
       es: "Solo aparecen en la tercera área de Fiehonja, abierta únicamente en esta fase.",
       pl: "Występują tylko w trzecim obszarze Fiehonji, otwartym wyłącznie na tym etapie.",
-    },
-    qualifier: {
-      pt: "na terceira área de Fiehonja",
-      en: "in the third area of Fiehonja",
-      es: "en la tercera área de Fiehonja",
-      pl: "w trzecim obszarze Fiehonji",
     },
     sources: [`${WIKI}/Manta_Ray`, `${WIKI}/Liquid_Black_Quest/Spoiler`],
   },
@@ -1165,7 +1790,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "item",
     subject: "Gooey Mass",
     availability: "available-today",
-    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["breached", "fallen"] },
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["breached"] },
     detail: {
       pt: "Gaste 50 Favour Points com Orockle (reward, yes) para receber o feromônio que abre os Hive Gates por 7 dias e dá acesso às salas com Insectoid Cells.",
       en: "Spend 50 Favour Points with Orockle (reward, yes) for the pheromone that opens the Hive Gates for 7 days and reaches the rooms with Insectoid Cells.",
@@ -1203,45 +1828,129 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   {
     id: "hive-born-bosses",
     kind: "boss",
-    subject: "Hive Born bosses",
+    subject: "Bosstiary",
     availability: "available-today",
     exclusive: true,
     bosstiary: "Bane",
     trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
     detail: {
-      pt: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit e Shadowstalker ficam no lado oeste da Hive interna, aberto só neste estágio, e largam Dung Balls que valem 10 War Exp cada.",
-      en: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit and Shadowstalker sit in the western inner Hive, open only in this stage, and drop Dung Balls worth 10 War Exp each.",
-      es: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit y Shadowstalker están en el lado oeste de la Hive interna, abierto solo en esta fase, y sueltan Dung Balls que valen 10 War Exp cada una.",
-      pl: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit i Shadowstalker siedzą w zachodniej części wewnętrznego Hive, otwartej tylko na tym etapie, i upuszczają Dung Balle warte po 10 War Exp.",
+      pt: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit e Shadowstalker, os seis Bane do lado oeste da Hive interna. Largam Dung Balls que valem 10 War Exp cada.",
+      en: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit and Shadowstalker, the six Bane bosses of the western inner Hive. They drop Dung Balls worth 10 War Exp each.",
+      es: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit y Shadowstalker, los seis Bane del lado oeste de la Hive interna. Sueltan Dung Balls que valen 10 War Exp cada una.",
+      pl: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit i Shadowstalker, sześciu bossów Bane z zachodniej części wewnętrznego Hive. Upuszczają Dung Balle warte po 10 War Exp.",
     },
+    // No day count. Stage 3 does run for a fixed stretch, but the Guide reply the app parses
+    // carries no day number (only a counter the parser discards), so any "N days left" the
+    // bulletin printed would be inferred rather than known.
     caveat: {
-      pt: "O estágio 3 dura cinco dias e depois volta ao estágio 1.",
-      en: "Stage 3 lasts five days and then falls back to stage 1.",
-      es: "La fase 3 dura cinco días y luego vuelve a la fase 1.",
-      pl: "Etap 3 trwa pięć dni, po czym wraca do etapu 1.",
+      pt: "O estágio 3 dura um tempo fixo e depois a Hive volta ao estágio 1.",
+      en: "Stage 3 runs for a fixed stretch, after which the hive falls back to stage 1.",
+      es: "La fase 3 dura un tiempo fijo y después la Hive vuelve a la fase 1.",
+      pl: "Etap 3 trwa ustalony czas, po czym Hive wraca do etapu 1.",
     },
-    qualifier: {
-      pt: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit e Shadowstalker",
-      en: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit and Shadowstalker",
-      es: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit y Shadowstalker",
-      pl: "Chopper, Fleshslicer, Maw, Mindmasher, Rotspit i Shadowstalker",
-    },
-    sources: [wc("Hive_Born")],
+    sources: [wc("Hive_Born"), `${WIKI}/Dung_Ball_(Quest)`],
   },
   {
     id: "hive-born-insectoid-outfits",
-    kind: "quest",
-    subject: "Insectoid Outfits Quest",
+    kind: "outfit",
+    subject: "Insectoid Outfit",
     availability: "available-today",
     exclusive: true,
     trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
     detail: {
-      pt: "A sala da quest fica no lado oeste da Hive interna, acessível apenas neste estágio e com o feromônio de Orockle.",
-      en: "The quest room is in the western inner Hive, reachable only in this stage and only with Orockle's pheromone.",
-      es: "La sala de la quest está en el lado oeste de la Hive interna, accesible solo en esta fase y con la feromona de Orockle.",
-      pl: "Sala questa jest w zachodniej części wewnętrznego Hive, dostępna tylko na tym etapie i z feromonem Orockle'a.",
+      pt: "A sala da quest fica no lado oeste da Hive interna, acessível neste estágio com o feromônio de Orockle.",
+      en: "The quest room in the western inner Hive is accessible during this stage with Orockle's pheromone.",
+      es: "La sala de la quest en el lado oeste de la Hive interna es accesible en esta fase con la feromona de Orockle.",
+      pl: "Sala questa w zachodniej części wewnętrznego Hive jest w tym etapie dostępna z feromonem Orockle'a.",
     },
+    prerequisites: ["Orockle's pheromone (50 Favour Points)"],
     sources: [wc("Hive_Born"), `${WIKI}/Insectoid_Outfits_Quest`],
+  },
+  {
+    id: "hive-born-lady-bug-mount",
+    kind: "mount",
+    subject: "Lady Bug",
+    availability: "available-today",
+    exclusive: true,
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    // The clover comes from a Gooey Mass, which comes from an Insectoid Cell behind the Hive
+    // Gates. That is one chain and it is written once here, rather than a line apiece.
+    detail: {
+      pt: "Use um Four-Leaf Clover em uma Ladybug. O clover sai ao usar uma Gooey Mass, obtida nas Insectoid Cells atrás dos Hive Gates com o feromônio de Orockle.",
+      en: "Use a Four-Leaf Clover on a Ladybug. The clover comes from using a Gooey Mass, taken from the Insectoid Cells behind the Hive Gates with Orockle's pheromone.",
+      es: "Usa un Four-Leaf Clover en una Ladybug. El clover sale al usar una Gooey Mass, obtenida en las Insectoid Cells tras los Hive Gates con la feromona de Orockle.",
+      pl: "Użyj Four-Leaf Clover na Ladybugu. Koniczyna wypada z użycia Gooey Mass, zdobytej z Insectoid Cells za Hive Gates z feromonem Orockle'a.",
+    },
+    achievement: {
+      name: "Lovely Dots",
+      grade: 1,
+      points: 3,
+      premium: true,
+      requirement: {
+        pt: "Dome uma Ladybug",
+        en: "Tame a Ladybug",
+        es: "Doma una Ladybug",
+        pl: "Oswój Ladybuga",
+      },
+    },
+    sources: [
+      `${WIKI}/Lady_Bug`,
+      `${WIKI}/Four-Leaf_Clover`,
+      `${WIKI}/Gooey_Mass`,
+      `${WIKI}/Lovely_Dots`,
+    ],
+  },
+  {
+    id: "hive-born-hive-fighter",
+    kind: "achievement",
+    subject: "Hive Fighter",
+    availability: "progressable-today",
+    achievement: {
+      name: "Hive Fighter",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Acumule 300 War Exp na War Against the Hive Quest",
+        en: "Earn 300 War Exp in the War Against the Hive Quest",
+        es: "Acumula 300 War Exp en la War Against the Hive Quest",
+        pl: "Zdobądź 300 War Exp w War Against the Hive Quest",
+      },
+    },
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "Este é o estágio rápido: as Dung Balls dos seis bosses valem 10 War Exp cada.",
+      en: "This is the fast stage: the six bosses' Dung Balls are worth 10 War Exp each.",
+      es: "Esta es la fase rápida: las Dung Balls de los seis bosses valen 10 War Exp cada una.",
+      pl: "To szybki etap: Dung Balle od sześciu bossów są warte po 10 War Exp.",
+    },
+    sources: [`${WIKI}/Hive_Fighter`, `${WIKI}/Dung_Ball_(Quest)`],
+  },
+  {
+    id: "hive-born-hive-war-veteran",
+    kind: "achievement",
+    subject: "Hive War Veteran",
+    availability: "progressable-today",
+    achievement: {
+      name: "Hive War Veteran",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Acumule 500 War Exp na War Against the Hive Quest",
+        en: "Earn 500 War Exp in the War Against the Hive Quest",
+        es: "Acumula 500 War Exp en la War Against the Hive Quest",
+        pl: "Zdobądź 500 War Exp w War Against the Hive Quest",
+      },
+    },
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "O War Exp soma entre os ciclos, e cada peça do chitin outfit pede mais um patamar.",
+      en: "War Exp adds up across cycles, and each piece of the chitin outfit asks for one more tier.",
+      es: "El War Exp se acumula entre ciclos, y cada pieza del chitin outfit pide un nivel más.",
+      pl: "War Exp sumuje się przez cykle, a każdy element chitin outfitu wymaga kolejnego progu.",
+    },
+    sources: [`${WIKI}/Hive_War_Veteran`],
   },
   {
     id: "hive-born-ladybug",
@@ -1283,10 +1992,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "available-today",
     trigger: { kind: "mini-world-change", changeId: "fury-gates" },
     detail: {
-      pt: "Use uma Decorative Ribbon ou Music Box em um Dragonling: eles só existem na Fury Dungeon e no vulcão de Goroma em erupção.",
-      en: "Use a Decorative Ribbon or Music Box on a Dragonling: they exist only in the Fury Dungeon and on the erupting Goroma volcano.",
-      es: "Usa una Decorative Ribbon o Music Box en un Dragonling: solo existen en la Fury Dungeon y en el volcán de Goroma en erupción.",
-      pl: "Użyj Decorative Ribbon lub Music Box na Dragonlingu: występują tylko w Fury Dungeon i na wybuchającym wulkanie Goroma.",
+      pt: "Use uma Decorative Ribbon ou Music Box em um Dragonling da Fury Dungeon.",
+      en: "Use a Decorative Ribbon or Music Box on a Dragonling in the Fury Dungeon.",
+      es: "Usa una Decorative Ribbon o Music Box en un Dragonling de la Fury Dungeon.",
+      pl: "Użyj Decorative Ribbon lub Music Box na Dragonlingu w Fury Dungeon.",
     },
     qualifier: {
       pt: "com Decorative Ribbon ou Music Box",
@@ -1329,7 +2038,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Limpia todos los orcos del campamento para que aparezca; da el achievement Bibby's Bloodbath.",
       pl: "Wyczyść wszystkie orki w obozie, by się pojawiła; daje osiągnięcie Bibby's Bloodbath.",
     },
-    achievement: { name: "Bibby's Bloodbath", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Bibby's Bloodbath",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Mate Bibby Bloodbath",
+        en: "Kill Bibby Bloodbath",
+        es: "Mata a Bibby Bloodbath",
+        pl: "Zabij Bibby Bloodbath",
+      },
+    },
     caveat: {
       pt: "Só pode ser morta a cada 24 horas, e subir a escada antes disso reinicia a contagem.",
       en: "She can only be killed every 24 hours, and going up the stairs sooner resets the timer.",
@@ -1450,10 +2170,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     exclusive: true,
     trigger: { kind: "mini-world-change", changeId: "nightmare-isles" },
     detail: {
-      pt: "Plataformas ligadas por escadas-teleporte, com Silencers, Retching Horrors, Choking Fears e seis Terrorsleeps.",
-      en: "Platforms linked by teleporting stairs, with Silencers, Retching Horrors, Choking Fears and six Terrorsleeps.",
-      es: "Plataformas unidas por escaleras-teletransporte, con Silencers, Retching Horrors, Choking Fears y seis Terrorsleeps.",
-      pl: "Platformy połączone teleportującymi schodami, z Silencerami, Retching Horrorami, Choking Fearami i sześcioma Terrorsleepami.",
+      pt: "Plataformas ligadas por escadas-teleporte, com Silencers, Retching Horrors, Choking Fears e Terrorsleeps.",
+      en: "Platforms linked by teleporting stairs, with Silencers, Retching Horrors, Choking Fears and Terrorsleeps.",
+      es: "Plataformas unidas por escaleras-teletransporte, con Silencers, Retching Horrors, Choking Fears y Terrorsleeps.",
+      pl: "Platformy połączone teleportującymi schodami, z Silencerami, Retching Horrorami, Choking Fearami i Terrorsleepami.",
     },
     caveat: {
       pt: "Uma plataforma pode ter mais de dez criaturas, que atacam todas de uma vez.",
@@ -1462,10 +2182,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Na jednej platformie może być ponad dziesięć stworzeń, które atakują naraz.",
     },
     advisory: {
-      pt: "O guia de caça da TibiaWiki sugere nível 250 para todas as vocações. É uma recomendação da comunidade, não um requisito do jogo.",
-      en: "TibiaWiki's hunting guide suggests level 250 for every vocation, a community recommendation, not a requirement the game enforces.",
-      es: "La guía de caza de TibiaWiki sugiere nivel 250 para todas las vocaciones, una recomendación de la comunidad, no un requisito del juego.",
-      pl: "Poradnik łowiecki TibiaWiki sugeruje poziom 250 dla każdej profesji, to rekomendacja społeczności, nie wymóg gry.",
+      // The "this is only a recommendation" clause is what the 💡 marker is for; spelling it
+      // out in the sentence as well said the same thing twice on one line.
+      pt: "O guia de caça da TibiaWiki sugere nível 250 para todas as vocações.",
+      en: "TibiaWiki's hunting guide suggests level 250 for every vocation.",
+      es: "La guía de caza de TibiaWiki sugiere nivel 250 para todas las vocaciones.",
+      pl: "Poradnik łowiecki TibiaWiki sugeruje poziom 250 dla każdej profesji.",
     },
     sources: [mwc("Nightmare_Isles"), `${WIKI}/Nightmare_Isles`],
   },
@@ -1477,10 +2199,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     exclusive: true,
     trigger: { kind: "mini-world-change", changeId: "nightmare-isles" },
     detail: {
-      pt: "O Nightmare Teddy é guardado nas ilhas, que só existem enquanto a tempestade de areia mantiver o portal aberto.",
-      en: "The Nightmare Teddy is guarded on the isles, which only exist while the sandstorm holds the portal open.",
-      es: "El Nightmare Teddy está guardado en las islas, que solo existen mientras la tormenta de arena mantenga el portal abierto.",
-      pl: "Nightmare Teddy jest strzeżony na wyspach, które istnieją tylko, póki burza piaskowa trzyma portal otwarty.",
+      // The state sentence above this line already says the portal is open. Repeating it here
+      // spent the line on a fact the reader had just read.
+      pt: "O Nightmare Teddy é guardado nas ilhas.",
+      en: "The Nightmare Teddy is guarded on the isles.",
+      es: "El Nightmare Teddy está guardado en las islas.",
+      pl: "Nightmare Teddy jest strzeżony na wyspach.",
     },
     sources: [mwc("Nightmare_Isles"), `${WIKI}/Nightmare_Teddy_Quest`],
   },
@@ -1526,7 +2250,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Fire from the Earth",
     availability: "available-today",
-    achievement: { name: "Fire from the Earth", grade: 1, points: 2, premium: true },
+    achievement: {
+      name: "Fire from the Earth",
+      grade: 1,
+      points: 2,
+      premium: true,
+      requirement: {
+        pt: "Mate 50 criaturas de fogo no vulcão Hellgore",
+        en: "Kill 50 fiery creatures on the Hellgore volcano",
+        es: "Mata 50 criaturas de fuego en el volcán Hellgore",
+        pl: "Zabij 50 ognistych stworzeń na wulkanie Hellgore",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "fire-from-the-earth" },
     detail: {
       pt: "Mate 50 criaturas de fogo, de qualquer tipo, dentro ou em cima do vulcão Hellgore.",
@@ -1575,7 +2310,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Chest Robber",
     availability: "progressable-today",
-    achievement: { name: "Chest Robber", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Chest Robber",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Saqueie o baú de 3 acampamentos nômades diferentes",
+        en: "Loot the chest of 3 different Nomad camps",
+        es: "Saquea el cofre de 3 campamentos nómadas distintos",
+        pl: "Złup skrzynię z 3 różnych obozów nomadów",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "nomads" },
     detail: {
       pt: "Três dos quatro acampamentos têm baú (10 Hams, 50 Fishes ou uma Fur Bag com gemas); o achievement pede os três, em dias diferentes.",
@@ -1604,7 +2350,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Torn Treasures",
     availability: "available-today",
-    achievement: { name: "Torn Treasures", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Torn Treasures",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Entregue Blood Herbs a Wyda até receber um Torn Teddy",
+        en: "Hand Blood Herbs to Wyda until she gives a Torn Teddy",
+        es: "Entrega Blood Herbs a Wyda hasta recibir un Torn Teddy",
+        pl: "Oddawaj Wydzie Blood Herby, aż da Torn Teddy'ego",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "bored" },
     detail: {
       pt: "Entregue Blood Herbs a Wyda até ela dar um Torn Teddy; normalmente ela devolve Witchesbrooms antes disso.",
@@ -1625,7 +2382,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Someone's Bored",
     availability: "available-today",
-    achievement: { name: "Someone's Bored", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Someone's Bored",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Mate uma Giant Spider falsa",
+        en: "Kill a fake Giant Spider",
+        es: "Mata una Giant Spider falsa",
+        pl: "Zabij fałszywego Giant Spidera",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "bored" },
     detail: {
       pt: "Mate uma das Giant Spiders falsas que aparecem em volta da casa de Wyda.",
@@ -1648,7 +2416,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Dog Sitter",
     availability: "available-today",
-    achievement: { name: "Dog Sitter", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Dog Sitter",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Encontre Noodles",
+        en: "Find Noodles",
+        es: "Encuentra a Noodles",
+        pl: "Znajdź Noodlesa",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "noodles-is-gone" },
     detail: {
       pt: "Peça o Dog Collar a King Tibianus, use-o em Noodles pela península de Thais e volte para pedir a recompensa: 1000 de experiência e, raramente, uma Fan Doll of Queen Eloise.",
@@ -1677,7 +2456,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Loyal Subject",
     availability: "available-today",
-    achievement: { name: "Loyal Subject", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Loyal Subject",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Diga \"hello king\" a King Tibianus",
+        en: "Say \"hello king\" to King Tibianus",
+        es: "Dile \"hello king\" a King Tibianus",
+        pl: "Powiedz \"hello king\" do King Tibianusa",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "kingsday" },
     detail: {
       pt: 'Diga "Hello King" a King Tibianus em Thais; só conta durante o Kingsday.',
@@ -1727,7 +2517,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Ice Harvester",
     availability: "progressable-today",
-    achievement: { name: "Ice Harvester", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Ice Harvester",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Colha 10 Ice Flower Seeds",
+        en: "Harvest 10 Ice Flower Seeds",
+        es: "Cosecha 10 Ice Flower Seeds",
+        pl: "Zbierz 10 Ice Flower Seeds",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "thawing" },
     detail: {
       pt: "São 15 Ice Flowers pelo degelo ao norte de Svargrond, cada uma com cerca de 20% de chance de dar semente; precisa de 10 sementes.",
@@ -1764,7 +2565,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El nido al suroeste de Venore solo abre en este cambio; matarla tres veces da el achievement Nestling.",
       pl: "Gniazdo na południowy zachód od Venore otwiera się tylko przy tej zmianie; trzy zabicia dają osiągnięcie Nestling.",
     },
-    achievement: { name: "Nestling", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Nestling",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Mate Mamma Longlegs 3 vezes",
+        en: "Kill Mamma Longlegs 3 times",
+        es: "Mata a Mamma Longlegs 3 veces",
+        pl: "Zabij Mamma Longlegs 3 razy",
+      },
+    },
     caveat: {
       pt: "Depois da terceira morte você nunca mais consegue entrar na área.",
       en: "After the third kill you can never enter the area again.",
@@ -1848,7 +2660,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Arthom the Hunter",
     availability: "available-today",
     exclusive: true,
-    bosstiary: "Nemesis",
+    // No `bosstiary`: his TibiaWiki page carries no bosstiaryclass, unlike Oodok Witchmaster's.
     trigger: { kind: "mini-world-change", changeId: "jungle-camp", variantIds: ["hunters"] },
     detail: {
       pt: "Chefe do Hunter Camp em Tiquanda. Só pode aparecer nos dias em que os caçadores dominam as terras sagradas.",
@@ -1934,7 +2746,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Hasta 16 ocupan el claro al sur de Banuta, y sueltan Elephant Tusks más que los elefantes comunes.",
       pl: "Nawet 16 z nich wypełnia polanę na południe od Banuty i częściej niż zwykłe słonie upuszczają Elephant Tusks.",
     },
-    achievement: { name: "Trail of the Ape God", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Trail of the Ape God",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Mate 5 Terrified Elephants",
+        en: "Kill 5 Terrified Elephants",
+        es: "Mata 5 Terrified Elephants",
+        pl: "Zabij 5 Terrified Elephants",
+      },
+    },
     caveat: {
       pt: "Cinco mortes já dão o achievement Trail of the Ape God.",
       en: "Five kills already grant the Trail of the Ape God achievement.",
@@ -1950,7 +2773,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Honest Finder",
     availability: "available-today",
-    achievement: { name: "Honest Finder", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Honest Finder",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Devolva uma Bag with Stolen Gold a um banco",
+        en: "Return a Bag with Stolen Gold to a bank",
+        es: "Devuelve una Bag with Stolen Gold a un banco",
+        pl: "Oddaj Bag with Stolen Gold do banku",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "bank-robbery" },
     detail: {
       pt: "Descubra qual das quatro cidades foi roubada, derrote o ladrão e devolva a Bag with Stolen Gold ao banqueiro por 10 Platinum Coins.",
@@ -1977,7 +2811,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Goldhunter",
     availability: "progressable-today",
-    achievement: { name: "Goldhunter", grade: 1, points: 2, premium: false },
+    achievement: {
+      name: "Goldhunter",
+      grade: 1,
+      points: 2,
+      premium: false,
+      requirement: {
+        pt: "Devolva 5 Bags with Stolen Gold ao todo",
+        en: "Return 5 Bags with Stolen Gold in total",
+        es: "Devuelve 5 Bags with Stolen Gold en total",
+        pl: "Oddaj łącznie 5 Bags with Stolen Gold",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "bank-robbery" },
     detail: {
       pt: "São 5 bolsas devolvidas ao todo, normalmente uma por roubo. Hoje adianta um passo.",
@@ -2001,7 +2846,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Desert Fisher",
     availability: "available-today",
     exclusive: true,
-    achievement: { name: "Desert Fisher", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Desert Fisher",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Pesque um Sandfish no rio de Zao",
+        en: "Fish a Sandfish in the Zao river",
+        es: "Pesca un Sandfish en el río de Zao",
+        pl: "Złów Sandfisha w rzece Zao",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "river-runs-deep" },
     detail: {
       pt: "Pesque um Sandfish no rio do Zao Steppe, que só corre enquanto esta mudança durar.",
@@ -2030,7 +2886,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Whistle-Blower",
     availability: "available-today",
-    achievement: { name: "Whistle-Blower", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Whistle-Blower",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Conte a Queen Eloise sobre Chip",
+        en: "Tell Queen Eloise about Chip",
+        es: "Cuéntale a Queen Eloise sobre Chip",
+        pl: "Powiedz Queen Eloise o Chipie",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "lumberjack" },
     detail: {
       pt: "Fale com Chip nos campos ao norte de Carlin primeiro. Sem isso, Queen Eloise só responde \"How would you know?\".",
@@ -2060,7 +2927,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Down the Drain",
     availability: "available-today",
     exclusive: true,
-    achievement: { name: "Down the Drain", grade: 1, points: 2, premium: false },
+    achievement: {
+      name: "Down the Drain",
+      grade: 1,
+      points: 2,
+      premium: false,
+      requirement: {
+        pt: "Mate 50 Water Elementals na ilha alagada",
+        en: "Kill 50 Water Elementals on the flooded island",
+        es: "Mata 50 Water Elementals en la isla inundada",
+        pl: "Zabij 50 Water Elementali na zalanej wyspie",
+      },
+    },
     trigger: { kind: "mini-world-change", changeId: "down-the-drain" },
     detail: {
       pt: "A cheia abre uma ilhota com 11 Water Elementals ao sul do Outlaw Camp; são 50 mortes lá dentro.",
@@ -2091,7 +2969,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Usa una Colourful Water Lily en un Giant Beaver suelto en Silvertides; reflejan todo ataque, así que no pueden ser heridos.",
       pl: "Użyj Colourful Water Lily na wolnym Giant Beaverze w Silvertides; odbijają każdy atak, więc nie da się ich zranić.",
     },
-    achievement: { name: "Beaver Away", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Beaver Away",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Dome um Giant Beaver",
+        en: "Tame a Giant Beaver",
+        es: "Doma un Giant Beaver",
+        pl: "Oswój Giant Beavera",
+      },
+    },
     prerequisites: [
       "Star-Crossed Lovers mission of the Within the Tides Quest",
       "A Colourful Water Lily",
@@ -2142,7 +3031,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "Usa un Melting Horn tres veces seguidas en un Half-Frozen Ursagrodon; la isla solo es accesible mientras exista el puente de hielo.",
       pl: "Użyj Melting Horna trzy razy pod rząd na Half-Frozen Ursagrodonie; wyspa jest dostępna tylko, póki stoi lodowy most.",
     },
-    achievement: { name: "Icy Glare", grade: 1, points: 1, premium: true },
+    achievement: {
+      name: "Icy Glare",
+      grade: 1,
+      points: 1,
+      premium: true,
+      requirement: {
+        pt: "Dome um Half-Frozen Ursagrodon",
+        en: "Tame a Half-Frozen Ursagrodon",
+        es: "Doma un Half-Frozen Ursagrodon",
+        pl: "Oswój Half-Frozen Ursagrodona",
+      },
+    },
     caveat: {
       pt: "O Melting Horn quebra com muita facilidade, leve vários Fireproof Horns e uma Tinder Box.",
       en: "The Melting Horn breaks very easily, bring several Fireproof Horns and a Tinder Box.",
@@ -2244,7 +3144,18 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "achievement",
     subject: "Si, Ariki!",
     availability: "available-today",
-    achievement: { name: "Si, Ariki!", grade: 1, points: 1, premium: false },
+    achievement: {
+      name: "Si, Ariki!",
+      grade: 1,
+      points: 1,
+      premium: false,
+      requirement: {
+        pt: "Negocie com Yasir pela primeira vez",
+        en: "Trade with Yasir for the first time",
+        es: "Comercia con Yasir por primera vez",
+        pl: "Handluj z Yasirem po raz pierwszy",
+      },
+    },
     trigger: { kind: "merchant", merchantId: "yasir" },
     detail: {
       pt: 'Diga "ariki" ou "trade" a Yasir para negociar pela primeira vez.',

@@ -70,7 +70,11 @@ describe("deriveOpportunities", () => {
     it("only offers the Princes once a faction dominates, not merely leads", () => {
       const advantage = baseInput();
       setWorldChange(advantage, "demon-war", "shaburak-advantage");
-      expect(ids(advantage)).toEqual(["demon-war-shaburak-lord"]);
+      expect(ids(advantage)).toContain("demon-war-shaburak-lord");
+      // The rank-and-file Demons are the crypt's base spawn and are there in every stage; what
+      // the advantage stage must not add is the losing faction's Lords, or anyone's Princes.
+      expect(ids(advantage)).not.toContain("demon-war-shaburak-prince");
+      expect(ids(advantage)).not.toContain("demon-war-askarak-lord");
 
       const dominant = baseInput();
       setWorldChange(dominant, "demon-war", "shaburak-dominant");

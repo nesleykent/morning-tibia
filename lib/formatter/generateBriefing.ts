@@ -40,9 +40,9 @@ export { BRIEFING_LANGUAGES } from "./translations";
  * ```
  *
  * The markers are the whole editorial idea. Every subordinate line declares its own kind with
- * a glyph — 🎯 bestiary, 🏆 achievement, 🔄 something to do, ⚔️ what spawns, 💡 advice,
- * ⏳ what changes at server save — so a reader scanning for "what can I actually do today"
- * finds it without reading a word of connective tissue. It replaces the old approach, which
+ * a glyph — 🎯 bestiary, 👹 boss, 🐎 mount, 👕 outfit, 🏆 achievement, 🔄 something to do,
+ * ⚔️ what spawns, 💡 advice, ⏳ what changes at server save — so a reader scanning for "what
+ * can I actually do today" finds it without reading a word of connective tissue. It replaces the old approach, which
  * appended the app's own vocabulary to each line ("só neste estado", "vale após o Server
  * Save") and made a forwarded message read like a database dump.
  *
@@ -82,6 +82,9 @@ const BETWEEN = "\n\n\n";
 const ICON: Record<NoteIcon, string> = {
   place: "📍",
   bestiary: "🎯",
+  boss: "👹",
+  mount: "🐎",
+  outfit: "👕",
   achievement: "🏆",
   progress: "🔄",
   creatures: "⚔️",
@@ -323,6 +326,9 @@ function render(model: BriefingModel, style: Style): string {
 
   // Omitted entirely when there is nothing scheduled. "No events right now" is a heading plus
   // a line to say the heading was unnecessary, and the bulletin is forwarded to other people.
+  // Name, date, countdown, then what the event is actually worth turning up for. The last
+  // part is the one a reader acts on: "Grimvale starts tomorrow" tells them when, and "Feroxa
+  // appears on the 13th, prepare the quest requirements first" tells them what tomorrow is for.
   const upcoming = section(
     style,
     "📆",
@@ -332,6 +338,13 @@ function render(model: BriefingModel, style: Style): string {
         withIcon(style, line.emoji, bold(style, line.title)),
         bold(style, line.detail),
         line.countdown ? withIcon(style, ICON.deadline, line.countdown) : null,
+        ...line.notes.map((note) =>
+          withIcon(
+            style,
+            note.emoji,
+            note.subject ? `${bold(style, `${note.subject}:`)} ${note.text}` : note.text,
+          ),
+        ),
       ]),
     ),
   );

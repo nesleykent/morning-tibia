@@ -74,8 +74,8 @@ describe("no claim stronger than the researched state", () => {
   it("Demon War reports the spawn each stage actually causes, not who 'controls' the dungeon", () => {
     // TibiaWiki, Demon Wars spoiler: advantage spawns that faction's Lords on its tower's upper
     // floors; dominance adds the Princes. Neither faction ever holds the whole complex.
-    expect(en("demon-war", "stalemate")).toMatch(/neither faction has the advantage/i);
-    expect(en("demon-war", "stalemate")).toMatch(/no Lords or Princes spawn/i);
+    expect(en("demon-war", "stalemate")).toMatch(/stalemate/i);
+    expect(en("demon-war", "stalemate")).toMatch(/no Lords or Princes present/i);
 
     expect(en("demon-war", "shaburak-advantage")).toMatch(/Shaburak Lords spawn.*western tower/i);
     expect(en("demon-war", "shaburak-advantage")).toMatch(/Princes do not yet/i);
@@ -84,8 +84,11 @@ describe("no claim stronger than the researched state", () => {
     expect(en("demon-war", "shaburak-dominant")).toMatch(/Shaburak Lords and Princes spawn.*western tower/i);
     expect(en("demon-war", "askarak-dominant")).toMatch(/Askarak Lords and Princes spawn.*eastern tower/i);
 
+    // "Occupy their towers" is the stalemate's own fact and the reason no Lord spawns; what the
+    // section still must never say is that either side *controls* the complex, which no stage
+    // of this change ever produces.
     for (const stateId of ["stalemate", "shaburak-advantage", "shaburak-dominant"]) {
-      expect(en("demon-war", stateId), stateId).not.toMatch(/control|occup|holds the/i);
+      expect(en("demon-war", stateId), stateId).not.toMatch(/control|holds the/i);
     }
   });
 
@@ -95,9 +98,13 @@ describe("no claim stronger than the researched state", () => {
     // the boss, with its real conditions, is an opportunity.
     expect(en("mage-tower", "portal-open")).not.toMatch(/can be fought|available|boss/i);
     expect(en("mage-tower", "portal-open")).toMatch(/holding the dimensional portal open/i);
-    // Killing him collapses the portal five minutes later, until the next server save.
+    // The portal collapses about five minutes after the kill, and the Guide reply carries no
+    // timestamp for that kill. So the state sentence says "collapsing" and stops: no countdown,
+    // and no claim that it has already shut. When it reopens is the opportunity's ⏳ line, where
+    // it can be said as a consequence rather than as a clock.
     expect(en("mage-tower", "mage-slain")).toMatch(/collapsing/i);
-    expect(en("mage-tower", "mage-slain")).toMatch(/after the next server save/i);
+    expect(en("mage-tower", "mage-slain")).not.toMatch(/\d+\s*minute/i);
+    expect(en("mage-tower", "mage-slain")).not.toMatch(/has closed|is closed|already closed/i);
   });
 
   it("Master's Voice reports the slime and nothing it infers from the other state", () => {
@@ -106,7 +113,10 @@ describe("no claim stronger than the researched state", () => {
     expect(en("masters-voice", "passable")).toMatch(/covered in slime/i);
     expect(en("masters-voice", "passable")).not.toMatch(/can be walked|passable/i);
     expect(en("masters-voice", "passable")).not.toMatch(/Golden Servants phase/i);
-    expect(en("masters-voice", "passable")).toMatch(/cleared before the servant waves/i);
+    // …and it does say what clearing the fungus is *for*, which is the whole reason anybody
+    // walks into a slime-covered tower.
+    expect(en("masters-voice", "passable")).toMatch(/servant waves/i);
+    expect(en("masters-voice", "passable")).toMatch(/Mad Mage/i);
   });
 
   it("Awash tells the two drained states apart from the state itself, not from its name", () => {

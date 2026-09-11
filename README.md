@@ -366,15 +366,20 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   form they take — bestiary, boss, mount, quest, item, access, service, hunt or World Change
   progress. Where research found nothing verifiable for a state, that state produces nothing
   rather than a padded list.
-- The briefing prints at most 16 opportunity lines, spent breadth-first across the changes
-  that have something to offer, with a small reserve so the deadline-bound "do this before the
-  next server save" tier cannot be crowded out by a busy morning. The full list is on the
-  catalog view.
+- The briefing caps each change at seven opportunities, plus its deadline-bound "do this
+  before the next server save" line, which is admitted on top of the cap. The cap is per change
+  rather than global, so a busy hive cannot crowd out a quiet lake and no arbitrator has to
+  decide between them. The full list is on the catalog view.
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
 - Swamp Fever has only one Guide reply publicly transcribed (the calm state), so only that
-  state auto-detects. A few replies (Horse Station's "working normally", and the
+  state auto-detects. Its spreading stage is still modelled — that is where the Feverish
+  Citizen bestiary entry and the Afflicted cloth belong, and leaving them on "under control"
+  sent readers to farm a spawn the medicine deliveries have throttled — and it is flagged
+  `guideWordingUnknown` in [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) so
+  the gap is declared rather than hidden. A test enforces that every other state has verbatim
+  Guide text behind it. A few replies (Horse Station's "working normally", and the
   non-primary Mage Tower / Thornfire / Master's Voice states) come from secondary fan
   sources and are marked `unverifiedWording` in
   [`lib/parser/guideMessages.ts`](lib/parser/guideMessages.ts) — if the wording is slightly
@@ -477,12 +482,40 @@ sections, which meant a reader met "Overhunting: starving wolves" near the top a
 their head until the second arrived. Merged, each change is named once and every fact
 appears once: a full day went from 165 lines to about 90.
 
-**Opportunities that only restate the change are dropped.** A hunting ground, an access
-route and an NPC service are what the state sentence above already says: Spirit Grounds' only
-offer is "a spirit gate is open". The concrete kinds (bestiary, boss, mount, achievement,
-quest, item, World Change progress) name something separable, so they get a line of their own,
-with no prefix. Two per change, plus any deadline-bound line, which is admitted on top of the
-cap because it is the only tier that is worthless read tomorrow.
+**Opportunities that only restate the change are dropped.** An access route and an NPC service
+are what the state sentence above already says. The concrete kinds (bestiary, boss, mount,
+achievement, outfit, quest, item, World Change progress, state transition) name something
+separable, so they get a line of their own.
+
+**Every subordinate line declares its own kind with a glyph**, so a reader scanning for "what
+can I actually do today" finds it without reading a word of connective tissue: 🎯 a Bestiary
+creature, 👹 a boss, 🐎 a mount, 👕 an outfit, 🏆 an achievement, 🔄 something to go and do,
+⚔️ what is spawning, 💡 somebody's advice, ⏳ what changes at the next server save. A Bosstiary
+boss is never printed as 🎯: they are different game systems with different rewards, and 🎯
+carries a kill count and a Charm Points payout that a boss does not have. An achievement always
+reads `Name: requirement, N achievement point(s)` with the achievement's *own* name in front —
+never the boss or mount it rides along with, which is how "Groam: achievement Eye of the Deep"
+used to reach a guild channel.
+
+**How many lines a change gets is decided by the state it is in.** The cap used to be a flat
+two, which is right for a lake that is merely clean and wrong for a fallen hive, where six Bane
+bosses, a mount that exists nowhere else, an outfit room and two War Exp achievements open at
+once. The catalog is curated per *state*, so a state contributes what it actually offers, up to
+a ceiling of seven, plus any deadline-bound line, which is admitted on top of the cap because it
+is the only tier that is worthless read tomorrow. Quiet states still produce one or two lines,
+because that is all they have.
+
+**An unchecked selectable state names its options.** Fury Gates, the Nomad camps, Trapwood's
+two factions and the rest are closed sets that no in-game source announces; somebody has to go
+and look. The bulletin used to say "which one isn't known yet", which tells the reader the
+answer is out of reach. It now says *We haven't checked which Fury Gate is active yet. It can be
+near one of these cities: …*, with the list built from the same catalog the picker is built
+from, so adding a city to the catalog adds it to the sentence the same day.
+
+**Server-save causality is spelled out, in that order.** An action today, the next server save,
+then the result: "Once 1,000 corpses have been thrown in server-wide, the lake will become dirty
+after the next server save." Changes that advance *immediately* say so instead, which is the
+whole point of the Fire-Feathered Serpent's mechanic.
 
 **No bullet glyphs, middle dots or em dashes, anywhere the reader looks.** They are how
 generated text gives itself away, and the bulletin is forwarded to people who did not generate
@@ -519,12 +552,26 @@ The formatter is isolated from React:
 - [`lib/formatter/miniWorldChangeNarratives.ts`](lib/formatter/miniWorldChangeNarratives.ts)
   is the same idea for Mini World Changes — one sentence per variant, with each variant's
   name written out per language rather than interpolated from the English catalog label.
+- [`lib/defaults/eventPreviews.ts`](lib/defaults/eventPreviews.ts) holds what each upcoming
+  event is worth turning up for. NEXT EVENTS used to be a name, a date and a countdown, which
+  answers "when" and leaves "why should I care" to the reader; each event now carries at most
+  two preview lines. Where an event has something on a fixed day *inside* its window — Feroxa
+  always spawns on the 13th, whatever day Grimvale opens — that day is rendered as a real date
+  worked out from the occurrence's own start, so nobody edits a sentence every month.
 
-Two test files guard this. [`generateBriefing.test.ts`](lib/formatter/generateBriefing.test.ts)
+Three test files guard this. [`generateBriefing.test.ts`](lib/formatter/generateBriefing.test.ts)
 reads a handful of scenarios closely; [`briefingCoverage.test.ts`](lib/formatter/briefingCoverage.test.ts)
 sweeps every state of every change in all four languages and both formats, asserting the
 structural invariants a pasteable message has to hold — balanced markup, no indentation, no
-doubled blank lines, no dangling separators, and a ceiling on length.
+doubled blank lines, no dangling separators, and a ceiling on length; and
+[`stageAwareness.test.ts`](lib/formatter/stageAwareness.test.ts) holds the one rule the whole
+catalog exists to keep — **a change may only offer what the stage it is actually in offers**.
+It checks each stage twice, for what it must say and for the neighbouring stage's content that
+must not leak into it, and then does the same structurally for every state of every change, so
+a future catalog edit cannot widen a trigger by accident. It is also where the two things the
+app must never invent are pinned down: no inferred "days left" for Hive Born, whose Guide reply
+carries no day number, and no countdown on the Mage Tower's collapsing portal, whose kill has no
+timestamp the app can read.
 
 To add a new language, add an entry to `translations.ts`'s `TRANSLATIONS` map and to
 `BRIEFING_LANGUAGES`. To change wording, section order, or add a new section, edit the

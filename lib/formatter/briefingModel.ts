@@ -11,9 +11,11 @@ import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "@/lib/utils/priceTrend";
 import { formatIsoDateUTC, formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
+import { eventPreviewFor } from "@/lib/defaults/eventPreviews";
 import {
   formatActiveEventLine,
   formatDromeBriefingParts,
+  formatEventInternalDate,
   formatMarketPriceLabel,
   formatPriceAge,
   formatUpcomingEventDate,
@@ -97,6 +99,21 @@ export interface MarketPriceLine {
   ageLabel: string | null;
 }
 
+/**
+ * One "what to expect" line under an event, already localized and ready to set.
+ *
+ * It is a flat emoji-plus-text pair rather than a `BriefingNote`, because an event's markers
+ * are not the World Change vocabulary: some of them are (👹 a boss, 🏆 an achievement, 🎯 a
+ * bestiary entry, and a reader who learned those above reads these for free) and some are the
+ * event itself, like the full moon over Grimvale or the three wizards' colours.
+ */
+export interface EventNote {
+  emoji: string;
+  /** Bolded and followed by a colon when present: `👹 *Feroxa:* Appears on 13 September.` */
+  subject: string | null;
+  text: string;
+}
+
 export interface EventLine {
   emoji: string;
   title: string;
@@ -104,6 +121,14 @@ export interface EventLine {
   detail: string;
   /** "Em 2 dias", on its own line under the date. Null for events already running. */
   countdown: string | null;
+  /**
+   * What the event is worth turning up for, at most a line or two.
+   *
+   * The section used to be a name, a date and a countdown, which answers "when" and leaves
+   * "why should I care" to the reader. Empty for an event the preview catalog does not cover,
+   * which degrades to exactly the old three lines rather than to a guess.
+   */
+  notes: EventNote[];
 }
 
 export interface BriefingModel {
@@ -165,12 +190,18 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
  * How many opportunity lines any single change may contribute to the bulletin.
  *
  * The cap is per change rather than global, which keeps a busy morning readable without an
- * arbitrator deciding between changes. A drained Awash has four things to offer and a quiet
- * Thawing has one; two apiece is enough to see what each state is worth, and the catalog view
- * has the rest. A deadline-bound line is admitted on top of the cap — see opportunityLinesFor.
- * "Include everything" lifts it entirely.
+ * arbitrator deciding between changes. A deadline-bound line is admitted on top of the cap
+ * (see notesForChange), and "include everything" lifts it entirely.
+ *
+ * It used to be two, which made the bulletin uniformly short and uniformly wrong about how
+ * much each state is worth. Two is right for a lake that is merely clean; it is not right for
+ * a fallen hive, where six Bane bosses, a mount that exists nowhere else, an outfit room and
+ * two War Exp achievements all open at once and stay open for a handful of days. The catalog
+ * is curated per *state*, so the honest cap is "whatever this state actually offers", with a
+ * ceiling high enough that no single change can swallow the message. Quiet states still
+ * produce one or two lines, because that is all they have.
  */
-const OPPORTUNITIES_PER_CHANGE = 2;
+const OPPORTUNITIES_PER_CHANGE = 7;
 
 /** Where the market numbers come from. Lower-case: it is a domain, not a shout. */
 const MARKET_SOURCE = "tibiamarket.top";
@@ -353,12 +384,30 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
         )
       : null;
 
+  // Active events keep their one-line form: they sit in the headline block at the top of the
+  // bulletin, beside the boosted creature, where a three-line preview would push today's own
+  // facts off the first screen. The preview belongs to what is still ahead.
   const activeEventLines: EventLine[] = input.activeEvents.map((event) => ({
     emoji: eventEmoji(event.title),
     title: event.title,
     detail: formatActiveEventLine(event, input.language),
     countdown: null,
+    notes: [],
   }));
+
+  /** An event's preview lines, with any fixed internal date resolved against its own window. */
+  const previewNotesFor = (event: UpcomingEvent): EventNote[] =>
+    (eventPreviewFor(event.title)?.notes ?? []).map((note) => {
+      const dated =
+        note.dayOfMonth !== undefined
+          ? `${formatEventInternalDate(event.startAt, note.dayOfMonth, input.language)} `
+          : "";
+      return {
+        emoji: note.emoji,
+        subject: note.subject ?? null,
+        text: `${dated}${note.text[input.language]}`.trim(),
+      };
+    });
 
   const sortedUpcoming = input.upcomingEvents; // already sorted ascending by the data source
   const visibleUpcoming = sortedUpcoming.filter((event) => event.daysUntil <= input.upcomingEventsWindowDays);
@@ -367,6 +416,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     title: event.title,
     detail: formatUpcomingEventDate(event, input.language),
     countdown: t.inDays(event.daysUntil),
+    notes: previewNotesFor(event),
   }));
 
   const yasirMerchant = overrides.merchants.yasir;

@@ -27,6 +27,18 @@ export interface WorldChangeStateOption {
    * it's still a real, confirmed state of the world.
    */
   quiet?: boolean;
+  /**
+   * Set when the game has this state but no Guide reply for it has ever been transcribed, so
+   * lib/parser/guideMessages.ts cannot produce it and only a hand-set value ever will.
+   *
+   * It exists so the gap is declared rather than hidden. Every other state is backed by
+   * verbatim Guide text, and a test enforces that; a state that quietly had none would look
+   * identical in the catalog while being unreachable, and the opportunities hanging off it
+   * would be researched facts silently switched off. Declared, the catalog can still model the
+   * stage correctly, which is what keeps the other states honest: it gives a stage's own
+   * creatures somewhere to live other than a state where they do not belong.
+   */
+  guideWordingUnknown?: boolean;
 }
 
 export interface WorldChangeDefinition {

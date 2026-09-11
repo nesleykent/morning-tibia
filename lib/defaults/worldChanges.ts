@@ -18,7 +18,10 @@ import type { WorldChangeDefinition, WorldChangeValue } from "@/types/worldChang
  *
  * `states` is each change's documented cycle, in order. Every state listed here has real
  * Guide reply text behind it in lib/parser/guideMessages.ts — the catalog and the parser
- * are kept in step by a test. A World Change is always in exactly one of these states;
+ * are kept in step by a test — with one declared exception: a state marked
+ * `guideWordingUnknown` is a stage the game really has but whose reply nobody has ever
+ * transcribed, so no paste can produce it. The flag is what keeps that gap visible instead of
+ * letting an unreachable state look like every other one. A World Change is always in exactly one of these states;
  * there is no separate "active/inactive" flag, because the game has no such thing (see the
  * modelling note in types/worldChange.ts).
  */
@@ -78,7 +81,19 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     location: "Venore",
     description:
       "Whether Venore's swamp fever is contained. Medicine pouches handed to Ottokar each day keep it under control.",
-    states: [{ id: "under-control", label: "Under control, medicine for everyone", quiet: true }],
+    // Two stages, and only the calm one has ever been transcribed. TibiaWiki's Talk page for
+    // this change has a player naming three distinct Guide replies ("under control", "the
+    // medicine is direly needed", "the plague is not under control") but quotes none of them,
+    // and no verbatim wording is findable anywhere primary. The spreading stage is still
+    // modelled, flagged as unreachable by the parser, because it is where the Feverish Citizen
+    // bestiary entry and the Afflicted cloth belong: left on "under control" they told a reader
+    // to go and hunt a spawn that the medicine deliveries have throttled. The day a real reply
+    // is pasted, parseGuideLog reports it as unreadable and it becomes one line of
+    // guideMessages.ts.
+    states: [
+      { id: "under-control", label: "Under control, medicine for everyone", quiet: true },
+      { id: "spreading", label: "Spreading, medicine needed", guideWordingUnknown: true },
+    ],
   },
   {
     id: "thornfire",

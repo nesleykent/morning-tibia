@@ -66,6 +66,9 @@ export function isAmbient(definition: OpportunityDefinition): boolean {
 export type NoteIcon =
   | "place"
   | "bestiary"
+  | "boss"
+  | "mount"
+  | "outfit"
   | "achievement"
   | "progress"
   | "creatures"
@@ -122,11 +125,16 @@ function pointsPhrase(points: number, language: BriefingLanguage): string {
   );
 }
 
-function achievementWord(language: BriefingLanguage): string {
-  return pick(
-    { pt: "achievement", en: "achievement", es: "achievement", pl: "osiągnięcie" },
-    language,
-  );
+/**
+ * The first letter upper-cased, for a clause that opens its own sentence.
+ *
+ * An achievement's requirement is authored as a clause ("break 50 Ornate Canopic Jars") because
+ * that is how it reads in the catalog. In the bulletin it opens the line, right after the
+ * achievement's own name and a colon, so it is a sentence and starts like one. Doing it here
+ * rather than in the catalog keeps the authored text in one form.
+ */
+function opensSentence(text: string): string {
+  return text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
 }
 
 /** Sentence-final punctuation, added only when the authored text lacks it. */
@@ -135,12 +143,58 @@ function sentence(text: string): string {
 }
 
 /**
+ * `🏆 *Fearless:* Break 50 Ornate Canopic Jars, 1 achievement point.`
+ *
+ * The shape is fixed, and the name position is load-bearing: it holds the achievement's own
+ * name and nothing else. It used to hold `subject` whenever an achievement rode along with a
+ * boss or a mount, which printed "Groam: achievement Eye of the Deep, 1 achievement point" and
+ * put a monster where a reader expects the achievement to be.
+ *
+ * "Premium" is not appended. It is a fact about the account, not about the morning, and a
+ * reader who has no Premium has it on every second line of a bulletin they cannot act on
+ * anyway; the catalog page still carries the flag.
+ */
+function achievementNote(
+  definition: OpportunityDefinition,
+  language: BriefingLanguage,
+): BriefingNote {
+  const { name, points, requirement } = definition.achievement!;
+  return {
+    icon: "achievement",
+    subject: name,
+    text: sentence(`${opensSentence(requirement[language])}, ${pointsPhrase(points, language)}`),
+    availability: definition.availability,
+  };
+}
+
+/**
+ * The marker a named opportunity carries, from what it is.
+ *
+ * Bosses and mounts used to share the errand marker with everything else, which is the one
+ * distinction a reader scanning a busy morning most wants: 👹 says a boss is reachable today,
+ * 🐎 says a mount can be tamed, and neither is a chore to be worked through. A Bosstiary boss
+ * is emphatically not a bestiary creature, and printing it with 🎯 conflated the two systems.
+ */
+const KIND_ICON: Partial<Record<OpportunityDefinition["kind"], NoteIcon>> = {
+  boss: "boss",
+  mount: "mount",
+  outfit: "outfit",
+  timing: "deadline",
+};
+
+/**
  * The one line that says what this opportunity *is*.
  *
  * The branch order is the reader's order of interest, not the catalog's: a creature with a
- * bestiary profile is a bestiary line whatever else it also grants, an achievement is an
+ * bestiary profile is a bestiary line whatever else it also grants, a boss is a boss and a
+ * mount is a mount however they are earned, an entry that *is* an achievement is an
  * achievement, a hunting state is a list of what spawns, and everything else is something to
  * go and do. One opportunity produces exactly one of these.
+ *
+ * An achievement no longer wins that race from third place. It used to, which meant every boss
+ * and every mount that happens to grant one was printed as an achievement line under the
+ * creature's name. Where an entry both is a thing and grants an achievement, the achievement
+ * gets its own line instead (see notesForOpportunity).
  */
 function headlineNote(
   definition: OpportunityDefinition,
@@ -163,24 +217,7 @@ function headlineNote(
     };
   }
 
-  if (definition.achievement) {
-    const { name, points, premium } = definition.achievement;
-    const facts: string[] = [];
-    // When the entry *is* the achievement, its name is the subject and the qualifier says
-    // what earns it. When the achievement rides along with something else, the subject is
-    // that something and the achievement has to name itself.
-    const isTheAchievement = definition.kind === "achievement";
-    if (qualifier) facts.push(qualifier);
-    if (!isTheAchievement) facts.push(`${achievementWord(language)} ${name}`);
-    facts.push(pointsPhrase(points, language));
-    if (premium) facts.push("Premium");
-    return {
-      icon: "achievement",
-      subject: isTheAchievement ? name : definition.subject,
-      text: sentence(facts.join(", ")),
-      availability,
-    };
-  }
+  if (definition.kind === "achievement") return achievementNote(definition, language);
 
   // A hunting state's whole content is what is spawning, which is a list, not an errand.
   if (definition.kind === "hunting") {
@@ -193,7 +230,9 @@ function headlineNote(
   }
 
   // Everything else is an errand. A `progress` entry describes the doing itself, so its
-  // sentence stands alone; a named thing — a boss, a mount, an item, a quest — keeps its
+  // sentence stands alone unless the catalog gave it a `label` — the few errands ("Keep the
+  // mine open", "Restart the Steamship") whose sentence does not say what the errand is
+  // called. A named thing — a boss, a mount, an outfit, an item, a quest — always keeps its
   // name in front of it, or the bulletin never says what you are going after.
   //
   // The qualifier is not appended here. On these kinds it restates what `detail` already
@@ -202,11 +241,20 @@ function headlineNote(
   const named =
     definition.kind === "boss" ||
     definition.kind === "mount" ||
+    definition.kind === "outfit" ||
     definition.kind === "item" ||
     definition.kind === "quest";
+  if (definition.kind === "timing") {
+    return {
+      icon: "deadline",
+      subject: null,
+      text: sentence(definition.detail[language]),
+      availability,
+    };
+  }
   return {
-    icon: "progress",
-    subject: named ? definition.subject : null,
+    icon: KIND_ICON[definition.kind] ?? "progress",
+    subject: definition.label?.[language] ?? (named ? definition.subject : null),
     text: sentence(definition.detail[language]),
     availability,
   };
@@ -231,6 +279,14 @@ export function notesForOpportunity(
 ): BriefingNote[] {
   const { definition } = opportunity;
   const notes: BriefingNote[] = [headlineNote(definition, language)];
+
+  // A boss or a mount that also grants an achievement gets a second line for it, rather than
+  // being *replaced* by it. Two facts, two lines: "Groam can appear in the mine while it is
+  // drained" and "Eye of the Deep: defeat Groam, 1 achievement point" are different things to
+  // know, and folding them into one put the boss's name where the achievement's belongs.
+  if (definition.achievement && definition.kind !== "achievement") {
+    notes.push(achievementNote(definition, language));
+  }
 
   if (definition.availability === "unlocks-future" && definition.caveat) {
     notes.push({

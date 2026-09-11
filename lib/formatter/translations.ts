@@ -57,6 +57,15 @@ export interface BriefingTranslation {
    * as unknown rather than as "nothing is happening there".
    */
   worldChangesUnchecked: (labels: string[]) => string;
+  /**
+   * "Thais, Venore or Edron" — the closed set of answers a question still has.
+   *
+   * It exists so an unanswered question can be written as an unanswered question. A change
+   * whose variant nobody has looked at used to read "which one isn't known yet", which tells
+   * the reader the information is out of reach; it is not, it is four places and somebody has
+   * to go and look at one of them. Naming them turns a shrug into a short list of errands.
+   */
+  orList: (items: string[]) => string;
 }
 
 const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
@@ -83,6 +92,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     notCheckedToday: "Não conferido hoje.",
     miniWorldChangesNoneActive: "Nenhuma ativa no momento.",
     worldChangesUnchecked: (labels) => `Ainda sem resposta do Guide: ${labels.join(", ")}.`,
+    orList: (items) =>
+      items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} ou ${items[items.length - 1]}`,
   },
   en: {
     greeting: (world) => `Good morning, ${world}!`,
@@ -106,6 +117,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     notCheckedToday: "Not checked today.",
     miniWorldChangesNoneActive: "None running right now.",
     worldChangesUnchecked: (labels) => `Still unasked: ${labels.join(", ")}.`,
+    orList: (items) =>
+      items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} or ${items[items.length - 1]}`,
   },
   es: {
     greeting: (world) => `¡Buenos días, ${world}!`,
@@ -129,6 +142,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     notCheckedToday: "Sin comprobar hoy.",
     miniWorldChangesNoneActive: "Ninguna activa ahora mismo.",
     worldChangesUnchecked: (labels) => `Aún sin preguntar al Guide: ${labels.join(", ")}.`,
+    orList: (items) =>
+      items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} o ${items[items.length - 1]}`,
   },
   pl: {
     greeting: (world) => `Dzień dobry, ${world}!`,
@@ -152,6 +167,8 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     notCheckedToday: "Dziś niesprawdzone.",
     miniWorldChangesNoneActive: "Żadna nie jest teraz aktywna.",
     worldChangesUnchecked: (labels) => `Wciąż bez odpowiedzi Guide'a: ${labels.join(", ")}.`,
+    orList: (items) =>
+      items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} lub ${items[items.length - 1]}`,
   },
 };
 

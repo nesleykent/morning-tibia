@@ -374,7 +374,7 @@ describe("what the reader is told, and what they are not", () => {
     setWorld(input, "twisted-waters", "clean");
     const message = generateBriefingMessage(input);
     expect(message).toContain(
-      "💧 *Twisted Waters*\n📍 Lake Equivocolao, Port Hope\n_O grande lago perto de Port Hope está limpo._",
+      "💧 *Twisted Waters*\n📍 Lake Equivocolao, Port Hope\n_O lago perto de Port Hope está limpo no momento._",
     );
     expect(message).toMatch(/_Ainda sem resposta do Guide: .*Steamship.*_/);
   });
@@ -406,9 +406,11 @@ describe("opportunities, under the change that created them", () => {
     expect(spirits.split("\n").filter(isNoteLine)).not.toEqual([]);
   });
 
-  it("caps a change at two lines but always keeps its deadline line", () => {
-    // Awash has four offers; two fit, and the fourth — the quota that expires at the server
-    // save — is admitted anyway, because it is the only one that is worthless tomorrow.
+  it("expands a rich state and still keeps its deadline line last", () => {
+    // Awash's drained stage is one of the busy ones: a 1,000-kill bestiary entry, the
+    // achievement on top of it, a boss, that boss's achievement, and a quota that expires at
+    // the server save. All of them fit, and the quota stays last because it is the only one
+    // that is worthless tomorrow.
     const input = makeInput();
     setWorld(input, "awash", "drained-quota-open");
     const entry = generateBriefingMessage(input)
@@ -418,10 +420,20 @@ describe("opportunities, under the change that created them", () => {
     // Counted off the markers, so the block's own name and location lines are not mistaken
     // for opportunities.
     const opportunities = entry.split("\n").filter(isNoteLine);
-    expect(opportunities).toHaveLength(3);
-    // The quota that expires at the server save is the one that had to survive the cap.
+    expect(opportunities.length).toBeGreaterThan(3);
     expect(opportunities.at(-1)).toMatch(/^🔄 /);
     expect(opportunities.at(-1)).toContain("Server Save");
+  });
+
+  it("keeps a quiet state to the one or two lines it actually has", () => {
+    // The cap is a ceiling, not a target. A clean lake has exactly one thing to say, and the
+    // same renderer that gives a fallen hive seven lines has to give this one line.
+    const input = makeInput();
+    setWorld(input, "twisted-waters", "clean");
+    const entry = generateBriefingMessage(input)
+      .split(/\n\n+/)
+      .find((block) => block.includes("*Twisted Waters*"))!;
+    expect(entry.split("\n").filter(isNoteLine)).toHaveLength(1);
   });
 
   it("says what today's effort actually buys, without the app's own vocabulary", () => {

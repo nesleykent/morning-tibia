@@ -143,6 +143,34 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
     });
   });
 
+  it("declares every state the catalog has but no Guide reply reaches", () => {
+    // The promise worldChanges.ts makes: a state is either backed by verbatim Guide text or it
+    // is flagged `guideWordingUnknown`. Without this check a state could quietly have neither,
+    // which looks identical in the catalog while being unreachable by any paste, and the
+    // opportunities hanging off it would be researched facts silently switched off.
+    const spoken = new Set(GUIDE_MESSAGES.map((entry) => `${entry.changeId}/${entry.stateId}`));
+    for (const [changeId, def] of WORLD_CHANGES_BY_ID) {
+      for (const state of def.states) {
+        const hasText = spoken.has(`${changeId}/${state.id}`);
+        expect(
+          hasText || state.guideWordingUnknown === true,
+          `${changeId}/${state.id} has no Guide text and is not declared as such`,
+        ).toBe(true);
+        // …and the flag is not used to excuse a state that does have text.
+        if (hasText) {
+          expect(state.guideWordingUnknown, `${changeId}/${state.id}`).toBeUndefined();
+        }
+      }
+    }
+
+    // Exactly one such state today. Listed by name so adding another is a decision somebody
+    // makes on purpose rather than a line that slips through review.
+    const undeclared = [...WORLD_CHANGES_BY_ID].flatMap(([changeId, def]) =>
+      def.states.filter((state) => state.guideWordingUnknown).map((state) => `${changeId}/${state.id}`),
+    );
+    expect(undeclared).toEqual(["swamp-fever/spreading"]);
+  });
+
   it("covers every one of the 14 official Guide keywords", () => {
     const covered = new Set(GUIDE_MESSAGES.map((entry) => entry.changeId));
     for (const [id] of WORLD_CHANGES_BY_ID) {

@@ -1,4 +1,5 @@
-import type { BriefingLanguage } from "./translations";
+import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
+import { getTranslation, type BriefingLanguage } from "./translations";
 
 type Lang<T> = Record<BriefingLanguage, T>;
 function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
@@ -34,6 +35,30 @@ function byNamedVariant(
     const name = variantId ? (pick(names, language)[variantId] ?? null) : null;
     return pick(sentence, language)(name);
   };
+}
+
+/**
+ * The options a change still has, named, in the reader's language and in catalog order.
+ *
+ * The ids come from lib/defaults/miniWorldChanges.ts rather than from a second list here, so
+ * the sentence cannot drift out of step with the picker the player answers it in: add a city
+ * to the catalog and it appears in this sentence the same day. The localized names come from
+ * the same tables the "we do know" wording uses.
+ *
+ * This is what replaced "which one isn't known yet". A variant nobody has looked at is not
+ * unknowable; it is a short list, and printing the list is what turns the sentence from a
+ * shrug into something a reader can act on.
+ */
+function optionsOf(
+  changeId: string,
+  names: Lang<Record<string, string>>,
+  language: BriefingLanguage,
+): string {
+  const variants = MINI_WORLD_CHANGES_BY_ID.get(changeId)?.variants ?? [];
+  const labels = variants
+    .map((variant) => pick(names, language)[variant.id])
+    .filter((label): label is string => Boolean(label));
+  return getTranslation(language).orList(labels);
 }
 
 /**
@@ -175,48 +200,60 @@ const FORSAKEN_SETS: Lang<Record<string, string>> = {
 };
 
 const NARRATIVES: Record<string, Resolver> = {
-  "fury-gates": byNamedVariant(everyLanguage(CITY_NAMES), {
-    pt: (city) =>
-      city
-        ? `Um fiery fury gate se abriu perto de ${city}.`
-        : "Um fiery fury gate se abriu perto de uma das grandes cidades; ainda não se sabe qual.",
-    en: (city) =>
-      city
-        ? `A fiery fury gate has opened near ${city}.`
-        : "A fiery fury gate has opened near one of the major cities; which one isn't known yet.",
-    es: (city) =>
-      city
-        ? `Se abrió una fiery fury gate cerca de ${city}.`
-        : "Se abrió una fiery fury gate cerca de una de las grandes ciudades; todavía no se sabe cuál.",
-    pl: (city) =>
-      city
-        ? `W pobliżu ${city} otworzyła się fiery fury gate.`
-        : "W pobliżu jednego z większych miast otworzyła się fiery fury gate, nie wiadomo jeszcze którego.",
-  }),
+  "fury-gates": (variantId, language) => {
+    const city = variantId ? CITY_NAMES[variantId] : null;
+    if (city) {
+      return pick(
+        {
+          pt: `Um fiery fury gate se abriu perto de ${city}.`,
+          en: `A fiery fury gate has opened near ${city}.`,
+          es: `Se abrió una fiery fury gate cerca de ${city}.`,
+          pl: `W pobliżu ${city} otworzyła się fiery fury gate.`,
+        },
+        language,
+      );
+    }
+    const cities = optionsOf("fury-gates", everyLanguage(CITY_NAMES), language);
+    return pick(
+      {
+        pt: `Ainda não conferimos qual Fury Gate está ativo. Pode ser perto de uma destas cidades: ${cities}.`,
+        en: `We haven't checked which Fury Gate is active yet. It can be near one of these cities: ${cities}.`,
+        es: `Todavía no comprobamos qué Fury Gate está activo. Puede estar cerca de una de estas ciudades: ${cities}.`,
+        pl: `Nie sprawdziliśmy jeszcze, który Fury Gate jest aktywny. Może być przy jednym z tych miast: ${cities}.`,
+      },
+      language,
+    );
+  },
   "hive-outpost": simple({
     pt: "Uma infestação da Hive foi avistada a sudoeste de Liberty Bay.",
     en: "A Hive infestation has been sighted south-west of Liberty Bay.",
     es: "Se avistó una infestación de la Hive al suroeste de Liberty Bay.",
     pl: "Na południowy zachód od Liberty Bay zaobserwowano inwazję Hive.",
   }),
-  warpath: byNamedVariant(WARPATH_CAMPS, {
-    pt: (place) =>
-      place
-        ? `Bibby Bloodbath e sua tripulação estão acampadas ${place}.`
-        : "Bibby Bloodbath e sua tripulação estão em marcha. O acampamento pode estar em um de três lugares.",
-    en: (place) =>
-      place
-        ? `Bibby Bloodbath and her crew are camped ${place}.`
-        : "Bibby Bloodbath and her crew are on the warpath. The camp could be at any of three places.",
-    es: (place) =>
-      place
-        ? `Bibby Bloodbath y su tripulación acampan ${place}.`
-        : "Bibby Bloodbath y su tripulación están en marcha. El campamento puede estar en uno de tres lugares.",
-    pl: (place) =>
-      place
-        ? `Bibby Bloodbath i jej załoga obozują ${place}.`
-        : "Bibby Bloodbath i jej załoga są na wojennej ścieżce. Obóz może być w jednym z trzech miejsc.",
-  }),
+  warpath: (variantId, language) => {
+    const place = variantId ? pick(WARPATH_CAMPS, language)[variantId] : null;
+    if (place) {
+      return pick(
+        {
+          pt: `Bibby Bloodbath e sua tripulação estão acampadas ${place}.`,
+          en: `Bibby Bloodbath and her crew are camped ${place}.`,
+          es: `Bibby Bloodbath y su tripulación acampan ${place}.`,
+          pl: `Bibby Bloodbath i jej załoga obozują ${place}.`,
+        },
+        language,
+      );
+    }
+    const places = optionsOf("warpath", WARPATH_CAMPS, language);
+    return pick(
+      {
+        pt: `Ainda não conferimos onde o acampamento de Bibby Bloodbath está. Pode ser em um destes lugares: ${places}.`,
+        en: `We haven't checked where Bibby Bloodbath's camp is yet. It can be at one of these places: ${places}.`,
+        es: `Todavía no comprobamos dónde está el campamento de Bibby Bloodbath. Puede ser en uno de estos lugares: ${places}.`,
+        pl: `Nie sprawdziliśmy jeszcze, gdzie stoi obóz Bibby Bloodbath. Może być w jednym z tych miejsc: ${places}.`,
+      },
+      language,
+    );
+  },
   "devovorgas-essence": simple({
     pt: "Devovorga's essence está disponível em Vengoth para entrar em sua guarida.",
     en: "Devovorga's essence is available at Vengoth to enter its lair.",
@@ -259,24 +296,30 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "El volcán Hellgore en Goroma está en erupción, trayendo criaturas más fuertes junto con la lava.",
     pl: "Wulkan Hellgore na Goroma wybucha, sprowadzając silniejsze stworzenia razem z lawą.",
   }),
-  nomads: byNamedVariant(NOMAD_CAMPS, {
-    pt: (camp) =>
-      camp
-        ? `Os nômades acamparam em Kha'labal, ${camp}.`
-        : "Os nômades acamparam em algum lugar de Kha'labal, um dos quatro acampamentos possíveis.",
-    en: (camp) =>
-      camp
-        ? `The nomads have camped in Kha'labal, ${camp}.`
-        : "The nomads have camped somewhere in Kha'labal, one of the four possible camps.",
-    es: (camp) =>
-      camp
-        ? `Los nómadas acamparon en Kha'labal, ${camp}.`
-        : "Los nómadas acamparon en algún lugar de Kha'labal, uno de los cuatro campamentos posibles.",
-    pl: (camp) =>
-      camp
-        ? `Nomadzi rozbili obóz w Kha'labal, ${camp}.`
-        : "Nomadzi rozbili obóz gdzieś w Kha'labal, w jednym z czterech możliwych miejsc.",
-  }),
+  nomads: (variantId, language) => {
+    const camp = variantId ? pick(NOMAD_CAMPS, language)[variantId] : null;
+    if (camp) {
+      return pick(
+        {
+          pt: `Os nômades acamparam em Kha'labal, ${camp}.`,
+          en: `The nomads have camped in Kha'labal, ${camp}.`,
+          es: `Los nómadas acamparon en Kha'labal, ${camp}.`,
+          pl: `Nomadzi rozbili obóz w Kha'labal, ${camp}.`,
+        },
+        language,
+      );
+    }
+    const camps = optionsOf("nomads", NOMAD_CAMPS, language);
+    return pick(
+      {
+        pt: `Ainda não conferimos qual acampamento nômade está ativo. Pode ser um destes lugares: ${camps}.`,
+        en: `We haven't checked which Nomad camp is active yet. It can be one of these locations: ${camps}.`,
+        es: `Todavía no comprobamos qué campamento nómada está activo. Puede ser uno de estos lugares: ${camps}.`,
+        pl: `Nie sprawdziliśmy jeszcze, który obóz nomadów jest aktywny. Może to być jedno z tych miejsc: ${camps}.`,
+      },
+      language,
+    );
+  },
   bored: simple({
     pt: "A bruxa Wyda está entediada e recebe visitas.",
     en: "The witch Wyda is bored and taking visitors.",
@@ -315,7 +358,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Caçadores furtivos estão devastando a vida selvagem ao norte do Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves e Gloom Wolves tomaram o lugar dos animais ao norte do Green Claw Swamp."
-            : "Há uma disputa nas cavernas ao norte do Green Claw Swamp; ainda não se sabe quem domina.",
+            : "Ainda não conferimos quem domina as cavernas ao norte do Green Claw Swamp. Podem ser os animais selvagens, os caçadores furtivos ou os Ghost Wolves.",
     en: (phase) =>
       phase === "game"
         ? "Wild animals dominate the area north of the Green Claw Swamp."
@@ -323,7 +366,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Poachers are ravaging the wildlife north of the Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves and Gloom Wolves have taken over north of the Green Claw Swamp."
-            : "The caves north of the Green Claw Swamp are contested; who holds them isn't known yet.",
+            : "We haven't checked who dominates the caves north of the Green Claw Swamp yet. It can be the wild animals, the poachers or the Ghost Wolves.",
     es: (phase) =>
       phase === "game"
         ? "Los animales salvajes dominan la zona al norte del Green Claw Swamp."
@@ -331,7 +374,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Los cazadores furtivos devastan la fauna al norte del Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Los Ghost Wolves y Gloom Wolves han tomado el control al norte del Green Claw Swamp."
-            : "Las cuevas al norte del Green Claw Swamp están en disputa; todavía no se sabe quién domina.",
+            : "Todavía no comprobamos quién domina las cuevas al norte del Green Claw Swamp. Pueden ser los animales salvajes, los cazadores furtivos o los Ghost Wolves.",
     pl: (phase) =>
       phase === "game"
         ? "Dzikie zwierzęta dominują na terenie na północ od Green Claw Swamp."
@@ -339,7 +382,7 @@ const NARRATIVES: Record<string, Resolver> = {
           ? "Kłusownicy dziesiątkują dziką przyrodę na północ od Green Claw Swamp."
           : phase === "ghost-wolves"
             ? "Ghost Wolves i Gloom Wolves przejęły teren na północ od Green Claw Swamp."
-            : "Jaskinie na północ od Green Claw Swamp są sporne; nie wiadomo jeszcze, kto je trzyma.",
+            : "Nie sprawdziliśmy jeszcze, kto panuje w jaskiniach na północ od Green Claw Swamp. Mogą to być dzikie zwierzęta, kłusownicy albo Ghost Wolves.",
   }),
   "jungle-camp": byVariant({
     pt: (side) =>
@@ -347,25 +390,25 @@ const NARRATIVES: Record<string, Resolver> = {
         ? "Os caçadores dominam as terras sagradas de Trapwood."
         : side === "dworcs"
           ? "Os dworcs dominam as terras sagradas de Trapwood."
-          : "Caçadores e dworcs disputam as terras sagradas de Trapwood. O World Board não diz quem está ganhando.",
+          : "Ainda não conferimos quem está controlando o Jungle Camp. Podem ser os Hunters ou os Dworcs.",
     en: (side) =>
       side === "hunters"
         ? "The hunters hold Trapwood's holy grounds."
         : side === "dworcs"
           ? "The dworcs hold Trapwood's holy grounds."
-          : "Hunters and dworcs are fighting over Trapwood's holy grounds. The World Board doesn't say who's winning.",
+          : "We haven't checked who's controlling the Jungle Camp yet. It can be either Hunters or Dworcs.",
     es: (side) =>
       side === "hunters"
         ? "Los cazadores dominan las tierras sagradas de Trapwood."
         : side === "dworcs"
           ? "Los dworcs dominan las tierras sagradas de Trapwood."
-          : "Cazadores y dworcs luchan por las tierras sagradas de Trapwood. El World Board no dice quién gana.",
+          : "Todavía no comprobamos quién controla el Jungle Camp. Pueden ser los Hunters o los Dworcs.",
     pl: (side) =>
       side === "hunters"
         ? "Myśliwi kontrolują święte ziemie Trapwood."
         : side === "dworcs"
           ? "Dworcowie kontrolują święte ziemie Trapwood."
-          : "Myśliwi i dworcowie walczą o święte ziemie Trapwood. World Board nie mówi, kto wygrywa.",
+          : "Nie sprawdziliśmy jeszcze, kto kontroluje Jungle Camp. Mogą to być Hunters albo Dworcs.",
   }),
   grimvale: simple({
     pt: "A lua cheia tem um efeito estranho sobre a ilha de Grimvale.",

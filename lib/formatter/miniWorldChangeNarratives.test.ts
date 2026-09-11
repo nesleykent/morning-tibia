@@ -29,13 +29,21 @@ describe("getMiniWorldChangeNarrative", () => {
     );
   });
 
-  it("says plainly that the spot is unknown when no source named one", () => {
+  it("names the options when no source named one, instead of calling it unknown", () => {
     // Fury Gates is the clearest case: the board and the Towncryer both confirm a gate is
-    // open and neither ever says which of the ten cities it is.
-    const pending = getMiniWorldChangeNarrative("fury-gates", null, "en");
+    // open and neither ever says which of the ten cities it is. That is not a fact out of
+    // reach, it is ten places and somebody has to look at one, so the sentence says who has
+    // not looked and then lists them. "Which one isn't known" told the reader to give up.
+    const pending = getMiniWorldChangeNarrative("fury-gates", null, "en")!;
     const known = getMiniWorldChangeNarrative("fury-gates", "thais", "en");
 
-    expect(pending).toMatch(/isn't known yet/i);
+    expect(pending).toMatch(/we haven't checked/i);
+    expect(pending).not.toMatch(/isn't known|unknown|doesn't say/i);
+    // Every city the catalog models, from the catalog, joined as a sentence would join them.
+    for (const city of ["Ab'Dendriel", "Kazordoon", "Port Hope", "Venore"]) {
+      expect(pending, city).toContain(city);
+    }
+    expect(pending).toMatch(/Thais or Venore/);
     expect(known).toContain("Thais");
     expect(pending).not.toBe(known);
   });
@@ -56,8 +64,10 @@ describe("getMiniWorldChangeNarrative", () => {
     // narrative's job is the state itself.
     expect(getMiniWorldChangeNarrative("jungle-camp", "hunters", "en")).toMatch(/hunters hold/i);
     expect(getMiniWorldChangeNarrative("jungle-camp", "dworcs", "en")).toMatch(/dworcs hold/i);
-    const unknown = getMiniWorldChangeNarrative("jungle-camp", null, "en");
-    expect(unknown).toMatch(/doesn't say who's winning/i);
+    const unknown = getMiniWorldChangeNarrative("jungle-camp", null, "en")!;
+    expect(unknown).toMatch(/we haven't checked/i);
+    expect(unknown).toMatch(/Hunters or Dworcs/i);
+    expect(unknown).not.toMatch(/doesn't say|isn't known|unknown/i);
     expect(unknown).not.toMatch(/Arthom|Oodok/);
   });
 

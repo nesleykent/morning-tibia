@@ -49,11 +49,20 @@ export type OpportunityTrigger =
  * What the opportunity *is*, so the briefing can label it in one word and the reader can tell
  * a grind apart from a one-off at a glance.
  */
+/**
+ * `timing` is the odd one out and is deliberate: it is not a thing to get, it is the moment a
+ * state changes into another. The bulletin has always been able to say that as a *consequence*
+ * of an errand (the ⏳ line under "deliver the coal"), but some stages have nothing to do and
+ * only a transition to report, and those used to be forced through the errand marker. A portal
+ * closing after a boss dies is not an errand.
+ */
 export type OpportunityKind =
   | "bestiary"
   | "boss"
   | "mount"
   | "achievement"
+  | "outfit"
+  | "timing"
   | "quest"
   | "item"
   | "access"
@@ -93,6 +102,18 @@ export interface OpportunityDefinition {
   availability: OpportunityAvailability;
   trigger: OpportunityTrigger;
   /**
+   * The heading this line carries in the bulletin, when the sentence alone would not say what
+   * the errand is.
+   *
+   * `subject` is the thing in canonical English ("Deepling Scout"); a `progress` entry's
+   * sentence normally stands on its own, because it describes the doing rather than a thing to
+   * go after. A few errands need a name in front of them anyway - "Keep the mine open",
+   * "Restart the Steamship" - and calling them by their `subject` would be wrong, because the
+   * subject is the creature you kill, not the errand. This is that name, and it is the only
+   * thing the renderer bolds for such a line.
+   */
+  label?: LocalizedText;
+  /**
    * One short sentence: what to actually do, or the fact that makes today the moment. Where a
    * limit decides whether the thing is possible *at all* today, it belongs here rather than in
    * `caveat` — the briefing shows this line and must not read as a promise it can't keep.
@@ -106,12 +127,23 @@ export interface OpportunityDefinition {
   exclusive?: boolean;
   /** Set for `kind: "bestiary"`. Derived, never hand-typed — see lib/defaults/bestiary.ts. */
   bestiary?: BestiaryProfile;
-  /** Set for `kind: "achievement"`, and for any other kind that also grants one. */
+  /**
+   * Set for `kind: "achievement"`, and for any other kind that also grants one.
+   *
+   * `requirement` is what earns it, in one clause, and it is a field of its own rather than a
+   * reuse of `qualifier`. The bulletin prints an achievement as `Name: requirement, N
+   * achievement points.`, so the clause has to be the achievement's own wording - and when the
+   * achievement rides along with a boss or a mount, `qualifier` is already spoken for by that
+   * other thing. Sharing one field between the two produced lines like "Groam: achievement Eye
+   * of the Deep, 1 achievement point", with a monster standing where the achievement's name
+   * belongs.
+   */
   achievement?: {
     name: string;
     grade: 1 | 2 | 3 | 4;
     points: number;
     premium: boolean;
+    requirement: LocalizedText;
   };
   /** Set for `kind: "boss"` when the boss is in the Bosstiary. */
   bosstiary?: BosstiaryClass;
