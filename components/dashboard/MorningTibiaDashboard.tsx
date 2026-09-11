@@ -262,6 +262,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                 numbers={{
                   warzones,
                   prices: state.overrides.marketPrices,
+                  merchants: state.overrides.merchants,
                   marketBasis: state.marketTrendBasis,
                   onMarketBasisChange: (basis: MarketTrendBasis) => state.setMarketTrendBasis(basis),
                   marketUnavailable: state.liveData.marketFailed,

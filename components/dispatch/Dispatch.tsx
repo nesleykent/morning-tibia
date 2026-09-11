@@ -3,6 +3,7 @@
 import { Blank } from "./Blank";
 import { OpportunityList } from "./OpportunityList";
 import type { DispatchStanza, Segment } from "@/lib/dispatch/composeDispatch";
+import type { Merchant } from "@/types/merchant";
 import type { Opportunity } from "@/types/opportunity";
 import type { MarketPrice, MarketPriceId, MarketTrendBasis } from "@/types/market";
 import { computeTrendForBasis, ENTRIES_BY_BASIS, averageOfLastEntries } from "@/lib/utils/priceTrend";
@@ -32,7 +33,7 @@ export function Dispatch({
   invitation: React.ReactNode;
 }) {
   return (
-    <article className="sheet dispatch-dashboard p-4 sm:p-5">
+    <article className="dispatch-dashboard">
       <nav
         aria-label="Daily information"
         className={cn(
@@ -54,16 +55,8 @@ export function Dispatch({
       </nav>
       <Numbers
         {...numbers}
-        context={
-          <div className="dispatch-context">
-            {stanzas
-              .filter((stanza) => ["merchants", "boosted-region"].includes(stanza.id))
-              .sort((a, b) => Number(a.id === "boosted-region") - Number(b.id === "boosted-region"))
-              .map((stanza) => (
-                <StanzaView key={stanza.id} stanza={stanza} onPick={onPick} />
-              ))}
-          </div>
-        }
+        stanzas={stanzas}
+        onPick={onPick}
       />
       {invitation}
 
@@ -151,6 +144,7 @@ function SegmentView({
 export interface NumbersProps {
   warzones: { id: string; time: string; sequence?: string | null }[];
   prices: Record<string, MarketPrice>;
+  merchants: Record<string, Merchant>;
   marketBasis: MarketTrendBasis;
   onMarketBasisChange: (basis: MarketTrendBasis) => void;
   /** True when the market feed itself failed — the block says so rather than showing nothing. */
@@ -180,8 +174,12 @@ function Numbers({
   marketBasis,
   onMarketBasisChange,
   marketUnavailable,
-  context,
-}: NumbersProps & { context: React.ReactNode }) {
+  merchants,
+  stanzas,
+  onPick,
+}: NumbersProps & { stanzas: DispatchStanza[]; onPick: (target: string, optionId: string) => void }) {
+  const region = stanzas.find((s) => s.id === "boosted-region")?.lines.flat().find((s) => s.kind === "blank");
+  const yasir = stanzas.find((s) => s.id === "merchants")?.lines.flat().find((s) => s.kind === "blank" && s.target === "merchant:yasir");
   const nowMs = useNowMs();
   const priceEntries = (Object.entries(prices) as [MarketPriceId, MarketPrice][]).filter(
     ([, p]) => p.value !== null,
@@ -199,7 +197,7 @@ function Numbers({
   const isStale = newestTimestamp !== null && nowMs > 0 && nowMs - newestTimestamp > STALE_PRICE_MS;
 
   return (
-    <section aria-label="Daily numbers" className="dispatch-numbers mb-4 grid grid-cols-1 gap-x-6 gap-y-3 border-b border-line pb-3">
+    <section aria-label="Daily numbers" className="dispatch-numbers">
       <div>
       {warzones.length > 0 && (
         <div>
@@ -216,7 +214,13 @@ function Numbers({
         </div>
       )}
 
-        {context}
+        <h2 className="dispatch-section-title dispatch-facts-heading">Today’s details</h2>
+        <dl className="dispatch-facts">
+          <dt>Rashid</dt><dd>{merchants.rashid?.location || "Not verified"}</dd>
+          <dt>Yasir</dt><dd>{yasir ? <SegmentView segment={yasir} onPick={onPick} /> : merchants.yasir?.activityState === "inactive" ? "Not trading today" : "Not verified"}</dd>
+          <dt>Boosted region</dt><dd>{region ? <SegmentView segment={region} onPick={onPick} /> : "Not verified"}</dd>
+          <dt>Server save</dt><dd><ServerSaveLine /></dd>
+        </dl>
       </div>
 
       {(priceEntries.length > 0 || marketUnavailable) && (
@@ -262,38 +266,31 @@ function Numbers({
             </p>
           ) : (
             <>
-              <div className="dispatch-market-assets grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] items-start gap-x-8 gap-y-3">
-                {MARKET_ASSETS.map(({ name, ids }) => {
-                  const entries = priceEntries.filter(([id]) => ids.includes(id));
-                  if (entries.length === 0) return null;
-                  return (
-                    <section key={name} aria-label={name} className="min-w-max">
-                      <h4 className="mb-1 whitespace-nowrap text-[13.5px] font-semibold text-ink">
-                        {name}
-                      </h4>
-                      <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-1">
-                        {entries.map(([id, price]) => {
-                          const trend = TREND[computeTrendForBasis(price.history, entryCount)];
-                          const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
-                          return (
-                            <div key={id} className="contents">
-                              <dt className="whitespace-nowrap text-[12.5px] text-ink-soft">
-                                {id === "tibiaCoinBuy" ? "Compra" : "Venda"}
-                              </dt>
-                              <dd className="tnum whitespace-nowrap text-right text-[13.5px] text-ink">
-                                {Math.round(shown).toLocaleString("pt-BR")}
-                                <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
-                              </dd>
-                            </div>
-                          );
-                        })}
-                      </dl>
-                    </section>
-                  );
-                })}
-              </div>
+              <table className="dispatch-market-table">
+                <caption className="sr-only">Market prices and trends by asset</caption>
+                <thead><tr><th scope="col">Asset</th><th scope="col">Venda</th><th scope="col">Compra</th></tr></thead>
+                <tbody>
+                  {MARKET_ASSETS.map(({ name, ids }) => {
+                    if (!priceEntries.some(([id]) => ids.includes(id))) return null;
+                    return <tr key={name}>
+                      <th scope="row">{name}</th>
+                      {[ids[0], ids[1]].map((id, index) => {
+                        const price = id ? prices[id] : undefined;
+                        if (!price || price.value === null) return <td key={index}><span aria-label="Not available" className="text-ink-faint">—</span></td>;
+                        const direction = computeTrendForBasis(price.history, entryCount);
+                        const trend = TREND[direction];
+                        const shown = averageOfLastEntries(price.history, entryCount) ?? price.value;
+                        return <td key={index}>
+                          {Math.round(shown).toLocaleString("pt-BR")}
+                          <span aria-label={direction} className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
+                        </td>;
+                      })}
+                    </tr>;
+                  })}
+                </tbody>
+              </table>
               {ageLabel && (
-                <p className="mt-1.5 text-[11px] text-ink-faint">
+                <p className="dispatch-market-source">
                   tibiamarket.top, {ageLabel}
                   {isStale && (
                     <span title="Market prices are more than two days old">
@@ -307,7 +304,6 @@ function Numbers({
         </div>
       )}
 
-      <ServerSaveLine />
     </section>
   );
 }
@@ -323,10 +319,9 @@ function ServerSaveLine() {
   if (nowMs === 0) return null;
   const msLeft = getNextServerSave(new Date(nowMs)).getTime() - nowMs;
   return (
-    <p className="dispatch-reset text-[11.5px] text-ink-faint">
-      Everything here resets at server save, in{" "}
-      <span className="tnum">{formatCountdownClock(msLeft)}</span>.
-    </p>
+    <span title="Everything here resets at server save">
+      <span className="tnum">{formatCountdownClock(msLeft)}</span><span className="text-ink-faint"> · daily reset</span>
+    </span>
   );
 }
 
