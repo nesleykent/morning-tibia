@@ -5,6 +5,8 @@ import {
   type ChangeLine,
   type EventLine,
 } from "./briefingModel";
+import type { BriefingNote, NoteIcon } from "./opportunityPhrases";
+import type { MarketPriceId } from "@/types/market";
 
 export type {
   BriefingInput,
@@ -19,29 +21,42 @@ export { BRIEFING_LANGUAGES } from "./translations";
  *
  * There used to be two — `renderRichBriefing` and `renderPlainBriefing` — running ~150 lines
  * of near-identical logic that differed only in whether a line carried an emoji and a pair of
- * asterisks. They drifted, as duplicated renderers do: the rich one headed a section
- * `*🎎 MINI WORLD CHANGES*` while the plain one wrote `MINI WORLD CHANGES:`, and a fix to one
- * was a coin-flip to reach the other. One renderer with a two-field `Style` cannot drift.
+ * asterisks. They drifted, as duplicated renderers do. One renderer with a two-field `Style`
+ * cannot.
  *
- * ## Formatting, and why this shape
+ * ## The shape, and why
  *
- * The output is pasted into WhatsApp and Discord, which constrains three things:
+ * The bulletin is pasted into WhatsApp and Discord, and it is read on a phone by someone
+ * deciding what to do with the next hour. That makes it a **document**, not a table: a
+ * dateline, a greeting, today's headline facts, then one block per subject.
  *
- * - **Length.** A message nobody scrolls through is a message nobody reads. Every fact appears
- *   once, and a change's state and what that state is worth are the same entry rather than two
- *   sections that mention the same places forty lines apart.
- * - **Markup.** `*bold*` is WhatsApp's syntax; Discord reads it as italic. That degrades
- *   gracefully — still emphasis, still readable — whereas Discord's `**bold**` arrives in
- *   WhatsApp as literal asterisks. So single `*` for headings and `_` for asides, which both
- *   clients agree on, and nothing else.
- * - **No indentation, and no bullet glyphs either.** Leading spaces are collapsed or shown
- *   inconsistently by chat clients, and a bullet character reads as generated output. A
- *   change's own line carries an emoji and a bold name; the lines beneath it carry neither,
- *   which is enough to show they belong to it.
+ * A block is always the same four things in the same order, any of which may be absent:
  *
- * Names keep their own casing. Upper-casing them was noise — a column of `FIRE FROM THE EARTH`
- * reads as shouting — and it mangles official Tibia names the app is otherwise careful to
- * reproduce exactly.
+ * ```
+ * 🌑 *Nightmare Isles*            the subject, bold, with its own emoji
+ * 📍 Costa norte de Darama         where, when the catalog knows
+ * _A tempestade abriu o acesso._   what is true right now, in italics
+ * ⚔️ Silencers, Retching Horrors…  what that is worth, one marker per line
+ * ```
+ *
+ * The markers are the whole editorial idea. Every subordinate line declares its own kind with
+ * a glyph — 🎯 bestiary, 🏆 achievement, 🔄 something to do, ⚔️ what spawns, 💡 advice,
+ * ⏳ what changes at server save — so a reader scanning for "what can I actually do today"
+ * finds it without reading a word of connective tissue. It replaces the old approach, which
+ * appended the app's own vocabulary to each line ("só neste estado", "vale após o Server
+ * Save") and made a forwarded message read like a database dump.
+ *
+ * ## Markup
+ *
+ * `*bold*` is WhatsApp's syntax; Discord reads it as italic. That degrades gracefully — still
+ * emphasis, still readable — whereas Discord's `**bold**` arrives in WhatsApp as literal
+ * asterisks. So single `*` for subjects and headings, `_` for the state sentence and for
+ * asides, and nothing else. No indentation and no bullet glyphs: leading spaces are collapsed
+ * inconsistently by chat clients, and a bullet reads as generated output where an emoji marker
+ * reads as an edited one.
+ *
+ * Names keep their own casing. Section headings are the sole exception, and they are shouted
+ * because they are signposts in a long message rather than things anybody reads as words.
  */
 
 interface Style {
@@ -54,44 +69,89 @@ interface Style {
 const RICH: Style = { emoji: true, markup: true };
 const PLAIN: Style = { emoji: false, markup: false };
 
+/** One blank line between the parts of a block; two between the blocks themselves. */
+const WITHIN = "\n\n";
+const BETWEEN = "\n\n\n";
+
+/**
+ * The marker glyphs.
+ *
+ * Declared in one table so the vocabulary is legible as a vocabulary. Adding a kind of line
+ * means adding a `NoteIcon` and a row here, never touching a render function.
+ */
+const ICON: Record<NoteIcon, string> = {
+  place: "📍",
+  bestiary: "🎯",
+  achievement: "🏆",
+  progress: "🔄",
+  creatures: "⚔️",
+  counter: "📊",
+  advisory: "💡",
+  deadline: "⏳",
+};
+
+/** Each market item's own glyph, so three price blocks are told apart at a glance. */
+const MARKET_ITEM_ICON: Record<string, string> = {
+  "Tibia Coin": "🪙",
+  "Gold Token": "🟡",
+  "Silver Token": "⚪",
+};
+
 function joinLines(lines: (string | null | undefined)[]): string {
   return lines.filter((line): line is string => Boolean(line && line.length > 0)).join("\n");
 }
 
-function joinBlocks(blocks: (string | null | undefined)[]): string {
-  return blocks.filter((block): block is string => Boolean(block && block.length > 0)).join("\n\n");
+function join(separator: string, blocks: (string | null | undefined)[]): string {
+  return blocks.filter((block): block is string => Boolean(block && block.length > 0)).join(separator);
 }
 
-/** `👾 Criatura boostada: Badger` — label and value on one line. */
+function bold(style: Style, text: string): string {
+  return style.markup ? `*${text}*` : text;
+}
+
+/** An aside — an attribution, a state sentence, a caveat. Never a fact the reader came for. */
+function italic(style: Style, text: string): string {
+  return style.markup ? `_${text}_` : text;
+}
+
+function withIcon(style: Style, emoji: string, text: string): string {
+  return style.emoji ? `${emoji} ${text}` : text;
+}
+
+/** `👾 *Criatura Boostada:* Corym Skirmisher` — the colon belongs to the label. */
 function field(style: Style, emoji: string, label: string, value: string): string {
-  return `${style.emoji ? `${emoji} ` : ""}${label}: ${value}`;
+  return withIcon(style, emoji, `${bold(style, `${label}:`)} ${value}`);
 }
 
 function heading(style: Style, emoji: string, text: string): string {
-  const withEmoji = style.emoji ? `${emoji} ${text}` : text;
-  return style.markup ? `*${withEmoji}*` : withEmoji;
-}
-
-/** An aside — an attribution, a caveat, an empty state. Never a fact the reader came for. */
-function aside(style: Style, text: string): string {
-  return style.markup ? `_${text}_` : text;
+  return withIcon(style, emoji, bold(style, text));
 }
 
 function stripGp(value: string): string {
   return value.replace(/\s+gp$/i, "");
 }
 
+/** `🎯 *Deepling Scout:* 1.000 mortes, 25 Charm Points.` */
+function noteLine(style: Style, note: BriefingNote): string {
+  const body = note.subject ? `${bold(style, `${note.subject}:`)} ${note.text}` : note.text;
+  return withIcon(style, ICON[note.icon], body);
+}
+
 /**
- * One change: what is true, then what that makes worth doing.
+ * One subject, and everything the bulletin has to say about it.
  *
- * The opportunity lines carry no prefix at all. They are subordinate to the state above them,
- * and the heading's emoji and bold name already say which of the two a line is; adding a
- * bullet glyph to make the point would trade a real distinction for a decorative one.
+ * State and opportunities live in the same block because they are one subject. Rendered as
+ * separate sections they said everything twice — the volcano's state up top and what erupting
+ * is worth forty lines below — and a reader scanning for the morning's plan had to hold the
+ * first half in their head until the second arrived.
  */
 function changeBlock(style: Style, line: ChangeLine): string {
-  const name = style.markup ? `*${line.name}*` : line.name;
-  const head = `${style.emoji ? `${line.emoji} ` : ""}${name}: ${line.state}`;
-  return joinLines([head, ...line.opportunities.map((opportunity) => opportunity.text)]);
+  return joinLines([
+    withIcon(style, line.emoji, bold(style, line.name)),
+    line.location ? withIcon(style, ICON.place, line.location) : null,
+    italic(style, line.state),
+    ...line.notes.map((note) => noteLine(style, note)),
+  ]);
 }
 
 /**
@@ -103,50 +163,84 @@ function changeBlock(style: Style, line: ChangeLine): string {
  */
 function byUsefulness(lines: ChangeLine[]): ChangeLine[] {
   return [
-    ...lines.filter((line) => line.opportunities.length > 0),
-    ...lines.filter((line) => line.opportunities.length === 0),
+    ...lines.filter((line) => line.notes.length > 0),
+    ...lines.filter((line) => line.notes.length === 0),
   ];
 }
 
 const MARKET_ITEMS = ["Tibia Coin", "Gold Token", "Silver Token"] as const;
 
-function marketItemOf(id: BriefingModel["marketPriceLines"][number]["id"]): string {
+function marketItemOf(id: MarketPriceId): string {
   if (id === "tibiaCoinSell" || id === "tibiaCoinBuy") return "Tibia Coin";
   if (id === "goldTokenSell") return "Gold Token";
   return "Silver Token";
 }
 
-function marketLines(model: BriefingModel, style: Style): string[] {
+/**
+ * One block per item: the item names itself, then each side of the book gets a line.
+ *
+ * Sell before buy. The reader of this bulletin is overwhelmingly checking what their coins
+ * would fetch, not what it would cost to top up, and the two used to share a line where the
+ * pair of five-digit numbers ran together.
+ */
+function marketBlocks(model: BriefingModel, style: Style): string[] {
   return MARKET_ITEMS.flatMap((item) => {
     const prices = model.marketPriceLines.filter((price) => marketItemOf(price.id) === item);
     if (prices.length === 0) return [];
 
-    // Buy before sell, the order a player meets them in: what one costs, then what one
-    // fetches. Both on the item's own line, because they are two halves of one price — as
-    // separate rows under a shared title they took four lines to say two numbers.
     const ordered = [...prices].sort(
-      (a, b) => Number(a.id !== "tibiaCoinBuy") - Number(b.id !== "tibiaCoinBuy"),
+      (a, b) => Number(a.id === "tibiaCoinBuy") - Number(b.id === "tibiaCoinBuy"),
     );
-    const values = ordered
-      .map(
-        (price) =>
-          `${model.t.marketOffer(price.id)} ${stripGp(price.valueLabel)} ${price.trendSymbol}`,
-      )
-      .join(", ");
-
-    return [field(style, "🪙", item, values)];
+    return [
+      joinLines([
+        withIcon(style, MARKET_ITEM_ICON[item] ?? "🪙", bold(style, item)),
+        ...ordered.map((price) =>
+          bold(
+            style,
+            `${model.t.marketOffer(price.id)}: ${stripGp(price.valueLabel)}${
+              style.emoji ? ` ${price.trendSymbol}` : ""
+            }`,
+          ),
+        ),
+      ]),
+    ];
   });
+}
+
+/**
+ * A section: a shouted heading, then its blocks.
+ *
+ * `tight` sections keep the heading against their first line, because their body is a short
+ * flat list and a blank line there reads as a missing entry. The long sections breathe.
+ */
+function section(
+  style: Style,
+  emoji: string,
+  title: string,
+  blocks: string[],
+  options: { tight?: boolean; empty?: string | null } = {},
+): string | null {
+  const head = heading(style, emoji, title);
+  if (blocks.length === 0) {
+    return options.empty ? joinLines([head, italic(style, options.empty)]) : null;
+  }
+  return options.tight
+    ? joinLines([head, ...blocks])
+    : join(WITHIN, [head, ...blocks]);
 }
 
 function render(model: BriefingModel, style: Style): string {
   const t = model.t;
 
-  // World and date on one line. A date line, a greeting line and a blank was three lines of
-  // chrome before any information, on the first screen that is the only one many readers see.
-  const worldName = style.markup ? `*${model.worldName}*` : model.worldName;
-  const header = `${style.emoji ? "📅 " : ""}${worldName}, ${model.dateLabel}`;
+  // Dateline, then the greeting, then today's headline facts. The greeting is the one piece
+  // of warmth in the message and it costs a line; it earns it by making a forwarded bulletin
+  // read as something a person sent rather than something a bot emitted.
+  const masthead = joinLines([
+    withIcon(style, "📅", bold(style, model.isoDateLabel)),
+    withIcon(style, "🌞", bold(style, t.greeting(model.worldName))),
+  ]);
 
-  const status = joinLines([
+  const headline = joinLines([
     model.boostedCreatureLabel
       ? field(style, "👾", t.boostedCreature, model.boostedCreatureLabel)
       : null,
@@ -155,60 +249,101 @@ function render(model: BriefingModel, style: Style): string {
       ? field(style, "🗺️", t.boostedRegion, model.boostedRegionValue)
       : null,
     ...model.activeEventLines.map((line) => field(style, line.emoji, line.title, line.detail)),
-    model.dromeLine ? field(style, "🏛️", t.tibiaDrome, model.dromeLine) : null,
-    // The model joins several executions with "; ", which inside a field value reads as a
-    // sentence that lost its way; a comma list is what it actually is.
-    model.warzoneLine
-      ? field(style, "⚔️", t.warzoneToday, model.warzoneLine.split("; ").join(", "))
+    model.drome
+      ? field(
+          style,
+          "🏛️",
+          t.tibiaDrome,
+          join(" ", [
+            model.drome.label,
+            model.drome.countdown ? italic(style, `(${model.drome.countdown})`) : null,
+          ]),
+        )
+      : null,
+    // Semicolons, not commas: each entry already contains a parenthesised sequence, and a
+    // comma list ran the four of them together into one unreadable string.
+    model.warzoneEntries.length > 0
+      ? field(
+          style,
+          "⚔️",
+          t.warzoneToday,
+          model.warzoneEntries
+            .map((entry) =>
+              join(" ", [entry.time, entry.sequence ? italic(style, `(${entry.sequence})`) : null]),
+            )
+            .join("; "),
+        )
       : null,
   ]);
 
-  const merchants = joinLines([
-    heading(style, "💸", t.sectionMerchants),
-    field(style, "👳🏼‍♂️", t.merchantRashid, model.rashidLabel),
-    field(style, "💰", t.merchantYasir, model.yasirLabel),
-    ...marketLines(model, style),
-    model.marketSourceLabel ? aside(style, model.marketSourceLabel) : null,
-  ]);
-
-  // The heading rides on the first entry rather than standing off on its own, so a section
-  // opens the same way whether its body is a flat list (merchants) or a run of blocks.
-  const section = (title: string, blocks: string[], empty: string | null): string => {
-    if (blocks.length === 0) return joinLines([title, empty]);
-    return joinBlocks([joinLines([title, blocks[0]!]), ...blocks.slice(1)]);
-  };
-
-  const mini = section(
-    heading(style, "🎲", t.sectionMiniWorldChanges),
-    byUsefulness(model.miniWorldChangeLines).map((line) => changeBlock(style, line)),
-    aside(style, model.miniWorldChangesVerified ? t.miniWorldChangesNoneActive : t.notCheckedToday),
+  const merchants = section(
+    style,
+    "💰",
+    t.sectionMerchants,
+    [
+      joinLines([
+        field(style, "👳", t.merchantRashid, model.rashidLabel),
+        field(style, "💰", t.merchantYasir, model.yasirLabel),
+      ]),
+    ],
+    { tight: true },
   );
 
-  const world = joinBlocks([
-    section(
-      heading(style, "🌍", t.sectionWorldChanges),
-      byUsefulness(model.worldChangeLines).map((line) => changeBlock(style, line)),
-      aside(style, t.notCheckedToday),
-    ),
+  // The attribution sits directly under the heading rather than after the numbers: it is the
+  // provenance of everything below it, and a bulletin that is forwarded onward should say
+  // where its prices came from before it quotes them.
+  const marketItems = marketBlocks(model, style);
+  const market =
+    marketItems.length > 0
+      ? join(WITHIN, [
+          joinLines([
+            heading(style, "📈", t.sectionMarket),
+            model.marketSourceLabel ? italic(style, model.marketSourceLabel) : null,
+          ]),
+          ...marketItems,
+        ])
+      : null;
+
+  const mini = section(
+    style,
+    "🎎",
+    t.sectionMiniWorldChanges,
+    byUsefulness(model.miniWorldChangeLines).map((line) => changeBlock(style, line)),
+    { empty: model.miniWorldChangesVerified ? t.miniWorldChangesNoneActive : t.notCheckedToday },
+  );
+
+  const worldBody = byUsefulness(model.worldChangeLines).map((line) => changeBlock(style, line));
+  const world = join(WITHIN, [
+    section(style, "🌍", t.sectionWorldChanges, worldBody, { empty: t.notCheckedToday }),
     // Unasked keywords, named so "we don't know" cannot be read as "nothing is happening".
-    model.worldChangeLines.length > 0 && model.worldChangesUnchecked.length > 0
-      ? aside(style, t.worldChangesUnchecked(model.worldChangesUnchecked))
+    worldBody.length > 0 && model.worldChangesUnchecked.length > 0
+      ? italic(style, t.worldChangesUnchecked(model.worldChangesUnchecked))
       : null,
   ]);
 
   // Omitted entirely when there is nothing scheduled. "No events right now" is a heading plus
   // a line to say the heading was unnecessary, and the bulletin is forwarded to other people.
-  const upcoming =
-    model.upcomingEventLines.length > 0
-      ? joinLines([
-          heading(style, "📅", t.sectionNextEvents),
-          ...model.upcomingEventLines.map((line: EventLine) =>
-            field(style, line.emoji, line.title, line.detail),
-          ),
-        ])
-      : null;
+  const upcoming = section(
+    style,
+    "📆",
+    t.sectionNextEvents,
+    model.upcomingEventLines.map((line: EventLine) =>
+      joinLines([
+        withIcon(style, line.emoji, bold(style, line.title)),
+        bold(style, line.detail),
+        line.countdown ? withIcon(style, ICON.deadline, line.countdown) : null,
+      ]),
+    ),
+  );
 
-  return joinBlocks([header, status, merchants, mini, world, upcoming]);
+  return join(BETWEEN, [
+    // The masthead and the headline facts are one block, one blank line apart.
+    join(WITHIN, [masthead, headline]),
+    join(WITHIN, [merchants, market]),
+    mini,
+    world,
+    upcoming,
+  ]);
 }
 
 export function renderRichBriefing(model: BriefingModel): string {

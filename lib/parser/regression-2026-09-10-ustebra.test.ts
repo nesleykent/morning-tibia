@@ -185,7 +185,7 @@ describe("2026-09-10 Ustebra regression — evidence semantics", () => {
     const parsed = wholeBoard();
     expect(parsed.inactiveMerchantIds).toEqual(["yasir"]);
     expect(applyEvidence(parsed).merchants.yasir?.activityState).toBe("inactive");
-    expect(briefingFor(applyEvidence(parsed))).toContain("💰 Yasir: não está comerciando hoje");
+    expect(briefingFor(applyEvidence(parsed))).toContain("💰 *Yasir:* não está comerciando hoje");
     expect(briefingFor(applyEvidence(parsed))).not.toContain("ainda não verificado");
   });
 
@@ -201,7 +201,7 @@ describe("2026-09-10 Ustebra regression — evidence semantics", () => {
     expect(guideOnly.inactiveMerchantIds).toEqual([]);
     expect(guideOnly.inactiveMiniWorldChangeIds).toEqual([]);
     expect(applyEvidence(guideOnly).merchants.yasir?.activityState).toBe("not-verified");
-    expect(briefingFor(applyEvidence(guideOnly))).toContain("💰 Yasir: ainda não verificado");
+    expect(briefingFor(applyEvidence(guideOnly))).toContain("💰 *Yasir:* ainda não verificado");
   });
 
   it("leaves Yasir UNKNOWN from a Towncryer shout, which announces but never lists", () => {
@@ -260,7 +260,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
 
   it("keeps every one of the fourteen recognised World Changes", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}*: `);
+      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}*\n`);
     }
     // Six of these were previously deleted for being "quiet" states.
     for (const label of [
@@ -280,7 +280,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   it("keeps every one of the seven announced Mini World Changes", () => {
     for (const id of Object.keys(EXPECTED_MINI)) {
       const def = MINI_WORLD_CHANGE_DEFINITIONS.find((d) => d.id === id)!;
-      expect(message, id).toContain(`${def.emoji} *${def.name}*: `);
+      expect(message, id).toContain(`${def.emoji} *${def.name}*\n`);
     }
   });
 
@@ -303,25 +303,34 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   });
 
   it("surfaces the state-specific opportunity the blocked content hid", () => {
-    expect(message).toContain("🦌 *Overhunting*: ");
-    expect(message).toContain("Starving Wolf: 500 kills, 15 Charm Points");
+    expect(message).toContain("🦌 *Overhunting*\n");
+    expect(message).toContain("🎯 *Starving Wolf:* 500 mortes, 15 Charm Points.");
   });
 
   it("offers more than achievements", () => {
     // The old catalog could only express achievements, so a state whose whole value was a
-    // bestiary entry, a boss or a mount reported nothing at all.
+    // bestiary entry, a boss or a mount reported nothing at all. The marker vocabulary is
+    // how that breadth reads now: a kind per glyph, learned once.
     expect(message).toContain("Charm Points");
-    expect(message).toContain(": boss ");
-    expect(message).toContain(": montaria ");
-    expect(message).toContain(": progresso ");
-    expect(message).toContain(": achievement,");
+    expect(message, "bestiary").toMatch(/^🎯 /m);
+    expect(message, "achievement").toMatch(/^🏆 /m);
+    expect(message, "something to go and do").toMatch(/^🔄 /m);
+    expect(message, "what is spawning").toMatch(/^⚔️ /m);
   });
 
-  it("marks availability honestly, in all three tiers", () => {
-    // Available today carries no marker — the bulletin is already about today.
-    expect(message).toContain("Deepling Scout: 1.000 kills, 25 Charm Points, só neste estado");
-    expect(message).toContain("só progresso hoje");
-    expect(message).toContain("vale após o Server Save");
+  it("says what today's effort buys without leaking the app's own vocabulary", () => {
+    // These three phrases were the catalog's availability tiers, appended to almost every
+    // line and forwarded verbatim into guild channels. They describe how the app models an
+    // entry, not anything a player does.
+    for (const banned of ["só neste estado", "só progresso hoje", "vale após o Server Save"]) {
+      expect(message, banned).not.toContain(banned);
+    }
+
+    // What they gestured at is still said, properly, as sentences: Awash's quota is the
+    // tier with a real deadline and it survives on its own line.
+    const awash = message.split(/\n\n+/).find((block) => block.includes("*Awash*"))!;
+    expect(awash).toContain("🎯 *Deepling Scout:* 1.000 mortes, 25 Charm Points.");
+    expect(awash).toMatch(/^🔄 .*Server Save/m);
     expect(message).not.toContain("undefined");
   });
 

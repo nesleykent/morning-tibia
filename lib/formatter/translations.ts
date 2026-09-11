@@ -19,7 +19,10 @@ export const BRIEFING_LANGUAGES: { value: BriefingLanguage; label: string }[] = 
  * those is not localization, it is making the text harder to read for the people using it.
  */
 export interface BriefingTranslation {
+  /** "Bom dia, Ustebra!" — the bulletin greets the world it is about. */
+  greeting: (world: string) => string;
   sectionMerchants: string;
+  sectionMarket: string;
   sectionMiniWorldChanges: string;
   sectionWorldChanges: string;
   sectionNextEvents: string;
@@ -30,8 +33,11 @@ export interface BriefingTranslation {
   merchantRashid: string;
   warzoneToday: string;
   tibiaDrome: string;
-  /** "compra"/"venda" — which side of the market a price is. */
+  /** "Compra"/"Venda" — which side of the market a price is. Capitalised: each one
+   * opens its own line under the item rather than sitting mid-sentence. */
   marketOffer: (id: MarketPriceId) => string;
+  /** "Em 2 dias" / "Hoje" — how far off a scheduled event is, opening its own line. */
+  inDays: (days: number) => string;
   /** Attribution for the market numbers, with their age when one is known. */
   marketSource: (source: string, age: string | null) => string;
   /** A Mini World Change confirmed running, when no narrative sentence is authored. */
@@ -55,18 +61,22 @@ export interface BriefingTranslation {
 
 const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
   pt: {
+    greeting: (world) => `Bom dia, ${world}!`,
     sectionMerchants: "COMERCIANTES",
+    sectionMarket: "MARKET",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "PRÓXIMOS EVENTOS",
-    boostedCreature: "Criatura",
-    boostedBoss: "Boss",
-    boostedRegion: "Região",
+    boostedCreature: "Criatura Boostada",
+    boostedBoss: "Boss Boostado",
+    boostedRegion: "Região Boostada",
     merchantYasir: "Yasir",
     merchantRashid: "Rashid",
     warzoneToday: "Warzones",
-    tibiaDrome: "Drome",
-    marketOffer: (id) => (id === "tibiaCoinBuy" ? "compra" : "venda"),
+    tibiaDrome: "Tibia Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "Compra" : "Venda"),
+    inDays: (days) =>
+      days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Em ${days} dias`,
     marketSource: (source, age) => (age ? `Preços de ${source}, ${age}.` : `Preços de ${source}.`),
     running: "Está ativa.",
     notRunning: "Não está acontecendo.",
@@ -75,18 +85,21 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     worldChangesUnchecked: (labels) => `Ainda sem resposta do Guide: ${labels.join(", ")}.`,
   },
   en: {
+    greeting: (world) => `Good morning, ${world}!`,
     sectionMerchants: "MERCHANTS",
+    sectionMarket: "MARKET",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "NEXT EVENTS",
-    boostedCreature: "Creature",
-    boostedBoss: "Boss",
-    boostedRegion: "Region",
+    boostedCreature: "Boosted Creature",
+    boostedBoss: "Boosted Boss",
+    boostedRegion: "Boosted Region",
     merchantYasir: "Yasir",
     merchantRashid: "Rashid",
     warzoneToday: "Warzones",
-    tibiaDrome: "Drome",
-    marketOffer: (id) => (id === "tibiaCoinBuy" ? "buy" : "sell"),
+    tibiaDrome: "Tibia Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "Buy" : "Sell"),
+    inDays: (days) => (days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`),
     marketSource: (source, age) => (age ? `Prices from ${source}, ${age}.` : `Prices from ${source}.`),
     running: "Running.",
     notRunning: "Not running.",
@@ -95,18 +108,21 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     worldChangesUnchecked: (labels) => `Still unasked: ${labels.join(", ")}.`,
   },
   es: {
+    greeting: (world) => `¡Buenos días, ${world}!`,
     sectionMerchants: "COMERCIANTES",
+    sectionMarket: "MARKET",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "PRÓXIMOS EVENTOS",
-    boostedCreature: "Criatura",
-    boostedBoss: "Boss",
-    boostedRegion: "Región",
+    boostedCreature: "Criatura Boosteada",
+    boostedBoss: "Boss Boosteado",
+    boostedRegion: "Región Boosteada",
     merchantYasir: "Yasir",
     merchantRashid: "Rashid",
     warzoneToday: "Warzones",
-    tibiaDrome: "Drome",
-    marketOffer: (id) => (id === "tibiaCoinBuy" ? "compra" : "venta"),
+    tibiaDrome: "Tibia Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "Compra" : "Venta"),
+    inDays: (days) => (days <= 0 ? "Hoy" : days === 1 ? "Mañana" : `En ${days} días`),
     marketSource: (source, age) => (age ? `Precios de ${source}, ${age}.` : `Precios de ${source}.`),
     running: "Está activa.",
     notRunning: "No está ocurriendo.",
@@ -115,18 +131,21 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     worldChangesUnchecked: (labels) => `Aún sin preguntar al Guide: ${labels.join(", ")}.`,
   },
   pl: {
+    greeting: (world) => `Dzień dobry, ${world}!`,
     sectionMerchants: "KUPCY",
+    sectionMarket: "MARKET",
     sectionMiniWorldChanges: "MINI WORLD CHANGES",
     sectionWorldChanges: "WORLD CHANGES",
     sectionNextEvents: "NADCHODZĄCE WYDARZENIA",
-    boostedCreature: "Stworzenie",
-    boostedBoss: "Boss",
-    boostedRegion: "Region",
+    boostedCreature: "Boostowane Stworzenie",
+    boostedBoss: "Boostowany Boss",
+    boostedRegion: "Boostowany Region",
     merchantYasir: "Yasir",
     merchantRashid: "Rashid",
     warzoneToday: "Warzones",
-    tibiaDrome: "Drome",
-    marketOffer: (id) => (id === "tibiaCoinBuy" ? "kupno" : "sprzedaż"),
+    tibiaDrome: "Tibia Drome",
+    marketOffer: (id) => (id === "tibiaCoinBuy" ? "Kupno" : "Sprzedaż"),
+    inDays: (days) => (days <= 0 ? "Dziś" : days === 1 ? "Jutro" : `Za ${days} dni`),
     marketSource: (source, age) => (age ? `Ceny z ${source}, ${age}.` : `Ceny z ${source}.`),
     running: "Aktywna.",
     notRunning: "Nieaktywna.",

@@ -67,3 +67,69 @@ export function formatCountdownClock(totalMs: number): string {
   const clock = [hours, minutes, seconds].map((n) => String(n).padStart(2, "0")).join(":");
   return days > 0 ? `${days}d ${clock}` : clock;
 }
+
+/** "2026-09-10" in UTC — the bulletin's own dateline, unambiguous in any locale. */
+export function formatIsoDateUTC(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Month names, capitalised, for a date a reader is meant to remember rather than compute.
+ *
+ * Written out rather than taken from `Intl`: `toLocaleDateString` lower-cases months in
+ * pt-BR and es-ES, and the bulletin sets an event's date as its own line where a lower-case
+ * month reads as a typo. Four languages, twelve words each, and no locale-data surprises.
+ */
+const MONTH_NAMES: Record<string, readonly string[]> = {
+  pt: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  es: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+  pl: ["Stycznia", "Lutego", "Marca", "Kwietnia", "Maja", "Czerwca", "Lipca", "Sierpnia", "Września", "Października", "Listopada", "Grudnia"],
+};
+
+/** "12 de Setembro" / "12 September" — a date said the way a person says it. */
+export function formatLongDateUTC(date: Date, language: string): string {
+  const months = MONTH_NAMES[language] ?? MONTH_NAMES.en!;
+  const day = date.getUTCDate();
+  const month = months[date.getUTCMonth()]!;
+  return language === "en" ? `${day} ${month}` : `${day} de ${month}`;
+}
+
+const WEEKDAY_NAMES: Record<string, readonly string[]> = {
+  pt: ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"],
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  es: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  pl: ["niedziela", "poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota"],
+};
+
+/**
+ * How a deadline inside the coming week is actually said: "terça que vem", not "16/09".
+ *
+ * Only within the week, and only from two days out. A day named more than seven days ahead is
+ * ambiguous about which week it means, and "amanhã" beats naming tomorrow's weekday, so those
+ * cases fall back to the caller's short date.
+ */
+export function formatRelativeWeekday(
+  date: Date,
+  dayDiff: number,
+  timeZone: string,
+  language: string,
+): string | null {
+  if (dayDiff < 2 || dayDiff > 7) return null;
+  const weekdayIndex = Number(
+    new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" })
+      .formatToParts(date)
+      .find((part) => part.type === "weekday")?.value
+      .replace(/Sun|Mon|Tue|Wed|Thu|Fri|Sat/, (match) =>
+        String(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(match)),
+      ) ?? "0",
+  );
+  const name = (WEEKDAY_NAMES[language] ?? WEEKDAY_NAMES.en!)[weekdayIndex]!;
+  if (language === "pt") return `${name} que vem`;
+  if (language === "es") return `el ${name} que viene`;
+  if (language === "pl") return `w ${name}`;
+  return `next ${name}`;
+}

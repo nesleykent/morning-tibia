@@ -9,21 +9,21 @@ import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "@/lib/utils/priceTrend";
-import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
+import { formatIsoDateUTC, formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
 import {
   formatActiveEventLine,
-  formatDromeBriefingLine,
+  formatDromeBriefingParts,
   formatMarketPriceLabel,
   formatPriceAge,
-  formatUpcomingEventLine,
+  formatUpcomingEventDate,
   formatYasirLabel,
   notAvailableText,
 } from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
 import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
-import { opportunityLinesFor, type OpportunityLine } from "./opportunityPhrases";
+import { notesForChange, type BriefingNote } from "./opportunityPhrases";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 
 export type { BriefingLanguage } from "./translations";
@@ -74,10 +74,15 @@ export interface ChangeLine {
   emoji: string;
   /** Official name, in its own casing — never upper-cased. */
   name: string;
-  /** What is true right now, in one or two sentences. */
+  /**
+   * Where it happens, from the catalog's own Location field. Null when the catalog has none,
+   * which is a real distinction: Demon War and Sea Serpent are not anywhere in particular.
+   */
+  location: string | null;
+  /** What is true right now, in one or two sentences. Set in italics by the renderer. */
   state: string;
-  /** What this state makes worth doing, one line each. Empty when it offers nothing today. */
-  opportunities: OpportunityLine[];
+  /** What this state is worth, each line carrying its own marker. */
+  notes: BriefingNote[];
 }
 
 export interface MarketPriceLine {
@@ -92,13 +97,18 @@ export interface MarketPriceLine {
 export interface EventLine {
   emoji: string;
   title: string;
+  /** The headline fact: a spoken date for a scheduled event, or how long an active one has. */
   detail: string;
+  /** "Em 2 dias", on its own line under the date. Null for events already running. */
+  countdown: string | null;
 }
 
 export interface BriefingModel {
   language: BriefingLanguage;
   t: BriefingTranslation;
   dateLabel: string;
+  /** "2026-09-10" — the bulletin's dateline, unambiguous wherever it is forwarded. */
+  isoDateLabel: string;
   worldName: string;
   /** null when the feed failed — the renderers drop the whole block. */
   boostedCreatureLabel: string | null;
@@ -106,8 +116,10 @@ export interface BriefingModel {
   /** null means the field is genuinely not applicable today and the line is omitted. */
   boostedRegionValue: string | null;
   activeEventLines: EventLine[];
-  dromeLine: string | null;
-  warzoneLine: string | null;
+  /** The rotation deadline and its countdown, kept apart so the renderer can set them apart. */
+  drome: { label: string; countdown: string | null } | null;
+  /** One entry per execution, so the renderer owns the separator and the sequence's markup. */
+  warzoneEntries: { time: string; sequence: string | null }[];
   yasirLabel: string;
   rashidLabel: string;
   marketPriceLines: MarketPriceLine[];
@@ -178,8 +190,8 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const perChangeLimit = overrides.includeAllChanges
     ? Number.MAX_SAFE_INTEGER
     : OPPORTUNITIES_PER_CHANGE;
-  const opportunitiesFor = (conditionName: string): OpportunityLine[] =>
-    opportunityLinesFor(
+  const notesFor = (conditionName: string): BriefingNote[] =>
+    notesForChange(
       allOpportunities.filter((o) => o.conditionName === conditionName),
       input.language,
       perChangeLimit,
@@ -207,8 +219,9 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       miniWorldChangeLines.push({
         emoji: def.emoji,
         name: def.name,
+        location: def.briefingLocation || def.location || null,
         state: t.notRunning,
-        opportunities: [],
+        notes: [],
       });
       continue;
     }
@@ -220,8 +233,13 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     miniWorldChangeLines.push({
       emoji: def.emoji,
       name: def.name,
+      location: def.briefingLocation || def.location || null,
+      // `def.reference` — the catalog's known-spots list — deliberately does not travel into
+      // the bulletin. Noodles alone carries twelve of them, which renders as a 376-character
+      // line nobody reads on a phone, and a hint the player still has to go and verify is
+      // exactly the kind of bulk the catalog view exists to hold.
       state: narrative ?? variantLabel ?? t.running,
-      opportunities: opportunitiesFor(def.name),
+      notes: notesFor(def.name),
     });
   }
 
@@ -252,11 +270,12 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     worldChangeLines.push({
       emoji: def.emoji,
       name: def.shortLabel,
+      location: def.briefingLocation || def.location || null,
       // Headline and body are one paragraph about one state, so they are joined into one
       // line. Split across two they read as two separate facts, and the second — "no White
       // Deer while the wolves are there" — is the half that decides what the morning is worth.
       state: [narrative?.headline ?? state.label, narrative?.body].filter(Boolean).join(" "),
-      opportunities: opportunitiesFor(def.shortLabel),
+      notes: notesFor(def.shortLabel),
     });
   }
 
@@ -289,26 +308,21 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     marketPriceLines.length > 0 ? t.marketSource(MARKET_SOURCE, marketAge) : null;
 
   const warzone = input.unavailable?.warzone ? null : input.warzoneSchedule;
-  const warzoneLine =
-    warzone && warzone.executions.length > 0
-      ? warzone.executions
-          .map((execution) => {
-            const time = warzone.timezone
-              ? convertTimeBetweenZones(
-                  execution.scheduleTime,
-                  warzone.timezone,
-                  input.viewerTimeZone,
-                  input.referenceDate,
-                )
-              : execution.scheduleTime;
-            return execution.warzoneSequence ? `${time} (${execution.warzoneSequence})` : time;
-          })
-          .join("; ")
-      : null;
+  const warzoneEntries = (warzone?.executions ?? []).map((execution) => ({
+    time: warzone!.timezone
+      ? convertTimeBetweenZones(
+          execution.scheduleTime,
+          warzone!.timezone!,
+          input.viewerTimeZone,
+          input.referenceDate,
+        )
+      : execution.scheduleTime,
+    sequence: execution.warzoneSequence || null,
+  }));
 
-  const dromeLine =
+  const drome =
     input.drome?.rotationNumber && input.drome.endsAt
-      ? formatDromeBriefingLine(
+      ? formatDromeBriefingParts(
           input.drome.rotationNumber,
           input.drome.endsAt,
           input.language,
@@ -321,6 +335,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     emoji: eventEmoji(event.title),
     title: event.title,
     detail: formatActiveEventLine(event, input.language),
+    countdown: null,
   }));
 
   const sortedUpcoming = input.upcomingEvents; // already sorted ascending by the data source
@@ -328,7 +343,8 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const upcomingEventLines: EventLine[] = visibleUpcoming.map((event) => ({
     emoji: eventEmoji(event.title),
     title: event.title,
-    detail: formatUpcomingEventLine(event, input.language),
+    detail: formatUpcomingEventDate(event, input.language),
+    countdown: t.inDays(event.daysUntil),
   }));
 
   const yasirMerchant = overrides.merchants.yasir;
@@ -338,6 +354,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     language: input.language,
     t,
     dateLabel: toBriefingDate(input.referenceDate),
+    isoDateLabel: formatIsoDateUTC(input.referenceDate),
     worldName: input.world,
     boostedCreatureLabel: input.unavailable?.boosted
       ? null
@@ -347,8 +364,8 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       : (input.boostedBoss?.name ?? notAvailableText(input.language)),
     boostedRegionValue: overrides.boostedRegions.length > 0 ? overrides.boostedRegions.join(", ") : null,
     activeEventLines,
-    dromeLine,
-    warzoneLine,
+    drome,
+    warzoneEntries,
     yasirLabel: yasirMerchant
       ? formatYasirLabel(yasirMerchant.activityState, yasirMerchant.location, input.language)
       : notAvailableText(input.language),

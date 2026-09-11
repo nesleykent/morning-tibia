@@ -45,7 +45,10 @@ function expectWellFormed(message: string, context: string) {
   expect(message, context).not.toContain("undefined");
   expect(message, context).not.toContain("null");
   expect(message, context).not.toMatch(/\[object/);
-  expect(message, context).not.toMatch(/\n{3,}/);
+  // Two blank lines separate the bulletin's top-level sections and one separates the blocks
+  // inside them; that two-tier rhythm is what makes a long message scannable on a phone.
+  // Three is always a hole where something rendered empty.
+  expect(message, context).not.toMatch(/\n{4,}/);
   expect(message, context).toBe(message.trim());
   expect(message, context).not.toContain("**");
 
@@ -83,7 +86,7 @@ describe("every World Change state", () => {
 
           const rich = generateBriefingMessage(input);
           expectWellFormed(rich, context);
-          expect(rich, context).toContain(`${definition.emoji} *${definition.shortLabel}*: `);
+          expect(rich, context).toContain(`${definition.emoji} *${definition.shortLabel}*\n`);
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
       }
@@ -112,7 +115,7 @@ describe("every Mini World Change, with and without its variant", () => {
           // "the mine changed again" is not news until the player has been down there.
           const reportable = definition.detection !== "always-active" || variantId !== null;
           if (reportable) {
-            expect(rich, context).toContain(`${definition.emoji} *${definition.name}*: `);
+            expect(rich, context).toContain(`${definition.emoji} *${definition.name}*\n`);
           }
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
@@ -132,8 +135,8 @@ describe("every Mini World Change, with and without its variant", () => {
       };
       const message = generateBriefingMessage(input);
       expectWellFormed(message, `inactive/${language}`);
-      expect(message, language).toContain("🎲");
-      expect(message, language).toContain("*Kingsday*: ");
+      expect(message, language).toContain("🎎");
+      expect(message, language).toContain("*Kingsday*\n");
     }
   });
 });
@@ -190,6 +193,11 @@ describe("the extremes", () => {
   it("keeps an ordinary morning short enough to be read in a chat window", () => {
     // The bulletin this replaced ran to 165 lines for one day, most of it the same facts
     // twice. A ceiling here is the only thing that keeps that from creeping back.
+    //
+    // 80, not the old 45: a change is now a block — its name, where it is, what is true, and
+    // what that is worth — rather than one dense line. That is the format this bulletin is
+    // meant to have, and it costs roughly four lines per change. The ceiling still does its
+    // job, which is to catch the day duplication creeps back in, not to force density.
     const input = inputFor("pt");
     for (const id of ["fury-gates", "stampede", "spider-nest", "nomads"]) {
       input.overrides.miniWorldChanges[id] = { id, status: "active", variantId: null, updatedAt: null };
@@ -203,6 +211,6 @@ describe("the extremes", () => {
       input.overrides.worldChanges[id] = { id, stateId, updatedAt: null };
     }
 
-    expect(generateBriefingMessage(input).split("\n").length).toBeLessThan(45);
+    expect(generateBriefingMessage(input).split("\n").length).toBeLessThan(80);
   });
 });

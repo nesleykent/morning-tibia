@@ -856,7 +856,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Różnica 100 zabójstw między frakcjami przy server save przesuwa wojnę; od 400 przeskakuje wprost do etapu Princes.",
     },
     qualifier: {
-      pt: "100 kills de diferença movem a guerra",
+      pt: "100 mortes de diferença movem a guerra",
       en: "a 100-kill difference moves the war",
       es: "100 muertes de diferencia mueven la guerra",
       pl: "różnica 100 zabójstw rusza wojnę",
@@ -1772,7 +1772,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Po trzecim zabiciu nigdy więcej nie wejdziesz na ten teren.",
     },
     qualifier: {
-      pt: "3 kills",
+      pt: "3 mortes",
       en: "3 kills",
       es: "3 kills",
       pl: "3 kills",

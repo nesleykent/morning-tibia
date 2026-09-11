@@ -79,6 +79,19 @@ export interface MiniWorldChangeDefinition {
   /** Where it happens, per TibiaWiki's own Location field. */
   location: string;
   /**
+   * The location as the daily bulletin says it: the place, and nothing else.
+   *
+   * `location` is written for the catalog page, where a full sentence of orientation is
+   * welcome — "Reached via Darama, Ghostlands or Vengoth". In a bulletin that line sits under
+   * a 📍 among twenty others and has to be read at a glance, and its English connectives are
+   * the one place English prose leaks into a Portuguese message.
+   *
+   * Every value here is a strict shortening of `location`: the same places, with the
+   * orientation removed. Never a place the catalog does not already name. Omitted wherever
+   * `location` is already just a place, which the renderer falls back to.
+   */
+  briefingLocation?: string;
+  /**
    * The closed set of forms this change can take. Empty for a plain on/off change (most of
    * them) — an empty list means "it's either running or it isn't", with nothing further to
    * pin down, so the UI must not offer a choice.

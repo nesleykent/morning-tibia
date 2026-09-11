@@ -4,6 +4,8 @@ import type { BriefingLanguage } from "./translations";
 import {
   calendarDayDiff,
   formatDuration,
+  formatLongDateUTC,
+  formatRelativeWeekday,
   formatShortDateInZone,
   formatShortDateUTC,
   formatTimeInZone,
@@ -121,6 +123,23 @@ export function formatActiveEventLine(event: ActiveEvent, language: BriefingLang
  * than 30 days out (a countdown stops being useful that far ahead). Appends a phase
  * label when the same title recurs (e.g. a two-window seasonal event).
  */
+/**
+ * The date an upcoming event starts, written the way an invitation writes it.
+ *
+ * The countdown is *not* here: the bulletin gives it its own line under the date, so a reader
+ * scanning the events section sees "12 de Setembro" and "Em 2 dias" as two separate facts
+ * rather than one run-on. See `formatUpcomingEventCountdown`.
+ */
+export function formatUpcomingEventDate(event: UpcomingEvent, language: BriefingLanguage): string {
+  const date = formatLongDateUTC(new Date(event.startAt), language);
+  const notes: string[] = [];
+  if (event.certainty === "estimated") {
+    notes.push(pick({ pt: "previsto", en: "estimated", es: "previsto", pl: "przewidywane" }, language));
+  }
+  if (event.occurrenceCount > 1) notes.push(phaseLabel(event.occurrenceIndex, language));
+  return notes.length > 0 ? `${date} (${notes.join(", ")})` : date;
+}
+
 export function formatUpcomingEventLine(event: UpcomingEvent, language: BriefingLanguage): string {
   const shortDate = formatShortDateUTC(new Date(event.startAt));
   const withinThreshold = event.daysUntil <= UPCOMING_COUNTDOWN_THRESHOLD_DAYS;
@@ -144,12 +163,13 @@ function capitalize(text: string): string {
  * it opens a sentence capitalize it explicitly.
  */
 function rotationLabel(rotationNumber: string, language: BriefingLanguage): string {
+  const number = `#${rotationNumber.replace(/^#+/, "")}`;
   return pick(
     {
-      pt: `rotação ${rotationNumber}`,
-      en: `rotation ${rotationNumber}`,
-      es: `rotación ${rotationNumber}`,
-      pl: `rotacja ${rotationNumber}`,
+      pt: `rotação ${number}`,
+      en: `rotation ${number}`,
+      es: `rotación ${number}`,
+      pl: `rotacja ${number}`,
     },
     language,
   );
@@ -229,6 +249,60 @@ export function formatDromeLine(
  * The clock time is omitted because the rotation boundary is the Tibia
  * server save. The briefing keeps the end date and remaining calendar days.
  */
+/**
+ * The Drome deadline, split into the claim and the countdown.
+ *
+ * Two fields rather than one string because the bulletin sets the countdown in italics beside
+ * the date, and markup is the renderer's business — a model that baked in `_(faltam 5 dias)_`
+ * would put WhatsApp syntax into the plain-text output.
+ *
+ * Inside the coming week the date is said rather than written: "até terça que vem" is how a
+ * person reports a deadline five days out, and "até 16/09" is how a spreadsheet does.
+ */
+export function formatDromeBriefingParts(
+  rotationNumber: string,
+  endsAtIso: string,
+  language: BriefingLanguage,
+  now: Date,
+  viewerTimeZone: string,
+): { label: string; countdown: string | null } {
+  const endsAt = new Date(endsAtIso);
+  const dayDiff = Math.max(0, calendarDayDiff(now, endsAt, viewerTimeZone));
+  const label = rotationLabel(rotationNumber, language);
+  const weekday = formatRelativeWeekday(endsAt, dayDiff, viewerTimeZone, language);
+  const when = weekday ?? formatShortDateInZone(endsAt, viewerTimeZone);
+
+  const until = pick(
+    { pt: `${label} até ${when}`, en: `${label} until ${when}`, es: `${label} hasta ${when}`, pl: `${label} do ${when}` },
+    language,
+  );
+
+  if (dayDiff <= 0) {
+    return { label: until, countdown: pick({ pt: "hoje", en: "today", es: "hoy", pl: "dzisiaj" }, language) };
+  }
+  if (dayDiff === 1) {
+    return {
+      label: until,
+      countdown: pick(
+        { pt: "falta 1 dia", en: "1 day left", es: "queda 1 día", pl: "został 1 dzień" },
+        language,
+      ),
+    };
+  }
+  return {
+    label: until,
+    countdown: pick(
+      {
+        pt: `faltam ${dayDiff} dias`,
+        en: `${dayDiff} days left`,
+        es: `quedan ${dayDiff} días`,
+        pl: `zostało ${dayDiff} dni`,
+      },
+      language,
+    ),
+  };
+}
+
 export function formatDromeBriefingLine(
   rotationNumber: string,
   endsAtIso: string,
