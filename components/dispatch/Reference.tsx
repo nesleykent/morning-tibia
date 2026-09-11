@@ -211,7 +211,7 @@ function Column({
   return (
     <section className="surface min-w-0 overflow-hidden">
       <div className="flex items-center justify-between gap-4 border-b border-line bg-surface-2 px-3 py-2">
-        <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
+        <h2 className="prose-serif text-[16px] font-semibold leading-tight text-ink">
           {title}
         </h2>
         <span className="text-[12px] text-ink-faint">{count}</span>
