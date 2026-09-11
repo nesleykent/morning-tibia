@@ -71,7 +71,7 @@ export function Reference({
        26, 14 and 3 rows, so the third renders ~80% empty. An even margin outside the content
        beats a hollow column inside it. */
     <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2 xl:gap-x-7">
-      <Column title="World board & towncryer" count={`${mini.length} tracked`}>
+      <Column title="Mini World Changes" count={`${mini.length} tracked`}>
         {mini.map(({ definition: d, value }) => {
           const variant = d.variants.find((v) => v.id === value.variantId);
           const pending = value.status === "active" && d.variants.length > 0 && !value.variantId;
@@ -132,7 +132,7 @@ export function Reference({
           the 26-row Mini World Change list, so the two columns end up close to even. */}
       <div className="flex flex-col gap-6">
         <Column
-          title="Guide NPC"
+          title="World Changes"
           count={
             <span className="flex items-center gap-2">
               <span className="text-[12px] text-ink-faint">{world.length} tracked</span>
@@ -263,7 +263,7 @@ function Row({
             accent ? "bg-gold-bright ring-1 ring-gold-line" : "bg-transparent",
           )}
         />
-        <span className="flex min-w-0 flex-[1_0_13rem] items-center gap-1.5 overflow-hidden">
+        <span className="flex min-w-0 flex-[1_1_13rem] flex-wrap items-center gap-1.5">
           {details ? (
             <button
               type="button"
@@ -271,7 +271,7 @@ function Row({
               aria-expanded={open}
               title={name}
               className={cn(
-                "-ml-1 flex min-w-0 items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[13px] transition-colors hover:text-ink",
+                "-ml-1 flex min-w-0 items-center gap-1 rounded px-1 py-0.5 text-left text-[13px] transition-colors hover:text-ink",
                 dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
@@ -282,7 +282,7 @@ function Row({
                   open && "rotate-90",
                 )}
               />
-              <span className="truncate">{nameNode}</span>
+              <span>{nameNode}</span>
             </button>
           ) : href ? (
             <a
@@ -291,7 +291,7 @@ function Row({
               rel="noreferrer"
               title={name}
               className={cn(
-                "min-w-0 truncate text-[13px] underline decoration-line-strong underline-offset-[3px] transition-colors hover:decoration-gold",
+                "min-w-0 text-[13px] underline decoration-line-strong underline-offset-[3px] transition-colors hover:decoration-gold",
                 dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
@@ -300,7 +300,7 @@ function Row({
           ) : (
             <span
               className={cn(
-                "min-w-0 truncate text-[13px]",
+                "min-w-0 text-[13px]",
                 dim ? "text-ink-soft" : "font-medium text-ink",
               )}
             >
@@ -309,7 +309,7 @@ function Row({
           )}
           {aside}
         </span>
-        <span className="ml-auto shrink-0 py-[1px]">{children}</span>
+        <span className="ml-auto min-w-0 max-w-full py-[1px]">{children}</span>
       </div>
       {open && details && <div className="pb-3 pl-[34px] pr-3">{details}</div>}
     </div>
@@ -434,7 +434,7 @@ function Inline({
       <SelectTrigger
         aria-label={label}
         className={cn(
-          "h-auto w-auto shrink-0 gap-1 whitespace-nowrap rounded border-transparent bg-transparent px-1 py-0.5 text-right text-[12.5px] shadow-none hover:border-line hover:bg-surface focus:ring-0",
+          "h-auto w-auto max-w-full gap-1 whitespace-normal [&>span]:whitespace-normal [&>span]:overflow-visible [&>span]:text-clip rounded border-transparent bg-transparent px-1 py-0.5 text-right text-[12.5px] shadow-none hover:border-line hover:bg-surface focus:ring-0",
           accent ? "font-medium text-gold" : "text-ink-soft",
         )}
       >

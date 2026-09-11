@@ -28,20 +28,8 @@ import { useNowMs } from "@/lib/utils/clock";
 import type { MarketTrendBasis } from "@/types/market";
 
 /**
- * Morning Tibia.
- *
- * The product object is *my Tibia world today*, and the page is that object: a dispatch you
- * read, with the handful of facts the game can't tell the app left as gaps you fill.
- *
- * On a desktop it is two columns. The left one is the document — the masthead and the dispatch,
- * the things you read. The right one is the ritual — paste what the game said, then take the
- * briefing away — and it is sticky, because both ends of that ritual have to be reachable
- * without scrolling a two-screen document to find them. Below 960px the same three pieces
- * stack in the order the morning happens in: what's special today, what the game told you,
- * what you send, then the detail behind it.
- *
- * The complete catalog lives on a second view because it answers a different question. That is
- * navigation between two purposes, not a disclosure hiding content from the first one.
+ * Website dashboard and its independent copy/share tools. Wide desktops keep the tools
+ * beside the facts; constrained windows give the facts the full width before the tools.
  */
 export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   const isClient = useIsClient();
@@ -233,8 +221,8 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         )}
 
         {view === "today" ? (
-          <div className="grid gap-6 rail:grid-cols-[minmax(0,1fr)_312px] rail:gap-6 xl:grid-cols-[minmax(0,1fr)_352px] xl:gap-7">
-            <div className="rail:col-span-2">
+          <div className="dashboard-layout">
+            <div className="dashboard-masthead">
               <Masthead
                 dateLabel={toBriefingDate(state.referenceDate)}
                 world={state.world}
@@ -247,10 +235,23 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
               />
             </div>
 
-            {/* Before the dispatch in the DOM so the stacked order is the order of the
-                morning, and placed into the second column on a desktop. Sticky needs
-                `self-start`, and nothing between here and the viewport may clip overflow. */}
-            <aside className="grid items-start gap-4 sm:grid-cols-2 rail:grid-cols-1 rail:col-start-2 rail:row-start-2 rail:sticky rail:top-[calc(var(--appbar-h)+1.25rem)] rail:max-h-[calc(100dvh-var(--appbar-h)-2.5rem)] rail:self-start rail:overflow-y-auto rail:overscroll-contain thin-scroll">
+
+            <div className="dashboard-content min-w-0">
+              <Dispatch
+                stanzas={stanzas}
+                opportunities={opportunities}
+                onPick={handlePick}
+                invitation={!hasEvidence ? <Invitation /> : null}
+                numbers={{
+                  warzones,
+                  prices: state.overrides.marketPrices,
+                  marketBasis: state.marketTrendBasis,
+                  onMarketBasisChange: (basis: MarketTrendBasis) => state.setMarketTrendBasis(basis),
+                  marketUnavailable: state.liveData.marketFailed,
+                }}
+              />
+            </div>
+            <aside id="dashboard-tools" className="dashboard-tools">
               <EvidenceBar
                 onApply={state.applyParsedEvidence}
                 onUndo={state.undoLastEvidence}
@@ -275,22 +276,6 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                 panelRef={watchBriefingPanel}
               />
             </aside>
-
-            <div className="min-w-0 rail:col-start-1 rail:row-start-2">
-              <Dispatch
-                stanzas={stanzas}
-                opportunities={opportunities}
-                onPick={handlePick}
-                invitation={!hasEvidence ? <Invitation /> : null}
-                numbers={{
-                  warzones,
-                  prices: state.overrides.marketPrices,
-                  marketBasis: state.marketTrendBasis,
-                  onMarketBasisChange: (basis: MarketTrendBasis) => state.setMarketTrendBasis(basis),
-                  marketUnavailable: state.liveData.marketFailed,
-                }}
-              />
-            </div>
           </div>
         ) : (
           <Reference
@@ -304,10 +289,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
           />
         )}
 
-        {/* Phones only, and only once the real panel has scrolled away.
-            From 640px up the rail holds the briefing in view, so the bar is hidden there
-            outright; on a phone the panel now sits near the top of the page, so showing both
-            at once put two identical gold buttons a finger's width apart. */}
+        {/* Keep copying reachable on phones while the full tools sit after the facts. */}
         {view === "today" && !briefingPanelOnScreen && (
           <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-line bg-surface px-4 py-3 shadow-elevated sm:hidden">
             <Button onClick={() => runCopy(briefing)} className="flex-1">
@@ -360,7 +342,7 @@ function useOnScreen(): [boolean, (node: HTMLElement | null) => void] {
  */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-5 pb-24 pt-6 sm:pb-14 lg:px-7">{children}</div>
+    <div className="mx-auto w-full max-w-[1600px] px-5 pb-24 pt-6 sm:pb-14 lg:px-7">{children}</div>
   );
 }
 
@@ -452,12 +434,12 @@ function Notice({
  */
 function Invitation() {
   return (
-    <div className="mb-7 border-b border-line pb-6">
-      <p className="prose-serif text-[17.5px] leading-[1.6] text-ink">
+    <div className="mb-4 border-b border-line pb-4">
+      <p className="text-[14px] leading-relaxed text-ink">
         This page writes your world&apos;s morning briefing, but only from what you can prove.
         Nothing has been checked yet today.
       </p>
-      <ol className="mt-4 flex flex-col gap-2 text-[13px] leading-relaxed text-ink-soft">
+      <ol className="dispatch-entries mt-3 text-[13px] leading-relaxed text-ink-soft">
         <Step n={1}>
           Read the <strong className="font-medium text-ink">world board</strong> at the
           Adventurer&apos;s Guild, first floor up, near Charos. It lists every mini world change
@@ -469,7 +451,7 @@ function Invitation() {
           Everything view lists all fourteen.
         </Step>
         <Step n={3}>
-          Paste whatever they told you into the game log beside this document. The dispatch
+          Paste whatever they told you into the game log. The dispatch
           fills itself in, and anything still missing shows up as a gap you can click.
         </Step>
       </ol>

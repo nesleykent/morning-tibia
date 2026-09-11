@@ -5,21 +5,8 @@ import { YASIR_CITIES } from "@/lib/defaults/merchants";
 import { miniWorldChangeWikiUrl } from "@/lib/utils/tibiaWiki";
 
 /**
- * Turns today's world state into sentences a person can read, with holes where the app is
- * missing a fact.
- *
- * This is the heart of the redesign. Every previous version rendered the *data model* — a
- * catalog of twenty-six changes, each a row with a status control — which forced the reader
- * to learn Morning Tibia's internal categories before they could learn anything about Tibia.
- * Here the categories disappear from the surface and only their consequences remain: a
- * running change becomes a clause, and a fact the app cannot know becomes a blank in that
- * clause, which is self-explanatory to anyone who has ever filled in a form.
- *
- * The domain rules are unchanged and still govern everything — they simply express themselves
- * as prose instead of as badges. A change nobody has checked contributes no sentence at all
- * (silence, not a row saying "unknown"). A change a complete board reading ruled out is
- * summarised in one clause at the end rather than nineteen rows. A silent change gets its own
- * sentence because no paste will ever settle it.
+ * Website-only presentation of today's facts. The copyable briefing uses its own
+ * model and formatter; visual grouping here must never change that portable text.
  */
 
 export type Segment =
@@ -52,6 +39,8 @@ export interface DispatchStanza {
   /** Small caps heading above the stanza. Null for the opening stanza. */
   heading: string | null;
   lines: Segment[][];
+  /** Canonical names for scanning website entries without parsing sentence text. */
+  lineLabels?: string[];
 }
 
 /** What each blank asks for, in the words that sentence needs. */
@@ -95,7 +84,7 @@ function blankFor(entry: MiniWorldChangeEntry): Segment {
  * a consequence — rather than the change's catalog name, because the name is an index entry
  * and the clause is the thing the player actually acts on.
  */
-function clauseFor(entry: MiniWorldChangeEntry): Segment[] | null {
+function clauseFor(entry: MiniWorldChangeEntry): Segment[] {
   const { definition: d } = entry;
   const needs = d.variants.length > 0;
 
@@ -208,14 +197,19 @@ export function composeDispatch(
     .filter((e, i, all) => all.findIndex((x) => x.definition.id === e.definition.id) === i)
     .filter((entry) => !isUnresolvedAlwaysActive(entry));
 
-  const happeningLines = running.map(clauseFor).filter((l): l is Segment[] => l !== null);
+  const happeningLines = running.map(clauseFor);
 
   if (happeningLines.length > 0) {
-    stanzas.push({ id: "happening", heading: "In the world", lines: happeningLines });
+    stanzas.push({
+      id: "happening",
+      heading: "Mini World Changes",
+      lines: happeningLines,
+      lineLabels: running.map((entry) => entry.definition.name),
+    });
   } else if (digest.mini.checked) {
     stanzas.push({
       id: "happening",
-      heading: "In the world",
+      heading: "Mini World Changes",
       lines: [[t("Nothing is stirring today — the board was empty.")]],
     });
   }
@@ -225,15 +219,16 @@ export function composeDispatch(
   // steamship is out of coal has answered the question; filtering those out left the page
   // silent about six of the fourteen keywords on a day they had all been asked, which reads
   // as "nobody checked" rather than as the report it is.
-  const guideLines = [...digest.world.noteworthy, ...digest.world.quiet]
-    .sort((a, b) => a.definition.name.localeCompare(b.definition.name))
-    .map((entry) => [
-      t(`${entry.definition.name}: `),
-      em(entry.stateLabel ?? ""),
-      t("."),
-    ]);
+  const guideEntries = [...digest.world.noteworthy, ...digest.world.quiet]
+    .sort((a, b) => a.definition.name.localeCompare(b.definition.name));
+  const guideLines = guideEntries.map((entry) => [em(entry.stateLabel ?? ""), t(".")]);
   if (guideLines.length > 0) {
-    stanzas.push({ id: "guides", heading: "The guides report", lines: guideLines });
+    stanzas.push({
+      id: "guides",
+      heading: "World Changes",
+      lines: guideLines,
+      lineLabels: guideEntries.map((entry) => entry.definition.name),
+    });
   }
 
   // ── Merchants ────────────────────────────────────────────────────────────

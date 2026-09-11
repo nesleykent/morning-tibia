@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 body-portalled popover content when a `backdrop-filter` sits on a sticky
                 ancestor, and every dropdown in this app is portalled. */}
             <header className="sticky top-0 z-40 border-b border-line bg-surface">
-              <div className="mx-auto flex h-[var(--appbar-h)] w-full max-w-[1200px] items-center justify-between gap-4 px-5 lg:px-7">
+              <div className="mx-auto flex h-[var(--appbar-h)] w-full max-w-[1600px] items-center justify-between gap-4 px-5 lg:px-7">
                 <span className="flex shrink-0 items-center gap-2">
                   <Sunrise className="h-[15px] w-[15px] text-gold" aria-hidden="true" />
                   <span className="prose-serif text-[15px] font-medium tracking-[-0.005em] text-ink">

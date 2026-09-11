@@ -15,15 +15,7 @@ import { cn } from "@/lib/utils/cn";
 /** Older than this and a "current" market price is not current enough to show plainly. */
 const STALE_PRICE_MS = 2 * 24 * 60 * 60 * 1000;
 
-/**
- * The dispatch: the product, rendered as the thing the reader came for.
- *
- * There is no dashboard here because there is nothing a dashboard would add. Every fact the
- * app is sure of is a sentence; every fact it is missing is a gap in one. Reading the page top
- * to bottom answers "what is special today", "what is happening", "what needs me" and "what
- * can I do about it" in that order, without the reader ever meeting the words "Mini World
- * Change" or learning which of two Tibia mechanics a fact belongs to.
- */
+/** The visual daily dashboard. All copy/share formatting stays in the briefing renderer. */
 export function Dispatch({
   stanzas,
   opportunities,
@@ -35,50 +27,57 @@ export function Dispatch({
   opportunities: Opportunity[];
   numbers: NumbersProps;
   onPick: (target: string, optionId: string) => void;
-  /** Rendered above everything when the reader has told the app nothing yet. */
+  /** First-run instructions, displayed before the change entries. */
   invitation: React.ReactNode;
 }) {
   return (
-    <article className="sheet px-5 py-6 sm:px-9 sm:py-8">
-      {invitation}
-
-      {stanzas.map((stanza) => (
-        <section key={stanza.id} className="settle mb-7 last:mb-0">
-          {stanza.heading && (
-            <h2 className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
-              {stanza.heading}
-            </h2>
-          )}
-          <div className="prose-serif flex flex-col gap-2.5 text-[16.5px] leading-[1.62] text-ink sm:text-[17.5px]">
-            {stanza.lines.map((line, index) => (
-              <p key={index} className="text-pretty">
-                {/* An unfilled blank already ends the sentence with "?", so the clause's own
-                    full stop is dropped until the fact arrives — otherwise every open question
-                    reads "…which city?.". */}
-                {line
-                  .filter((segment, i) => {
-                    if (segment.kind !== "text" || segment.text !== ".") return true;
-                    const previous = line[i - 1];
-                    return !(previous?.kind === "blank" && previous.value === null);
-                  })
-                  .map((segment, i) => (
-                    <SegmentView key={i} segment={segment} onPick={onPick} />
-                  ))}
-              </p>
+    <article className="sheet dispatch-dashboard p-4 sm:p-5">
+      <nav
+        aria-label="Daily information"
+        className={cn(
+          "mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-soft",
+          !stanzas.some((stanza) => ["happening", "guides"].includes(stanza.id)) && opportunities.length === 0 && "min-[1200px]:hidden",
+        )}
+      >
+        {stanzas.filter((stanza) => ["happening", "guides"].includes(stanza.id)).map((stanza) => (
+          <a key={stanza.id} href={`#daily-${stanza.id}`} className="underline decoration-line-strong underline-offset-4 hover:text-ink">
+            {stanza.heading}
+          </a>
+        ))}
+        {opportunities.length > 0 && (
+          <a href="#daily-opportunities" className="underline decoration-line-strong underline-offset-4 hover:text-ink">
+            Worth doing before it ends
+          </a>
+        )}
+        <a href="#dashboard-tools" className="min-[1200px]:hidden underline decoration-line-strong underline-offset-4 hover:text-ink">Game log &amp; copy</a>
+      </nav>
+      <Numbers
+        {...numbers}
+        context={
+          <div className="dispatch-context">
+            {stanzas.filter((stanza) => ["boosted-region", "merchants"].includes(stanza.id)).map((stanza) => (
+              <StanzaView key={stanza.id} stanza={stanza} onPick={onPick} />
             ))}
           </div>
-        </section>
-      ))}
+        }
+      />
+      {invitation}
+
+      <div className="dispatch-sections">
+        {stanzas.filter((stanza) => !["boosted-region", "merchants"].includes(stanza.id)).map((stanza) => (
+          <StanzaView key={stanza.id} stanza={stanza} onPick={onPick} />
+        ))}
+      </div>
 
       {opportunities.length > 0 && (
-        <section className="settle mb-7 border-t border-line pt-6">
-          <h2 className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
+        <section id="daily-opportunities" className="settle mt-5 border-t border-line pt-4">
+          <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
             Worth doing before it ends
           </h2>
-          <ul className="flex flex-col gap-3.5">
+          <ul className="dispatch-opportunities">
             {opportunities.map(({ definition, conditionName, conditionState }) => (
-              <li key={definition.id}>
-                <p className="prose-serif text-[16.5px] leading-snug text-ink sm:text-[17.5px]">
+              <li key={definition.id} className="dispatch-entry">
+                <p className="text-[14px] font-semibold leading-snug text-ink">
                   <a
                     href={definition.sources[0]}
                     target="_blank"
@@ -122,8 +121,50 @@ export function Dispatch({
         </section>
       )}
 
-      <Numbers {...numbers} />
     </article>
+  );
+}
+
+function StanzaView({
+  stanza,
+  onPick,
+}: {
+  stanza: DispatchStanza;
+  onPick: (target: string, optionId: string) => void;
+}) {
+  const grouped = ["happening", "guides", "silent"].includes(stanza.id);
+  return (
+    <section id={`daily-${stanza.id}`} data-section={stanza.id} className="settle dispatch-section">
+      {stanza.heading && (
+        <h2 className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
+          {stanza.heading}
+        </h2>
+      )}
+      <div className={cn("text-[14px] leading-[1.5] text-ink", grouped ? "dispatch-entries" : "space-y-1.5")}>
+        {stanza.lines.map((line, index) => (
+          <div
+            key={stanza.lineLabels?.[index] ?? index}
+            className={stanza.lineLabels || stanza.id === "silent" ? "dispatch-entry" : undefined}
+          >
+            {stanza.lineLabels?.[index] && (
+              <h3 className="mb-1 text-[14px] font-semibold leading-snug">{stanza.lineLabels[index]}</h3>
+            )}
+            <p className={stanza.id === "silent" ? "dispatch-silent-entry" : undefined}>
+              {/* The unresolved picker already ends in a question mark. */}
+              {line
+                .filter((segment, i) => {
+                  if (segment.kind !== "text" || segment.text !== ".") return true;
+                  const previous = line[i - 1];
+                  return !(previous?.kind === "blank" && previous.value === null);
+                })
+                .map((segment, i) => (
+                  <SegmentView key={i} segment={segment} onPick={onPick} />
+                ))}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -154,7 +195,7 @@ function opportunityMeta(definition: Opportunity["definition"]): string {
 /** Small trailing metadata on a line of prose — present, precise, visually subordinate. */
 function Meta({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-2 align-[0.15em] text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-faint">
+    <span className="ml-2 text-[10px] font-medium uppercase tracking-[0.07em] text-ink-faint">
       {children}
     </span>
   );
@@ -207,8 +248,8 @@ const BASIS_LABEL: Record<MarketTrendBasis, string> = {
 };
 
 /**
- * Numbers do not want to be prose. Times and prices are a small tabular footer to the
- * dispatch — present, precise, and visually subordinate to the sentences above them.
+ * A compact daily overview keeps schedules, market values, region and merchants
+ * available before the longer change and opportunity sections.
  */
 function Numbers({
   warzones,
@@ -216,7 +257,8 @@ function Numbers({
   marketBasis,
   onMarketBasisChange,
   marketUnavailable,
-}: NumbersProps) {
+  context,
+}: NumbersProps & { context: React.ReactNode }) {
   const nowMs = useNowMs();
   const priceEntries = (Object.entries(prices) as [MarketPriceId, MarketPrice][]).filter(
     ([, p]) => p.value !== null,
@@ -234,7 +276,8 @@ function Numbers({
   const isStale = newestTimestamp !== null && nowMs > 0 && nowMs - newestTimestamp > STALE_PRICE_MS;
 
   return (
-    <footer className="mt-7 grid grid-cols-1 gap-y-5 border-t border-line pt-5">
+    <section aria-label="Daily numbers" className="dispatch-numbers mb-4 grid grid-cols-1 gap-x-6 gap-y-3 border-b border-line pb-3">
+      <div>
       {warzones.length > 0 && (
         <div>
           <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
@@ -249,6 +292,9 @@ function Numbers({
           </p>
         </div>
       )}
+
+        {context}
+      </div>
 
       {(priceEntries.length > 0 || marketUnavailable) && (
         <div>
@@ -339,7 +385,7 @@ function Numbers({
       )}
 
       <ServerSaveLine />
-    </footer>
+    </section>
   );
 }
 
@@ -354,7 +400,7 @@ function ServerSaveLine() {
   if (nowMs === 0) return null;
   const msLeft = getNextServerSave(new Date(nowMs)).getTime() - nowMs;
   return (
-    <p className="text-[12.5px] text-ink-faint">
+    <p className="dispatch-reset text-[11.5px] text-ink-faint">
       Everything here resets at server save, in{" "}
       <span className="tnum">{formatCountdownClock(msLeft)}</span>.
     </p>

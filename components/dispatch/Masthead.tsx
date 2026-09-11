@@ -89,8 +89,8 @@ function Boosted({
   const href = creatureWikiUrl(entity?.name);
 
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5 shadow-card">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface px-2 py-2.5 sm:gap-3 sm:px-3 shadow-card">
+      <div className="flex h-8 w-8 shrink-0 sm:h-11 sm:w-11 items-center justify-center">
         {loading ? (
           <div className="skeleton h-full w-full" />
         ) : entity?.imageUrl ? (
@@ -110,13 +110,13 @@ function Boosted({
         )}
       </div>
       <div className="min-w-0">
-        <p className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.1em] text-ink-faint">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-ink-faint">
           {label}
         </p>
         {loading ? (
           <div className="skeleton mt-1.5 h-4 w-20" />
         ) : (
-          <p className="prose-serif mt-0.5 text-pretty text-[16px] leading-tight text-ink">
+          <p className="prose-serif mt-0.5 break-words text-pretty text-[16px] leading-tight text-ink">
             {entity?.name ? (
               href ? (
                 <a
