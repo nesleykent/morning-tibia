@@ -124,9 +124,9 @@ describe("2026-09-11 Antica regression", () => {
   });
 
   it("files the Spirit Gate under the region the board named, not the default one", () => {
-    // The board said Darama. The 📍 line used to say Ghostlands regardless, contradicting the
+    // The board said Darama. The location used to say Ghostlands regardless, contradicting the
     // sentence printed directly under it and pointing the reader at a different continent.
-    expect(briefing()).toContain("🌀 *Spirit Grounds*\n📍 Darama\n");
+    expect(briefing()).toContain("🌀 *Spirit Grounds* _(Darama)_\n");
   });
 
   it("writes the recovery stage without promising deer that are not back yet", () => {

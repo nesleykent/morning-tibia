@@ -492,7 +492,7 @@ creature, 👹 a boss, 🐎 a mount, 👕 an outfit, 🏆 an achievement, 🔄 s
 ⚔️ what is spawning, 💡 somebody's advice, ⏳ what changes at the next server save. A Bosstiary
 boss is never printed as 🎯: they are different game systems with different rewards, and 🎯
 carries a kill count and a Charm Points payout that a boss does not have. An achievement always
-reads `Name: requirement, N achievement point(s)` with the achievement's *own* name in front —
+reads `Name: requirement; N achievement point(s)` with the achievement's *own* name in front —
 never the boss or mount it rides along with, which is how "Groam: achievement Eye of the Deep"
 used to reach a guild channel.
 
@@ -548,6 +548,18 @@ generated text gives itself away, and the bulletin is forwarded to people who di
 it. An opportunity reads `Nomad (Blue): 500 kills, 15 Charm Points`, a change reads
 `Fire from the Earth: the volcano is erupting`, and a qualifier that would make a comma list
 ambiguous goes in parentheses. Enforced by tests over both the bulletin and the catalogs.
+
+**A semicolon parts a clause from what it is worth; a comma stays inside each half.** A line
+that opens with a list and closes with what that list costs has two halves, and both may carry
+commas of their own: `Bestiary: Kollos, Spidris and Spidris Elite; 1,000 kills, 25 Charm Points
+each`, `Chest Robber: Loot the chest of 3 different Nomad camps; 1 achievement point`. Without
+the semicolon "Spidris Elite" read as the item before "1,000 kills". A line that opens *with*
+the figures has no clause to part and keeps its comma: `Yielothax: 1,000 kills, 25 Charm
+Points`. The same rule governs the place on a change's own name — independent places are parted
+(`Horse Station _(Thais; Venore)_`) and a place whose own name carries a comma is not
+(`Twisted Waters _(Lake Equivocolao, Port Hope)_`). Which of the two a location is cannot be
+recovered from a joined string, so the catalogs declare it by listing each place separately in
+`briefingLocations`.
 
 **Markup is the intersection of the two clients.** `*bold*` is WhatsApp's; Discord reads it
 as italic, which is a graceful degradation. Discord's `**bold**` arrives in WhatsApp as

@@ -81,10 +81,16 @@ export interface ChangeLine {
   /** Official name, in its own casing — never upper-cased. */
   name: string;
   /**
-   * Where it happens, from the catalog's own Location field. Null when the catalog has none,
-   * which is a real distinction: Demon War and Sea Serpent are not anywhere in particular.
+   * Where it happens, one entry per distinct place, from the catalog's own Location field.
+   * Empty when the catalog has none, which is a real distinction: Demon War and Sea Serpent
+   * are not anywhere in particular.
+   *
+   * A list rather than a sentence, so the renderer owns the separator — the same division of
+   * labour as `warzoneEntries`. Independent places are punctuated one way and a single place
+   * whose own name carries a comma another, and only the catalog knows which it is looking
+   * at; the model must not decide that by re-reading a string it just assembled.
    */
-  location: string | null;
+  locations: readonly string[];
   /** What is true right now, in one or two sentences. Set in italics by the renderer. */
   state: string;
   /** What this state is worth, each line carrying its own marker. */
@@ -208,6 +214,24 @@ const OPPORTUNITIES_PER_CHANGE = 9;
 /** Where the market numbers come from. Lower-case: it is a domain, not a shout. */
 const MARKET_SOURCE = "tibiamarket.top";
 
+/**
+ * The places a change happens, as the bulletin names them.
+ *
+ * `briefingLocations` is the curated list, and `location` — the catalog page's own prose — is
+ * the fallback for the many changes that happen in exactly one named place. The fallback is a
+ * single entry on purpose: whatever commas it carries belong to one place's own expression
+ * ("Silvertides, Marapur"), so the renderer must not part it.
+ */
+function briefingLocationsOf(definition: {
+  briefingLocations?: readonly string[];
+  location?: string;
+}): readonly string[] {
+  if (definition.briefingLocations && definition.briefingLocations.length > 0) {
+    return definition.briefingLocations;
+  }
+  return definition.location ? [definition.location] : [];
+}
+
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const { overrides } = input;
   const t = getTranslation(input.language);
@@ -264,7 +288,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
         miniWorldChangeLines.push({
           emoji: def.emoji,
           name: def.name,
-          location: def.briefingLocation || def.location || null,
+          locations: briefingLocationsOf(def),
           state: absent,
           notes: [],
         });
@@ -274,7 +298,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       miniWorldChangeLines.push({
         emoji: def.emoji,
         name: def.name,
-        location: def.briefingLocation || def.location || null,
+        locations: briefingLocationsOf(def),
         state: t.notRunning,
         notes: [],
       });
@@ -298,15 +322,14 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     miniWorldChangeLines.push({
       emoji: def.emoji,
       name: def.name,
-      // For a change whose variant is the place itself, the 📍 narrows to the named region and
-      // otherwise lists the candidates. Without this the line contradicted the sentence under
-      // it: a Spirit Gate read off Antica's board as open in Darama was filed under Ghostlands,
-      // which is a different continent to sail to.
-      location:
-        (def.variantIsBriefingLocation ? variantLabel : null) ||
-        def.briefingLocation ||
-        def.location ||
-        null,
+      // For a change whose variant is the place itself, the location narrows to the named
+      // region and otherwise lists the candidates. Without this the name line contradicted
+      // the sentence beneath it: a Spirit Gate read off Antica's board as open in Darama was
+      // filed under Ghostlands, which is a different continent to sail to.
+      locations:
+        def.variantIsBriefingLocation && variantLabel
+          ? [variantLabel]
+          : briefingLocationsOf(def),
       // `def.reference` — the catalog's known-spots list — deliberately does not travel into
       // the bulletin. Noodles alone carries twelve of them, which renders as a 376-character
       // line nobody reads on a phone, and a hint the player still has to go and verify is
@@ -358,7 +381,7 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     worldChangeLines.push({
       emoji: def.emoji,
       name: def.shortLabel,
-      location: def.briefingLocation || def.location || null,
+      locations: briefingLocationsOf(def),
       // Headline and body are one paragraph about one state, so they are joined into one
       // line. Split across two they read as two separate facts, and the second — "no White
       // Deer while the wolves are there" — is the half that decides what the morning is worth.

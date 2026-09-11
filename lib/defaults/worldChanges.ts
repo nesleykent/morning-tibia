@@ -33,7 +33,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "🏺",
     guideKeyword: "Horestis",
     location: "Horestis Tomb, near Ankrahmun",
-    briefingLocation: "Ankrahmun",
+    briefingLocations: ["Ankrahmun"],
     description:
       "Pharaoh Horestis' cycle: he slumbers, rises to be killed, is desecrated, and his curse then fades.",
     states: [
@@ -50,7 +50,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "🗼",
     guideKeyword: "Mage Tower",
     location: "Zao Steppe, and another dimension",
-    briefingLocation: "Zao",
+    briefingLocations: ["Zao"],
     description:
       "The Raging Mage holds the dimensional portal open while he lives; killing him collapses it until the next server save.",
     states: [
@@ -65,7 +65,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "📯",
     guideKeyword: "Master's Voice",
     location: "Mad Mage Dungeon, Edron",
-    briefingLocation: "Edron",
+    briefingLocations: ["Edron"],
     description: "Whether the slime-covered servant tower on Edron can be entered.",
     states: [
       { id: "passable", label: "Covered in slime, passable" },
@@ -116,7 +116,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "💧",
     guideKeyword: "Twisted Waters",
     location: "Lake Equivocolao, north of Port Hope",
-    briefingLocation: "Lake Equivocolao, Port Hope",
+    briefingLocations: ["Lake Equivocolao, Port Hope"],
     description: "How polluted the great lake near Port Hope is, which decides whether shimmer swimmers appear.",
     states: [
       { id: "clean", label: "Clean", quiet: true },
@@ -162,7 +162,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "🐴",
     guideKeyword: "Horses",
     location: "East of Thais, west of Venore",
-    briefingLocation: "Thais, Venore",
+    briefingLocations: ["Thais", "Venore"],
     description:
       "Either the horses are confined and rentable, or they have escaped. While they are loose, wild horses spawn and can be tamed.",
     states: [
@@ -177,7 +177,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "🦌",
     guideKeyword: "Overhunting",
     location: "Forests around Ab'Dendriel, and near Carlin and the Orc Fortress",
-    briefingLocation: "Ab'Dendriel, Carlin",
+    briefingLocations: ["Ab'Dendriel", "Carlin"],
     description:
       "The white deer population cycle. Overhunt them and they leave, and starving wolves take their place.",
     states: [
@@ -195,7 +195,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     emoji: "😈",
     guideKeyword: "Demon War",
     location: "Hero Cave, Edron",
-    briefingLocation: "Edron",
+    briefingLocations: ["Edron"],
     description: "Which demon faction controls the Hero Cave complex, Shaburak or Askarak.",
     states: [
       { id: "stalemate", label: "Stalemate", quiet: true },

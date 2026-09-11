@@ -6,6 +6,7 @@ import { createDefaultOverrides } from "@/lib/defaults";
 import { generateBriefingMessage } from "@/lib/formatter/generateBriefing";
 import type { BriefingOverrides } from "@/types/briefing";
 import type { CombinedParseResult } from "./parseGameText";
+import { nameLinePattern } from "@/lib/testing/briefingLines";
 
 /**
  * A real morning on Ustebra, 10 September 2026: a whole World Board reading plus all fourteen
@@ -260,7 +261,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
 
   it("keeps every one of the fourteen recognised World Changes", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      expect(message, def.id).toContain(`${def.emoji} *${def.shortLabel}*\n`);
+      expect(message, def.id).toMatch(nameLinePattern(def.emoji, def.shortLabel));
     }
     // Six of these were previously deleted for being "quiet" states.
     for (const label of [
@@ -280,7 +281,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   it("keeps every one of the seven announced Mini World Changes", () => {
     for (const id of Object.keys(EXPECTED_MINI)) {
       const def = MINI_WORLD_CHANGE_DEFINITIONS.find((d) => d.id === id)!;
-      expect(message, id).toContain(`${def.emoji} *${def.name}*\n`);
+      expect(message, id).toMatch(nameLinePattern(def.emoji, def.name));
     }
   });
 
@@ -303,7 +304,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
   });
 
   it("surfaces the state-specific opportunity the blocked content hid", () => {
-    expect(message).toContain("🦌 *Overhunting*\n");
+    expect(message).toMatch(nameLinePattern("🦌", "Overhunting"));
     expect(message).toContain("🎯 *Starving Wolf:* 500 mortes, 15 Charm Points.");
   });
 

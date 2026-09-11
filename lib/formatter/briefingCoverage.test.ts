@@ -3,6 +3,7 @@ import { createDefaultOverrides } from "@/lib/defaults";
 import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBriefing";
+import { nameLinePattern } from "@/lib/testing/briefingLines";
 import { BRIEFING_LANGUAGES } from "./translations";
 import type { BriefingInput } from "./briefingModel";
 
@@ -86,7 +87,9 @@ describe("every World Change state", () => {
 
           const rich = generateBriefingMessage(input);
           expectWellFormed(rich, context);
-          expect(rich, context).toContain(`${definition.emoji} *${definition.shortLabel}*\n`);
+          expect(rich, context).toMatch(
+            nameLinePattern(definition.emoji, definition.shortLabel),
+          );
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
       }
@@ -115,7 +118,7 @@ describe("every Mini World Change, with and without its variant", () => {
           // "the mine changed again" is not news until the player has been down there.
           const reportable = definition.detection !== "always-active" || variantId !== null;
           if (reportable) {
-            expect(rich, context).toContain(`${definition.emoji} *${definition.name}*\n`);
+            expect(rich, context).toMatch(nameLinePattern(definition.emoji, definition.name));
           }
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
@@ -136,7 +139,7 @@ describe("every Mini World Change, with and without its variant", () => {
       const message = generateBriefingMessage(input);
       expectWellFormed(message, `inactive/${language}`);
       expect(message, language).toContain("🎎");
-      expect(message, language).toContain("*Kingsday*\n");
+      expect(message, language).toMatch(nameLinePattern("👑", "Kingsday"));
     }
   });
 });

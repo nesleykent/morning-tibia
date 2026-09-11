@@ -30,14 +30,18 @@ export { BRIEFING_LANGUAGES } from "./translations";
  * deciding what to do with the next hour. That makes it a **document**, not a table: a
  * dateline, a greeting, today's headline facts, then one block per subject.
  *
- * A block is always the same four things in the same order, any of which may be absent:
+ * A block is always the same three things in the same order, any of which may be absent:
  *
  * ```
- * 🌑 *Nightmare Isles*            the subject, bold, with its own emoji
- * 📍 Costa norte de Darama         where, when the catalog knows
- * _A tempestade abriu o acesso._   what is true right now, in italics
- * ⚔️ Silencers, Retching Horrors…  what that is worth, one marker per line
+ * 🌑 *Nightmare Isles* _(Kha'labal)_   the subject, bold, with its own emoji and its place
+ * _A tempestade abriu o acesso._       what is true right now, in italics
+ * ⚔️ Silencers, Retching Horrors…      what that is worth, one marker per line
  * ```
+ *
+ * The place rides on the subject's own line, parenthesised and set as an aside, because it is
+ * not a fact anybody scans for — it qualifies the name. Under its own 📍 it cost a line in
+ * every block and pushed the state sentence, which is what the reader came for, a line further
+ * down; across twenty changes that is twenty lines of a phone screen spent on punctuation.
  *
  * The markers are the whole editorial idea. Every subordinate line declares its own kind with
  * a glyph — 🎯 bestiary, 👹 boss, 🐎 mount, 🍀 the item that tames one, 👕 outfit,
@@ -81,7 +85,6 @@ const BETWEEN = "\n\n\n";
  * means adding a `NoteIcon` and a row here, never touching a render function.
  */
 const ICON: Record<NoteIcon, string> = {
-  place: "📍",
   bestiary: "🎯",
   boss: "👹",
   mount: "🐎",
@@ -151,9 +154,17 @@ function noteLine(style: Style, note: BriefingNote): string {
  * first half in their head until the second arrived.
  */
 function changeBlock(style: Style, line: ChangeLine): string {
+  // Semicolons between the places, because a place's own name may contain a comma: Horse
+  // Station's horses run between two towns — `(Thais; Venore)` — while the lake a comma
+  // merely locates is one place, `(Lake Equivocolao, Port Hope)`. The catalog draws that
+  // distinction by giving each independent place its own entry; here it becomes punctuation.
+  const where = line.locations.join("; ");
   return joinLines([
-    withIcon(style, line.emoji, bold(style, line.name)),
-    line.location ? withIcon(style, ICON.place, line.location) : null,
+    withIcon(
+      style,
+      line.emoji,
+      join(" ", [bold(style, line.name), where ? italic(style, `(${where})`) : null]),
+    ),
     italic(style, line.state),
     ...line.notes.map((note) => noteLine(style, note)),
   ]);

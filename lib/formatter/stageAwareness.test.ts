@@ -155,7 +155,7 @@ describe("manually checked states name their options instead of shrugging", () =
     }
     // Both nomads cost the same, so they share a line.
     expect(unselected).toContain(
-      "🎯 *Bestiary:* Nomad (Blue) and Nomad (Female), 500 kills and 15 Charm Points each.",
+      "🎯 *Bestiary:* Nomad (Blue) and Nomad (Female); 500 kills, 15 Charm Points each.",
     );
 
     const selected = mini("nomads", "south-of-the-tarpit-tomb");
@@ -207,7 +207,7 @@ describe("manually checked states name their options instead of shrugging", () =
       "Behind it are Nightmare, Nightmare Scion, Spectre and Phantasm.",
     );
     expect(answered).toContain(
-      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre; 1,000 kills, 25 Charm Points each.",
     );
     // Phantasm is Hard where the other three are Medium, so it gets its own numbers.
     expect(answered).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
@@ -254,7 +254,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     for (const stateId of ["under-control", "medicine-needed"]) {
       const contained = world("swamp-fever", stateId);
       expect(contained).toContain("🍀 *Slug Drug:*");
-      expect(contained).toContain("🏆 *Doctor! Doctor!:* Deliver 100 Medicine Pouches to Ottokar, 2 achievement points.");
+      expect(contained).toContain("🏆 *Doctor! Doctor!:* Deliver 100 Medicine Pouches to Ottokar; 2 achievement points.");
       // The spawn is throttled by the medicine deliveries, so this is not a hunt worth walking to.
       expect(contained).not.toContain("Feverish Citizen");
       expect(contained).not.toContain("Afflicted");
@@ -302,9 +302,9 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const drained = world("awash", "drained-quota-open");
     expect(drained).toContain("The mine near Kazordoon is currently drained, giving access to the Eyes of the Deep.");
     expect(drained).toContain("🎯 *Deepling Scout:* 1,000 kills, 25 Charm Points.");
-    expect(drained).toContain("🏆 *Invader of the Deep:* Kill 300 Deepling Scouts, 2 achievement points.");
+    expect(drained).toContain("🏆 *Invader of the Deep:* Kill 300 Deepling Scouts; 2 achievement points.");
     expect(drained).toMatch(/^👹 \*Groam:\* Can appear/m);
-    expect(drained).toContain("🏆 *Eye of the Deep:* Defeat Groam, 1 achievement point.");
+    expect(drained).toContain("🏆 *Eye of the Deep:* Defeat Groam; 1 achievement point.");
     expect(drained).toMatch(/🔄 \*Keep the mine open:\*.*after the next server save/);
     // The achievement is for killing Groam, never for talking to him or doing his tasks.
     expect(drained).not.toMatch(/talk to Groam|Groam's tasks/i);
@@ -332,11 +332,11 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     // The three ordinary horses cost the same and share a line; the Wild Horse does not, and
     // the mount points at it by name anyway.
     expect(escaped).toContain(
-      "🎯 *Bestiary:* Horse (Brown), Horse (Grey) and Horse (Taupe), 250 kills and 5 Charm Points each.",
+      "🎯 *Bestiary:* Horse (Brown), Horse (Grey) and Horse (Taupe); 250 kills, 5 Charm Points each.",
     );
     expect(escaped).toContain("🎯 *Wild Horse:* 5 kills, 10 Charm Points.");
     expect(escaped).toContain("🐎 *War Horse:* Use Sugar Oat or a Music Box on a Wild Horse to tame it.");
-    expect(escaped).toContain("🏆 *Lucky Horseshoe:* Tame a Wild Horse, 1 achievement point.");
+    expect(escaped).toContain("🏆 *Lucky Horseshoe:* Tame a Wild Horse; 1 achievement point.");
     expect(escaped).toMatch(/🔄 \*Restore horse rentals:\* Lure the escaped Horses back/);
     expect(escaped).not.toContain("Natural Born Cowboy");
     // Spawn trivia stays on the catalog page.
@@ -354,9 +354,9 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const deer = world("overhunting", "dwindling");
     expect(deer).toContain("🎯 *White Deer:* 250 kills, 5 Charm Points.");
     expect(deer).toMatch(/🐎 \*Kingly Deer:\* Kill White Deer until an Enraged White Deer appears/);
-    expect(deer).toContain("🏆 *Friend of Elves:* Tame an Enraged White Deer, 1 achievement point.");
+    expect(deer).toContain("🏆 *Friend of Elves:* Tame an Enraged White Deer; 1 achievement point.");
     expect(deer).toContain(
-      "🏆 *Deer Hunt:* Kill 400 Enraged or Desperate White Deer in total, 1 achievement point.",
+      "🏆 *Deer Hunt:* Kill 400 Enraged or Desperate White Deer in total; 1 achievement point.",
     );
     expect(deer).toMatch(/Starving Wolves will take their place/);
     // Named as a consequence, never as something to go and hunt today.
@@ -375,7 +375,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const stalemate = world("demon-war", "stalemate");
     expect(stalemate).toContain("The war between the Shaburak and Askarak is currently in a stalemate.");
     expect(stalemate).toContain(
-      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon; 1,000 kills, 25 Charm Points each.",
     );
     expect(stalemate).toMatch(/🔄 \*Shift the balance:\* A 100-kill advantage.*400-kill advantage/s);
     // The state sentence names Lords and Princes to say there are none; no line may offer them.
@@ -428,7 +428,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const stage3 = world("deeplings", "arcanum-breached");
     expect(stage3).toMatch(/🎯 \*Manta Ray:\* 1,000 kills, 25 Charm Points/);
     expect(stage3).toMatch(/🐎 \*Manta Ray:\* Use a Foxtail on a Manta Ray/);
-    expect(stage3).toContain("🏆 *Beneath the Sea:* Tame a Manta Ray, 3 achievement points.");
+    expect(stage3).toContain("🏆 *Beneath the Sea:* Tame a Manta Ray; 3 achievement points.");
     // Boss access can only be earned in stage 2, so the coral errand is not offered here.
     expect(stage3).not.toContain("Coral Mine");
   });
@@ -443,12 +443,12 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
       "🍀 *Four-Leaf Clover:* Use a Gooey Mass for a chance to obtain the Ladybug taming item.",
     );
     expect(stage3).toContain("🐎 *Ladybug:* Use a Four-Leaf Clover on a Ladybug to tame it.");
-    expect(stage3).toContain("🏆 *Lovely Dots:* Tame a Ladybug, 3 achievement points.");
+    expect(stage3).toContain("🏆 *Lovely Dots:* Tame a Ladybug; 3 achievement points.");
     // TibiaWiki spells the mount "Lady Bug" and the creature "Ladybug"; the reader sees one.
     expect(stage3).not.toContain("Lady Bug");
     // The stage's own Bestiary, from the areas it opens, not one featured creature.
     expect(stage3).toContain(
-      "🎯 *Bestiary:* Kollos, Spidris and Spidris Elite, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Kollos, Spidris and Spidris Elite; 1,000 kills, 25 Charm Points each.",
     );
     expect(stage3).toContain("🎯 *Hive Overseer:* 2,500 kills, 50 Charm Points.");
     // …and not the creatures that also live at the Hive Outpost, which are no reason to come.
@@ -478,7 +478,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const open = world("mage-tower", "portal-open");
     expect(open).toContain("🎯 *Yielothax:* 1,000 kills, 25 Charm Points.");
     expect(open).toContain(
-      "🏆 *Mageslayer:* Defeat the Energized Raging Mage twice, 1 achievement point.",
+      "🏆 *Mageslayer:* Defeat the Energized Raging Mage twice; 1 achievement point.",
     );
     expect(open).toMatch(/👹 \*Raging Mage:\*/);
 
@@ -499,12 +499,12 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
   it("Horestis: the slumbering tomb says what is in it and how the jars work", () => {
     const slumbering = world("horestis", "slumbering");
     expect(slumbering).toMatch(/🔄 \*Ornate Canopic Jars:\*/);
-    expect(slumbering).toContain("🏆 *Fearless:* Break 50 Ornate Canopic Jars, 1 achievement point.");
+    expect(slumbering).toContain("🏆 *Fearless:* Break 50 Ornate Canopic Jars; 1 achievement point.");
     expect(slumbering).toMatch(/🐎 \*Scorpion King:\* Use a Scorpion Sceptre on a Sandstone Scorpion/);
     // The tomb's whole undead population, not one featured creature. All seven live nowhere
     // else and all seven cost the same, so they are one line rather than seven.
     expect(slumbering).toContain(
-      "🎯 *Bestiary:* Death Priest, Elder Mummy, Ghoulish Hyaena, Grave Guard, Sacred Spider, Sandstone Scorpion and Tomb Servant, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Death Priest, Elder Mummy, Ghoulish Hyaena, Grave Guard, Sacred Spider, Sandstone Scorpion and Tomb Servant; 1,000 kills, 25 Charm Points each.",
     );
     // Clay Guardian is in the same tomb and also at Middle Spike and Medusa Tower, so it is
     // not a reason to come here.
@@ -528,10 +528,10 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
       /The servants' tower in Edron is covered in slime\. Clearing the fungus triggers the servant waves and unlocks the Mad Mage\./,
     );
     expect(passable).toMatch(/🔄 \*Clear the fungus:\* Clear at least 25 Slime Fungi/);
-    expect(passable).toContain("🏆 *Slimer:* Clear 500 Slime Fungi, 1 achievement point.");
+    expect(passable).toContain("🏆 *Slimer:* Clear 500 Slime Fungi; 1 achievement point.");
     expect(passable).toContain("🎯 *Iron Servant:* 5 kills, 30 Charm Points.");
     expect(passable).toContain(
-      "🎯 *Bestiary:* Diamond Servant and Golden Servant, 5 kills and 50 Charm Points each.",
+      "🎯 *Bestiary:* Diamond Servant and Golden Servant; 5 kills, 50 Charm Points each.",
     );
     expect(passable).toMatch(/👹 \*Mad Mage:\*/);
   });
@@ -550,7 +550,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
 
     const thawing = mini("thawing");
     expect(thawing).toContain("_Enough snow has melted near Svargrond to reveal Ice Flowers._");
-    expect(thawing).toContain("🏆 *Ice Harvester:* Harvest 10 Ice Flower Seeds, 1 achievement point.");
+    expect(thawing).toContain("🏆 *Ice Harvester:* Harvest 10 Ice Flower Seeds; 1 achievement point.");
     // Premium is a fact about the account, not about the morning.
     expect(thawing).not.toContain("Premium");
   });
@@ -610,14 +610,14 @@ describe("markers say which game system a line belongs to", () => {
       })(),
     );
     expect(ground).toContain(
-      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre; 1,000 kills, 25 Charm Points each.",
     );
     expect(ground).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
 
     // Iron Servant is 5/30 where the other two are 5/50, so it is not folded in with them.
     const servants = world("masters-voice", "passable");
     expect(servants).toContain(
-      "🎯 *Bestiary:* Diamond Servant and Golden Servant, 5 kills and 50 Charm Points each.",
+      "🎯 *Bestiary:* Diamond Servant and Golden Servant; 5 kills, 50 Charm Points each.",
     );
     expect(servants).toContain("🎯 *Iron Servant:* 5 kills, 30 Charm Points.");
   });
@@ -645,7 +645,7 @@ describe("markers say which game system a line belongs to", () => {
     setWorld(both, "awash", "drained-quota-open");
     const message = generateBriefingMessage(both);
     expect(message).toContain(
-      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon, 1,000 kills and 25 Charm Points each.",
+      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon; 1,000 kills, 25 Charm Points each.",
     );
     expect(message).toContain("🎯 *Deepling Scout:* 1,000 kills, 25 Charm Points.");
     expect(message).not.toContain("Deepling Scout and");
@@ -681,7 +681,7 @@ describe("markers say which game system a line belongs to", () => {
     }
 
     const drained = world("awash", "drained-quota-open");
-    expect(drained).toContain("🏆 *Eye of the Deep:* Defeat Groam, 1 achievement point.");
+    expect(drained).toContain("🏆 *Eye of the Deep:* Defeat Groam; 1 achievement point.");
     expect(drained).not.toContain("🏆 *Groam:*");
   });
 

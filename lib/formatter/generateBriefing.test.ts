@@ -3,6 +3,7 @@ import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBr
 import { createDefaultOverrides } from "@/lib/defaults";
 import { BRIEFING_LANGUAGES } from "./translations";
 import type { BriefingInput } from "./briefingModel";
+import { NAME_LINE } from "@/lib/testing/briefingLines";
 
 const LANGUAGES = BRIEFING_LANGUAGES.map((entry) => entry.value);
 /**
@@ -62,8 +63,8 @@ const NOTE_MARKERS = ["🎯", "🏆", "🔄", "⚔️", "📊", "💡", "⏳"] a
 const isHeading = (line: string) =>
   /^(?:\S+ )?\*([^*]+)\*$/.test(line) && line.replace(/[^A-Za-zÀ-ÿ]/g, "") ===
     line.replace(/[^A-Za-zÀ-ÿ]/g, "").toUpperCase();
-/** `🌀 *Spirit Grounds*` — a change naming itself at the head of its block. */
-const isNameLine = (line: string) => /^\S+ \*[^*]+\*$/.test(line) && !isHeading(line);
+/** `🌀 *Spirit Grounds* _(Ghostlands)_` — a change naming itself at the head of its block. */
+const isNameLine = (line: string) => NAME_LINE.test(line) && !isHeading(line);
 const isNoteLine = (line: string) => NOTE_MARKERS.some((marker) => line.startsWith(`${marker} `));
 
 /**
@@ -274,6 +275,113 @@ describe("formatting that has to survive a paste", () => {
   });
 });
 
+/**
+ * Where a change happens, and how the bulletin punctuates it.
+ *
+ * The place used to be a line of its own under a 📍. It is now an aside on the change's own
+ * name, which is the whole reason these cases are pinned: the three shapes below are settled
+ * by the catalog, not by the renderer parsing a string, and the renderer cannot tell them
+ * apart once they have been joined into one.
+ */
+describe("where a change happens", () => {
+  it("sets the place on the change's own name, never on a line of its own", () => {
+    const input = makeInput("en");
+    setMini(input, "fury-gates");
+    const message = generateBriefingMessage(input);
+
+    expect(message).toContain("🔥 *Fury Gates* _(Fury Dungeon)_\n");
+    // Not anywhere else in the bulletin either: the marker is gone from the vocabulary.
+    for (const { name, input: scenario } of everyScenario()) {
+      expect(generateBriefingMessage(scenario), name).not.toContain("📍");
+    }
+  });
+
+  it("parts two independent places with a semicolon", () => {
+    // The horses run between the two ends of the Thaian road, and the deer between two
+    // forests. Commas there read as one place with a two-part name.
+    const input = makeInput("en");
+    setWorld(input, "horse-station", "escaped");
+    setWorld(input, "overhunting", "dwindling");
+    const message = generateBriefingMessage(input);
+
+    expect(message).toContain("🐴 *Horse Station* _(Thais; Venore)_\n");
+    expect(message).toContain("🦌 *Overhunting* _(Ab'Dendriel; Carlin)_\n");
+  });
+
+  it("keeps the comma that belongs to one place's own name", () => {
+    // "Lake Equivocolao, Port Hope" is a lake and the town it is near: one place, expressed
+    // with a comma. Parting it would send the reader to two.
+    const input = makeInput("en");
+    setWorld(input, "twisted-waters", "clean");
+    expect(generateBriefingMessage(input)).toContain(
+      "💧 *Twisted Waters* _(Lake Equivocolao, Port Hope)_\n",
+    );
+  });
+
+  it("names a change the catalog cannot place without an empty aside", () => {
+    // Demon War is the Hero Cave, which the catalog does place; Sea Serpent's grounds are not
+    // a region anybody sails to. Either way the aside is never printed empty.
+    for (const { name, input } of everyScenario()) {
+      for (const line of generateBriefingMessage(input).split("\n")) {
+        expect(line, `${name}: ${line}`).not.toMatch(/_\(\s*\)_/);
+      }
+    }
+  });
+});
+
+/**
+ * The one semicolon in a subordinate line, and where it goes.
+ *
+ * A line that opens with a clause — a list of creatures, an achievement's requirement — and
+ * closes with what that clause costs or pays has two halves, and both halves may carry commas
+ * of their own. The semicolon is what keeps "Spidris Elite" from reading as the item before
+ * "1,000 kills". A line that opens *with* the figures has no such clause and keeps its comma.
+ */
+describe("a clause, then what it is worth", () => {
+  it("parts a grouped creature list from the cost they share", () => {
+    const input = makeInput("en");
+    setMini(input, "nomads");
+    expect(generateBriefingMessage(input)).toContain(
+      "🎯 *Bestiary:* Nomad (Blue) and Nomad (Female); 500 kills, 15 Charm Points each.",
+    );
+  });
+
+  it("leaves a line that opens with the figures alone", () => {
+    // Yielothax is one creature, so the subject already names it and the text is nothing but
+    // the two columns. There is no clause to part, and a semicolon here would invent one.
+    const input = makeInput("en");
+    setWorld(input, "mage-tower", "mage-slain");
+    setWorld(input, "awash", "drained-quota-open");
+    const message = generateBriefingMessage(input);
+
+    expect(message).toContain("🎯 *Yielothax:* 1,000 kills, 25 Charm Points.");
+    expect(message).toContain("🎯 *Deepling Scout:* 1,000 kills, 25 Charm Points.");
+  });
+
+  it("parts an achievement's requirement from what it pays", () => {
+    const input = makeInput("en");
+    setMini(input, "thawing");
+    setMini(input, "nomads");
+    const message = generateBriefingMessage(input);
+
+    expect(message).toContain("🏆 *Ice Harvester:* Harvest 10 Ice Flower Seeds; 1 achievement point.");
+    // A requirement with a comma inside it keeps that comma, and still parts from its points.
+    expect(message).toContain(
+      "🏆 *Chest Robber:* Loot the chest of 3 different Nomad camps; 1 achievement point.",
+    );
+  });
+
+  it("never parts the two figures of a bestiary cost from each other", () => {
+    // Kills and Charm Points are one pair of columns, whether one creature carries them or
+    // seven share them, so they read the same way in both shapes.
+    for (const { name, input } of everyScenario()) {
+      for (const line of opportunityLines(generateBriefingMessage(input))) {
+        expect(line, `${name}: ${line}`).not.toMatch(/(mortes|kills|muertes|zabójstw);/);
+      }
+    }
+  });
+});
+
 describe("today's numbers", () => {
   it("keeps each status fact to one label-and-value line", () => {
     const input = makeInput();
@@ -374,8 +482,10 @@ describe("what the reader is told, and what they are not", () => {
     const input = emptyInput();
     setWorld(input, "twisted-waters", "clean");
     const message = generateBriefingMessage(input);
+    // The lake's own name carries the comma — it is one place, not two — so it keeps it where
+    // a change that happens in two places would be parted with a semicolon.
     expect(message).toContain(
-      "💧 *Twisted Waters*\n📍 Lake Equivocolao, Port Hope\n_O lago perto de Port Hope está limpo no momento._",
+      "💧 *Twisted Waters* _(Lake Equivocolao, Port Hope)_\n_O lago perto de Port Hope está limpo no momento._",
     );
     expect(message).toMatch(/_Ainda sem resposta do Guide: .*Steamship.*_/);
   });

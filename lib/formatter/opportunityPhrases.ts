@@ -64,7 +64,6 @@ export function isAmbient(definition: OpportunityDefinition): boolean {
  * day those numbers are captured, the editorial rule is already here.
  */
 export type NoteIcon =
-  | "place"
   | "bestiary"
   | "boss"
   | "mount"
@@ -126,15 +125,22 @@ function creatureListPhrase(creatures: readonly string[], language: BriefingLang
   return `${creatures.slice(0, -1).join(", ")} ${and} ${creatures[creatures.length - 1]}`;
 }
 
-/** "1.000 mortes e 25 Charm Points cada" — the shared cost of a grouped bestiary line. */
+/**
+ * "1.000 mortes, 25 Charm Points cada" — the shared cost of a grouped bestiary line.
+ *
+ * A comma, not "and": the two figures are the same pair a single-creature line already prints
+ * as "1.000 mortes, 25 Charm Points", and setting them as a conjunction where the ungrouped
+ * line sets them as a pair made the two shapes look like different kinds of fact. The
+ * conjunction this line does need belongs to the creature list in front of it.
+ */
 function eachPhrase(kills: number, charmPoints: number, language: BriefingLanguage): string {
   const count = kills.toLocaleString(NUMBER_LOCALE[language]);
   return pick(
     {
-      pt: `${count} mortes e ${charmPoints} Charm Points cada`,
-      en: `${count} kills and ${charmPoints} Charm Points each`,
-      es: `${count} muertes y ${charmPoints} Charm Points cada uno`,
-      pl: `po ${count} zabójstw i ${charmPoints} Charm Points`,
+      pt: `${count} mortes, ${charmPoints} Charm Points cada`,
+      en: `${count} kills, ${charmPoints} Charm Points each`,
+      es: `${count} muertes, ${charmPoints} Charm Points cada uno`,
+      pl: `po ${count} zabójstw, ${charmPoints} Charm Points`,
     },
     language,
   );
@@ -170,7 +176,12 @@ function sentence(text: string): string {
 }
 
 /**
- * `🏆 *Fearless:* Break 50 Ornate Canopic Jars, 1 achievement point.`
+ * `🏆 *Fearless:* Break 50 Ornate Canopic Jars; 1 achievement point.`
+ *
+ * A semicolon between the requirement and what it pays, because the requirement is a clause
+ * that may carry commas of its own — "Kill 400 Enraged or Desperate White Deer in total",
+ * "three times, in any colour" — and a comma there ranked the reward with whatever the clause
+ * was already listing, so the eye could not find where the requirement ended.
  *
  * The shape is fixed, and the name position is load-bearing: it holds the achievement's own
  * name and nothing else. It used to hold `subject` whenever an achievement rode along with a
@@ -189,7 +200,7 @@ function achievementNote(
   return {
     icon: "achievement",
     subject: name,
-    text: sentence(`${opensSentence(requirement[language])}, ${pointsPhrase(points, language)}`),
+    text: sentence(`${opensSentence(requirement[language])}; ${pointsPhrase(points, language)}`),
     availability: definition.availability,
   };
 }
@@ -309,7 +320,7 @@ export function notesForOpportunity(
 
   // A boss or a mount that also grants an achievement gets a second line for it, rather than
   // being *replaced* by it. Two facts, two lines: "Groam can appear in the mine while it is
-  // drained" and "Eye of the Deep: defeat Groam, 1 achievement point" are different things to
+  // drained" and "Eye of the Deep: defeat Groam; 1 achievement point" are different things to
   // know, and folding them into one put the boss's name where the achievement's belongs.
   if (definition.achievement && definition.kind !== "achievement") {
     notes.push(achievementNote(definition, language));
@@ -417,7 +428,15 @@ function unitsFor(opportunities: Opportunity[]): Unit[] {
   return units;
 }
 
-/** `🎯 *Bestiary:* Kollos, Spidris and Spidris Elite, 1,000 kills and 25 Charm Points each.` */
+/**
+ * `🎯 *Bestiary:* Kollos, Spidris and Spidris Elite; 1,000 kills, 25 Charm Points each.`
+ *
+ * A semicolon parts the creatures from their cost, for the same reason it parts an
+ * achievement's requirement from its points: the list in front of it is already comma
+ * separated, so a comma there made "Spidris Elite" and "1,000 kills" read as two more items
+ * of one list. Parted, the line has two halves — who, then what they cost — and the commas
+ * inside each half stay unambiguous.
+ */
 function groupedBestiaryNote(
   opportunities: Opportunity[],
   language: BriefingLanguage,
@@ -430,7 +449,7 @@ function groupedBestiaryNote(
     icon: "bestiary",
     subject: bestiaryWord(language),
     text: sentence(
-      `${creatureListPhrase(names, language)}, ${eachPhrase(
+      `${creatureListPhrase(names, language)}; ${eachPhrase(
         bestiary!.kills,
         bestiary!.charmPoints,
         language,

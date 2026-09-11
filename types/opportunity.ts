@@ -143,7 +143,7 @@ export interface OpportunityDefinition {
    * Set for `kind: "achievement"`, and for any other kind that also grants one.
    *
    * `requirement` is what earns it, in one clause, and it is a field of its own rather than a
-   * reuse of `qualifier`. The bulletin prints an achievement as `Name: requirement, N
+   * reuse of `qualifier`. The bulletin prints an achievement as `Name: requirement; N
    * achievement points.`, so the clause has to be the achievement's own wording - and when the
    * achievement rides along with a boss or a mount, `qualifier` is already spoken for by that
    * other thing. Sharing one field between the two produced lines like "Groam: achievement Eye
