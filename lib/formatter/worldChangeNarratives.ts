@@ -174,18 +174,36 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         headline: "Gorączka bagienna w Venore jest pod kontrolą. Leków starcza dla wszystkich.",
       },
     }),
-    "spreading": simple({
+    "medicine-needed": simple({
       pt: {
-        headline: "A febre do pântano se espalha por Venore. Faltam remédios no abrigo dos pobres.",
+        headline: "A febre do pântano em Venore ainda está sob controle, mas o remédio está acabando.",
+        body: "Sem novas entregas, vem o próximo surto.",
       },
       en: {
-        headline: "The swamp fever is spreading through Venore. The poor house is short of medicine.",
+        headline: "The swamp fever in Venore is still under control, but the medicine is running out.",
+        body: "Without fresh deliveries the next outbreak follows.",
       },
       es: {
-        headline: "La fiebre del pantano se extiende por Venore. Falta medicina en la casa de los pobres.",
+        headline: "La fiebre del pantano en Venore sigue bajo control, pero la medicina se está acabando.",
+        body: "Sin nuevas entregas llega el próximo brote.",
       },
       pl: {
-        headline: "Gorączka bagienna rozprzestrzenia się po Venore. W przytułku brakuje leków.",
+        headline: "Gorączka bagienna w Venore wciąż jest pod kontrolą, ale leki się kończą.",
+        body: "Bez nowych dostaw przyjdzie kolejny wybuch.",
+      },
+    }),
+    "outbreak": simple({
+      pt: {
+        headline: "A febre do pântano irrompeu em Venore e Feverish Citizens vagam pelas ruas.",
+      },
+      en: {
+        headline: "The swamp fever has broken out in Venore and Feverish Citizens are roaming the streets.",
+      },
+      es: {
+        headline: "La fiebre del pantano estalló en Venore y los Feverish Citizens vagan por las calles.",
+      },
+      pl: {
+        headline: "Gorączka bagienna wybuchła w Venore, a Feverish Citizens krążą po ulicach.",
       },
     }),
   },
@@ -546,6 +564,24 @@ const NARRATIVES: Record<string, ChangeNarratives> = {
         language,
       );
     },
+    "wolves-receding": simple({
+      pt: {
+        headline: "Starving Wolves ainda rondam Ab'Dendriel, mas já foram afugentados o bastante.",
+        body: "Os White Deer devem voltar à região em breve.",
+      },
+      en: {
+        headline: "Starving Wolves still roam Ab'Dendriel, but enough have been driven away.",
+        body: "The White Deer should return to the region soon.",
+      },
+      es: {
+        headline: "Los Starving Wolves aún rondan Ab'Dendriel, pero ya se ahuyentaron suficientes.",
+        body: "Los White Deer deberían volver a la región pronto.",
+      },
+      pl: {
+        headline: "Starving Wolves wciąż krążą po Ab'Dendriel, ale przepędzono ich już dość.",
+        body: "White Deer powinny wkrótce wrócić do regionu.",
+      },
+    }),
     "wolves": simple({
       pt: {
         headline: "Starving Wolves rondam a região de Ab'Dendriel.",

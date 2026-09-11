@@ -561,7 +561,11 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Slug Drug",
     availability: "available-today",
     leadsTo: "swamp-fever-doctor",
-    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control"] },
+    trigger: {
+      kind: "world-change",
+      changeId: "swamp-fever",
+      stateIds: ["under-control", "medicine-needed", "outbreak"],
+    },
     detail: {
       pt: "Troque Medicine Pouches com Ottokar por Belongings of a Deceased, que podem conter o Slug Drug usado para domar um Slug e ganhar a montaria Tiger Slug.",
       en: "Trade Medicine Pouches to Ottokar for Belongings of a Deceased, which can contain the Slug Drug used to tame a Slug for the Tiger Slug mount.",
@@ -599,7 +603,11 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
         pl: "Dostarcz Ottokarowi 100 Medicine Pouches",
       },
     },
-    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control", "spreading"] },
+    trigger: {
+      kind: "world-change",
+      changeId: "swamp-fever",
+      stateIds: ["under-control", "medicine-needed", "outbreak"],
+    },
     detail: {
       pt: "As bolsas vêm dos Swamp Trolls ao sul de Venore e em Port Hope, e somam entre os dias.",
       en: "The pouches come from the Swamp Trolls south of Venore and at Port Hope, and add up across days.",
@@ -614,10 +622,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     subject: "Feverish Citizen",
     availability: "available-today",
     bestiary: bestiaryProfile("Easy", "Rare"),
-    // The spreading stage only. Their spawn interval is set by how much medicine Ottokar has
-    // been given, so in the contained stage they are throttled to an hour or more apart, and
+    // The outbreak stage only. Their spawn interval is set by how much medicine Ottokar has
+    // been given, so in either contained stage they are throttled to an hour or more apart, and
     // sending a reader to Venore to farm them is sending them to wait.
-    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["spreading"] },
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["outbreak"] },
     detail: {
       pt: "Surgem por Venore em raides enquanto faltar remédio, cada vez mais raros conforme as Medicine Pouches são entregues.",
       en: "They raid Venore while the medicine is short, growing rarer as Medicine Pouches are handed in.",
@@ -631,14 +639,41 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "outfit",
     subject: "Afflicted Outfits Quest",
     availability: "progressable-today",
-    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["spreading"] },
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["outbreak"] },
     detail: {
-      pt: "Os Feverish Citizens largam os panos usados nos Afflicted Outfits, e só aparecem enquanto a febre estiver se espalhando.",
-      en: "Feverish Citizens drop the cloth pieces used for the Afflicted Outfits, and only turn up while the fever is spreading.",
-      es: "Los Feverish Citizens sueltan las telas usadas en los Afflicted Outfits, y solo aparecen mientras la fiebre se extiende.",
-      pl: "Feverish Citizens upuszczają tkaniny do Afflicted Outfits i pojawiają się tylko, gdy gorączka się rozprzestrzenia.",
+      pt: "Os Feverish Citizens largam os panos usados nos Afflicted Outfits, e só tomam as ruas enquanto a febre estiver solta.",
+      en: "Feverish Citizens drop the cloth pieces used for the Afflicted Outfits, and only take to the streets while the fever is loose.",
+      es: "Los Feverish Citizens sueltan las telas usadas en los Afflicted Outfits, y solo toman las calles mientras la fiebre está suelta.",
+      pl: "Feverish Citizens upuszczają tkaniny do Afflicted Outfits i wychodzą na ulice tylko wtedy, gdy gorączka jest rozpętana.",
     },
     sources: [wc("Swamp_Fever"), `${WIKI}/Afflicted_Outfits_Quest`],
+  },
+
+  {
+    id: "swamp-fever-prevent-outbreak",
+    kind: "progress",
+    subject: "Medicine Pouch",
+    availability: "unlocks-future",
+    trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["medicine-needed"] },
+    label: {
+      pt: "Conter a febre",
+      en: "Hold the fever back",
+      es: "Contener la fiebre",
+      pl: "Powstrzymać gorączkę",
+    },
+    detail: {
+      pt: "Entregue Medicine Pouches a Ottokar hoje. Se as entregas não bastarem, a febre irrompe no próximo server save e as ruas de Venore ficam hostis.",
+      en: "Deliver Medicine Pouches to Ottokar today. If the deliveries fall short, the fever breaks out at the next server save and Venore's streets turn hostile.",
+      es: "Entrega Medicine Pouches a Ottokar hoy. Si las entregas no bastan, la fiebre estalla en el próximo server save y las calles de Venore se vuelven hostiles.",
+      pl: "Dostarcz dziś Ottokarowi Medicine Pouches. Jeśli dostaw zabraknie, gorączka wybuchnie po następnym server save, a ulice Venore staną się wrogie.",
+    },
+    caveat: {
+      pt: "As bolsas vêm dos Swamp Trolls ao sul de Venore e em Port Hope.",
+      en: "The pouches come from the Swamp Trolls south of Venore and at Port Hope.",
+      es: "Las bolsas vienen de los Swamp Trolls al sur de Venore y en Port Hope.",
+      pl: "Torby wypadają ze Swamp Trolli na południe od Venore i w Port Hope.",
+    },
+    sources: [wc("Swamp_Fever")],
   },
 
   // ══ WORLD CHANGE: Thornfire ════════════════════════════════════════════════
@@ -1306,7 +1341,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     availability: "available-today",
     exclusive: true,
     bestiary: bestiaryProfile("Easy", "Rare"),
-    trigger: { kind: "world-change", changeId: "overhunting", stateIds: ["wolves"] },
+    trigger: { kind: "world-change", changeId: "overhunting", stateIds: ["wolves", "wolves-receding"] },
     detail: {
       pt: "Rondam o leste, o oeste e o sudoeste das Femor Hills, e só existem neste estado da Overhunting.",
       en: "They roam east, west and south-west of the Femor Hills, and exist only in this Overhunting state.",
@@ -1320,7 +1355,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "progress",
     subject: "Captured Wolf",
     availability: "unlocks-future",
-    trigger: { kind: "world-change", changeId: "overhunting", stateIds: ["wolves"] },
+    trigger: { kind: "world-change", changeId: "overhunting", stateIds: ["wolves", "wolves-receding"] },
     detail: {
       pt: "Atraia os lobos famintos para as Magic Wolf Traps espalhadas pelas Femor Hills e leve o Captured Wolf a Benevola: os veados voltam já no dia seguinte.",
       en: "Lure the starving wolves onto the Magic Wolf Traps around the Femor Hills and take the Captured Wolf to Benevola: the deer come back as soon as the next day.",

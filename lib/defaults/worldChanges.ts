@@ -81,18 +81,15 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
     location: "Venore",
     description:
       "Whether Venore's swamp fever is contained. Medicine pouches handed to Ottokar each day keep it under control.",
-    // Two stages, and only the calm one has ever been transcribed. TibiaWiki's Talk page for
-    // this change has a player naming three distinct Guide replies ("under control", "the
-    // medicine is direly needed", "the plague is not under control") but quotes none of them,
-    // and no verbatim wording is findable anywhere primary. The spreading stage is still
-    // modelled, flagged as unreachable by the parser, because it is where the Feverish Citizen
-    // bestiary entry and the Afflicted cloth belong: left on "under control" they told a reader
-    // to go and hunt a spawn that the medicine deliveries have throttled. The day a real reply
-    // is pasted, parseGuideLog reports it as unreadable and it becomes one line of
-    // guideMessages.ts.
+    // Three tiers, all three now transcribed. TibiaWiki's Talk page had a player naming exactly
+    // these three replies in 2012 and quoting none of them, so the catalog modelled only the
+    // calm one and flagged the rest as unreachable. A sweep of fourteen live worlds on
+    // 2026-09-11 produced the other two verbatim, on eleven of those worlds: this change was
+    // the single biggest hole in the Guide catalog.
     states: [
       { id: "under-control", label: "Under control, medicine for everyone", quiet: true },
-      { id: "spreading", label: "Spreading, medicine needed", guideWordingUnknown: true },
+      { id: "medicine-needed", label: "Under control, medicine running short" },
+      { id: "outbreak", label: "Broken out, feverish citizens in the streets" },
     ],
   },
   {
@@ -188,6 +185,7 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
       { id: "dwindling", label: "Population dwindling" },
       { id: "leaving", label: "Overhunted, deer leaving the region" },
       { id: "wolves", label: "Starving wolves, no deer will return" },
+      { id: "wolves-receding", label: "Wolves driven away, deer returning" },
     ],
   },
   {

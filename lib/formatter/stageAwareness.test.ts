@@ -247,19 +247,28 @@ describe("manually checked states name their options instead of shrugging", () =
 });
 
 describe("a stage offers what it has, and nothing a neighbouring stage has", () => {
-  it("Swamp Fever: contained trades medicine, spreading hunts the citizens", () => {
-    const contained = world("swamp-fever", "under-control");
-    expect(contained).toContain("🍀 *Slug Drug:*");
-    expect(contained).toContain("🏆 *Doctor! Doctor!:* Deliver 100 Medicine Pouches to Ottokar, 2 achievement points.");
-    // The spawn is throttled by the medicine deliveries, so this is not a hunt worth walking to.
-    expect(contained).not.toContain("Feverish Citizen");
-    expect(contained).not.toContain("Afflicted");
-    // And no invented call to action to restart an event players cannot restart.
-    expect(contained).not.toMatch(/reactivate|restart the (fever|event)/i);
+  it("Swamp Fever: both contained stages trade medicine, only the outbreak hunts the citizens", () => {
+    // Three stages, and the middle one was the reason the log sweep happened: eleven of fourteen
+    // worlds answered "under control, but medicine is direly needed" and the catalog could read
+    // none of it.
+    for (const stateId of ["under-control", "medicine-needed"]) {
+      const contained = world("swamp-fever", stateId);
+      expect(contained).toContain("🍀 *Slug Drug:*");
+      expect(contained).toContain("🏆 *Doctor! Doctor!:* Deliver 100 Medicine Pouches to Ottokar, 2 achievement points.");
+      // The spawn is throttled by the medicine deliveries, so this is not a hunt worth walking to.
+      expect(contained).not.toContain("Feverish Citizen");
+      expect(contained).not.toContain("Afflicted");
+      // And no invented call to action to restart an event players cannot restart.
+      expect(contained).not.toMatch(/reactivate|restart the (fever|event)/i);
+    }
 
-    const spreading = world("swamp-fever", "spreading");
-    expect(spreading).toContain("🎯 *Feverish Citizen:* 500 kills, 15 Charm Points.");
-    expect(spreading).toContain("👕 *Afflicted Outfits Quest:*");
+    // Only the running-short stage can say the deliveries are holding something back.
+    expect(world("swamp-fever", "medicine-needed")).toContain("Hold the fever back");
+    expect(world("swamp-fever", "under-control")).not.toContain("Hold the fever back");
+
+    const outbreak = world("swamp-fever", "outbreak");
+    expect(outbreak).toContain("🎯 *Feverish Citizen:* 500 kills, 15 Charm Points.");
+    expect(outbreak).toContain("👕 *Afflicted Outfits Quest:*");
   });
 
   it("Thornfire: guarded offers the Overseers and the release, not the fire", () => {

@@ -42,6 +42,29 @@ export interface GuideMessageEntry {
   unverifiedWording?: boolean;
 }
 
+/**
+ * Things a Guide says that are not an answer about a World Change state.
+ *
+ * Without this the honest report "the game told us something and we could not read it" fills up
+ * with lines nobody ever needs read: the greeting every Guide opens with, and the counter
+ * sentence that trails the Deeplings and Hive Born replies. A fourteen-world log sweep produced
+ * three such lines per world and not one of them was a gap in the catalog.
+ *
+ * Kept deliberately narrow. Each pattern is anchored on wording that no state reply uses, so a
+ * genuinely unknown reply still surfaces instead of being swallowed here.
+ */
+export const NON_STATE_REPLIES: readonly RegExp[] = [
+  // "Hello there, Player and welcome to Thais! Would you like some information and a map guide?"
+  // — and its Carlin, Edron, Darashia and Kingsday variants, which differ only in the opening.
+  /would you like some information and a map guide/i,
+  /information or a map i can help you/i,
+  // "31 actions against the Deeplings have been taken. This position will hold for a while." and
+  // "0 actions have been taken against the Hive Born. 200 actions are necessary…". The state is
+  // already settled by the sentence before it; this one only counts. No state reply starts with
+  // a number, so the anchor cannot collide with one.
+  /^\d+\s+actions?\b/i,
+];
+
 export const GUIDE_MESSAGES: GuideMessageEntry[] = [
   // ── Horestis ────────────────────────────────────────────────────────────────
   // Leading sentence only; the live reply continues "I wouldn't disrupt his sleep...".
@@ -148,6 +171,11 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
     changeId: "overhunting",
     stateId: "wolves",
   },
+  {
+    text: "Starving wolves are roaming the region near Ab'Dendriel, but enough have been driven away and the deer population will return soon.",
+    changeId: "overhunting",
+    stateId: "wolves-receding",
+  },
 
   // ── Demon War ───────────────────────────────────────────────────────────────
   {
@@ -157,6 +185,7 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
   },
   {
     text: "The Shaburak demons are in advantage right now.",
+    alsoMatches: ["The Shaburak are in advantage right now."],
     changeId: "demon-war",
     stateId: "shaburak-advantage",
   },
@@ -288,13 +317,25 @@ export const GUIDE_MESSAGES: GuideMessageEntry[] = [
   },
 
   // ── Swamp Fever ─────────────────────────────────────────────────────────────
-  // Only the calm state has ever been transcribed. A 2012 TibiaWiki Talk-page comment
-  // describes further tiers, but no verbatim text for them is publicly findable, so they
-  // are not modelled — the user can still set the state by hand.
+  // All three tiers, captured from live Guide replies across fourteen worlds on 2026-09-11.
+  // A 2012 TibiaWiki Talk-page comment had named exactly these three and quoted none of them,
+  // so the catalog carried only the first and this change came back unanswered on eleven of
+  // those fourteen worlds. The middle tier is the one that matters editorially: the fever is
+  // still contained, and the medicine that keeps it contained is running out.
   {
     text: "The swamp fever in Venore is currently under control and there is enough medicine for everyone.",
     changeId: "swamp-fever",
     stateId: "under-control",
+  },
+  {
+    text: "The swamp fever in Venore is currently under control, but medicine is direly needed to prevent the next outbreak.",
+    changeId: "swamp-fever",
+    stateId: "medicine-needed",
+  },
+  {
+    text: "The swamp fever has broken out in Venore and feverish citizens are roaming the streets.",
+    changeId: "swamp-fever",
+    stateId: "outbreak",
   },
 
   // ── Horse Station (keyword "Horses") ───────────────────────────────────────

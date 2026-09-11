@@ -1,5 +1,5 @@
 import type { ParsedGuideResult, ParsedWorldChangeSignal } from "@/types/parser";
-import { GUIDE_MESSAGES } from "./guideMessages";
+import { GUIDE_MESSAGES, NON_STATE_REPLIES } from "./guideMessages";
 import { normalizeForMatch } from "./textMatch";
 
 /** `Guide Luke: <reply>` — the one shape that unmistakably marks a line as a Guide speaking. */
@@ -36,7 +36,9 @@ function matchKey(text: string): string {
  *
  * Replies that are unmistakably a Guide speaking but whose wording is not in the catalog are
  * collected rather than dropped. That is the honest report of "the game told us something and
- * we could not read it", and it is the only way a missing catalog entry ever surfaces.
+ * we could not read it", and it is the only way a missing catalog entry ever surfaces. Guide
+ * small talk is filtered out first (see NON_STATE_REPLIES), because a greeting reported as
+ * unreadable teaches the reader to ignore the list that is supposed to catch real gaps.
  */
 export function parseGuideLog(rawText: string): ParsedGuideResult {
   const normalizedInput = normalizeForMatch(rawText);
@@ -74,6 +76,7 @@ export function parseGuideLog(rawText: string): ParsedGuideResult {
     if (!key) continue;
     // A known reply may be quoted in full or truncated by the client's line wrapping, so treat
     // "starts with a catalog entry" and "is the start of one" as recognised alike.
+    if (NON_STATE_REPLIES.some((pattern) => pattern.test(spoken))) continue;
     const recognised = [...known].some((entry) => key.startsWith(entry) || entry.startsWith(key));
     if (!recognised && !unrecognisedReplies.includes(spoken)) unrecognisedReplies.push(spoken);
   }

@@ -120,6 +120,16 @@ export interface MiniWorldChangeDefinition {
    */
   briefingLocation?: string;
   /**
+   * Set when the variant *is* the place, rather than a spot inside a place the change always
+   * occupies. Spirit Grounds is the only one: its gate opens in Darama, the Ghostlands or
+   * Vengoth, which are three different corners of the world, so `briefingLocation` can only
+   * honestly hold all three and the 📍 line must narrow to the one the board named. Contrast
+   * Nightmare Isles, whose three portal spots are all in Kha'labal, and Fury Gates, which
+   * always leads to the same Fury Dungeon whichever city the gate is in — for those the fixed
+   * region stays right whether or not anyone has named the variant.
+   */
+  variantIsBriefingLocation?: boolean;
+  /**
    * The closed set of forms this change can take. Empty for a plain on/off change (most of
    * them) — an empty list means "it's either running or it isn't", with nothing further to
    * pin down, so the UI must not offer a choice.

@@ -298,7 +298,15 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     miniWorldChangeLines.push({
       emoji: def.emoji,
       name: def.name,
-      location: def.briefingLocation || def.location || null,
+      // For a change whose variant is the place itself, the 📍 narrows to the named region and
+      // otherwise lists the candidates. Without this the line contradicted the sentence under
+      // it: a Spirit Gate read off Antica's board as open in Darama was filed under Ghostlands,
+      // which is a different continent to sail to.
+      location:
+        (def.variantIsBriefingLocation ? variantLabel : null) ||
+        def.briefingLocation ||
+        def.location ||
+        null,
       // `def.reference` — the catalog's known-spots list — deliberately does not travel into
       // the bulletin. Noodles alone carries twelve of them, which renders as a 376-character
       // line nobody reads on a phone, and a hint the player still has to go and verify is

@@ -373,13 +373,12 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
 - The upcoming-events section of the generated briefing only reaches as far as the
   selected day window (5/7/14 days) — further-out events still show on the dashboard's
   own Upcoming events card, just not in the generated text.
-- Swamp Fever has only one Guide reply publicly transcribed (the calm state), so only that
-  state auto-detects. Its spreading stage is still modelled — that is where the Feverish
-  Citizen bestiary entry and the Afflicted cloth belong, and leaving them on "under control"
-  sent readers to farm a spawn the medicine deliveries have throttled — and it is flagged
-  `guideWordingUnknown` in [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) so
-  the gap is declared rather than hidden. A test enforces that every other state has verbatim
-  Guide text behind it. A few replies (Horse Station's "working normally", and the
+- Every one of the 14 World Changes now auto-detects in every documented state: a sweep of
+  fourteen worlds' live Guide logs closed the last gap, Swamp Fever, whose middle and outbreak
+  wordings had never been transcribed publicly. `guideWordingUnknown` in
+  [`lib/defaults/worldChanges.ts`](lib/defaults/worldChanges.ts) still exists for the next such
+  gap, and a test asserts that no state uses it today, so one appearing is a decision somebody
+  makes on purpose. A few replies (Horse Station's "working normally", and the
   non-primary Mage Tower / Thornfire / Master's Voice states) come from secondary fan
   sources and are marked `unverifiedWording` in
   [`lib/parser/guideMessages.ts`](lib/parser/guideMessages.ts) — if the wording is slightly

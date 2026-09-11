@@ -208,9 +208,10 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     shortLabel: "Spirit Grounds",
     emoji: "🌀",
     location: "Reached via Darama, Ghostlands or Vengoth",
-    briefingLocation: "Ghostlands",
+    briefingLocation: "Darama, Ghostlands, Vengoth",
     variants: toVariants(["Darama", "Ghostlands", "Vengoth"]),
     variantKind: "location",
+    variantIsBriefingLocation: true,
     // Built from the creature arrays rather than typed out again, so the picker, the catalog
     // page, the bulletin's sentence and the opportunity entries all name the same creatures.
     contents: SPIRIT_GROUND_SETS.map((set) => ({

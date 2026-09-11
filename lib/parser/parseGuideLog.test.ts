@@ -73,6 +73,36 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
     }
   });
 
+  it("reads every catalog wording back to the state it was filed under", () => {
+    // The catalog is a list of near-identical sentences, several of which share long openings:
+    // the three Swamp Fever replies all begin "The swamp fever", and two of them agree as far
+    // as "currently under control". Adding a wording that is a prefix of another silently steals
+    // its matches, and nothing else here would notice. Round-tripping every entry does.
+    for (const entry of GUIDE_MESSAGES) {
+      for (const wording of [entry.text, ...(entry.alsoMatches ?? [])]) {
+        expect(parseGuideLog(`Guide Luke: ${wording}`).signals[0], wording).toMatchObject({
+          changeId: entry.changeId,
+          stateId: entry.stateId,
+        });
+      }
+    }
+  });
+
+  it("tells the three Swamp Fever replies apart", () => {
+    // All three verified verbatim from live logs; the middle one had never been read before,
+    // and eleven of fourteen worlds were sitting in it on the day it was found.
+    const state = (reply: string) => parseGuideLog(`Guide Elena: ${reply}`).signals[0]?.stateId;
+    expect(
+      state("The swamp fever in Venore is currently under control and there is enough medicine for everyone."),
+    ).toBe("under-control");
+    expect(
+      state("The swamp fever in Venore is currently under control, but medicine is direly needed to prevent the next outbreak."),
+    ).toBe("medicine-needed");
+    expect(
+      state("The swamp fever has broken out in Venore and feverish citizens are roaming the streets."),
+    ).toBe("outbreak");
+  });
+
   it("reads a reply that carries on past the wording the catalog quotes", () => {
     // TibiaWiki's transcript stops at "…dominate the complex."; the live reply keeps going. The
     // parser used to require the catalog string verbatim, full stop included, so this whole
@@ -132,6 +162,44 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
       expect(result.unrecognisedReplies).toEqual([]);
     });
 
+    it("does not flag the greeting every Guide opens with", () => {
+      // Verbatim from four cities in one sweep of real logs. None of them is a state reply, and
+      // reporting them as unreadable teaches the reader to ignore the list that catches real
+      // gaps. The Kingsday variant matters because it replaces the "welcome to" opening.
+      const result = parseGuideLog(
+        [
+          "Guide Luke: Hello there, Player and welcome to Thais! Would you like some information and a map guide?",
+          "Guide Jonathan: Hello there, Player and welcome to Edron! Would you like some information and a map guide?",
+          "Guide Isolde: Welcome to Carlin, Player! Would you like some information and a map guide?",
+          "Guide Yaman: Daraman's blessings, Player, welcome to Darashia! Would you like some information and a map guide?",
+          "Guide Luke: It's Kingsday today! Have you seen? If you require any other information or a map I can help you as well.",
+        ].join("\n"),
+      );
+      expect(result.unrecognisedReplies).toEqual([]);
+      expect(result.signals).toEqual([]);
+    });
+
+    it("does not flag the counter that trails the Deepling and Hive Born replies", () => {
+      // The state is settled by the sentence before; this one only counts actions. It changes
+      // with every kill, so it can never be catalog text, and it appeared on all fourteen
+      // worlds swept.
+      const result = parseGuideLog(
+        [
+          "Guide Jonathan: The defences of the hive are breached. The hive structure to the east is open. ...",
+          "Guide Jonathan: 0 actions have been taken against the Hive Born. 200 actions are necessary to advance further into the hive.",
+          "Guide Jonathan: 31 actions against the Deeplings have been taken. This position will hold for a while.",
+        ].join("\n"),
+      );
+      expect(result.unrecognisedReplies).toEqual([]);
+      expect(result.signals.map((signal) => signal.changeId)).toEqual(["hive-born"]);
+    });
+
+    it("still reports an unknown reply that merely mentions a number", () => {
+      // The filter is anchored on a *leading* count, so it cannot swallow a real gap.
+      const result = parseGuideLog("Guide Tiko: The lake has risen by 3 feet overnight.");
+      expect(result.unrecognisedReplies).toHaveLength(1);
+    });
+
     it("reports the same unreadable reply once, however often it was repeated", () => {
       const result = parseGuideLog(
         [
@@ -163,12 +231,13 @@ Guide: The great Pharaoh Horestis near Ankrahmun has risen from his slumber to c
       }
     }
 
-    // Exactly one such state today. Listed by name so adding another is a decision somebody
-    // makes on purpose rather than a line that slips through review.
+    // None today: every documented state is backed by verbatim Guide text. The last holdout was
+    // Swamp Fever, whose middle and outbreak wordings were only described second-hand until real
+    // logs supplied them. Asserted as a list so a new undeclared state has to be argued for.
     const undeclared = [...WORLD_CHANGES_BY_ID].flatMap(([changeId, def]) =>
       def.states.filter((state) => state.guideWordingUnknown).map((state) => `${changeId}/${state.id}`),
     );
-    expect(undeclared).toEqual(["swamp-fever/spreading"]);
+    expect(undeclared).toEqual([]);
   });
 
   it("covers every one of the 14 official Guide keywords", () => {
