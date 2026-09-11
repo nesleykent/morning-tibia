@@ -320,12 +320,16 @@ function render(model: BriefingModel, style: Style): string {
         ])
       : null;
 
+  // No `empty` fallback, because the section cannot be empty: the three changes nothing in the
+  // game announces are permanent residents of it, and on a day nobody has looked they say so
+  // themselves. The fallback used to carry that news for the whole section at once — "none
+  // running right now" once a board had been read, "not checked today" before — and both are
+  // now said per change, by the changes it could actually have been about.
   const mini = section(
     style,
     "🎎",
     t.sectionMiniWorldChanges,
     byUsefulness(model.miniWorldChangeLines).map((line) => changeBlock(style, line)),
-    { empty: model.miniWorldChangesVerified ? t.miniWorldChangesNoneActive : t.notCheckedToday },
   );
 
   const worldBody = byUsefulness(model.worldChangeLines).map((line) => changeBlock(style, line));

@@ -3,7 +3,8 @@ import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBr
 import { createDefaultOverrides } from "@/lib/defaults";
 import { BRIEFING_LANGUAGES } from "./translations";
 import type { BriefingInput } from "./briefingModel";
-import { NAME_LINE } from "@/lib/testing/briefingLines";
+import { NAME_LINE, nameLinePattern } from "@/lib/testing/briefingLines";
+import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
 
 const LANGUAGES = BRIEFING_LANGUAGES.map((entry) => entry.value);
 /**
@@ -55,6 +56,11 @@ function makeInput(language: BriefingInput["language"] = "pt"): BriefingInput {
   overrides.boostedRegions = ["Venore"];
   return input;
 }
+
+/** Each change's own glyph, so a name-line assertion does not hardcode one. */
+const MINI_EMOJI: Record<string, string> = Object.fromEntries(
+  MINI_WORLD_CHANGE_DEFINITIONS.map((definition) => [definition.name, definition.emoji]),
+);
 
 /** Every marker the bulletin can open a subordinate line with. */
 const NOTE_MARKERS = ["🎯", "🏆", "🔄", "⚔️", "📊", "💡", "⏳"] as const;
@@ -461,21 +467,46 @@ describe("what the reader is told, and what they are not", () => {
   it("says nothing was checked without telling the reader to go and check it", () => {
     // The bulletin is pasted into a guild channel; instructions there address the wrong person.
     const message = generateBriefingMessage(emptyInput());
-    expect(message).toContain("🎎 *MINI WORLD CHANGES*\n_Não conferido hoje._");
     expect(message).toContain("🌍 *WORLD CHANGES*\n_Não conferido hoje._");
     expect(message).not.toMatch(/cole o texto|pergunte a um Guide/i);
+    // Nor anywhere else: the three changes nothing announces are in the section every day,
+    // and their unchecked line is a statement about the world, never an errand.
+    expect(message).not.toMatch(/olhe|confira|vá at[ée]|v[aá] ver|desça/i);
   });
 
-  it("tells 'checked, none running' apart from 'nobody looked'", () => {
-    const input = emptyInput();
-    input.overrides.miniWorldChanges["stampede"] = {
+  it("keeps the changes nothing announces in the section on a day nobody looked", () => {
+    // The Mini World Changes section has no empty state any more, because it cannot be empty.
+    // For an announced change silence is an answer — the board would have said so — but no
+    // board reading can rule these three out, so leaving them off would make "nobody has been
+    // to Krailos" and "the coast is clear" look identical.
+    const message = generateBriefingMessage(emptyInput());
+    expect(message).toContain("🎎 *MINI WORLD CHANGES*\n\n🦫 *Beaver Breakout*");
+    for (const name of ["Beaver Breakout", "Shipwrecked", "Forsaken"]) {
+      expect(message, name).toMatch(nameLinePattern(MINI_EMOJI[name]!, name));
+    }
+    // The section's old whole-section fallbacks are gone with it.
+    expect(message).not.toContain("_Não conferido hoje._\n\n🦫");
+    expect(message).not.toContain("Nenhuma ativa no momento");
+  });
+
+  it("keeps an announced change nobody asked about off the bulletin entirely", () => {
+    // The restraint the section was built on, still intact where it applies: an unasked
+    // question must never be presented as an answer, and for the twenty announced changes
+    // absence is exactly what "unasked" looks like.
+    const message = generateBriefingMessage(emptyInput());
+    for (const name of ["Fury Gates", "Stampede", "Kingsday", "Spirit Grounds"]) {
+      expect(message, name).not.toContain(name);
+    }
+
+    // …and a complete board reading that ruled one out still prints nothing for it.
+    const ruledOut = emptyInput();
+    ruledOut.overrides.miniWorldChanges["stampede"] = {
       id: "stampede",
       status: "inactive",
       variantId: null,
       updatedAt: null,
     };
-    expect(generateBriefingMessage(input)).toContain("_Nenhuma ativa no momento._");
-    expect(generateBriefingMessage(emptyInput())).toContain("_Não conferido hoje._");
+    expect(generateBriefingMessage(ruledOut)).not.toContain("Stampede");
   });
 
   it("names the Guide keywords still unasked, so unknown cannot read as nothing", () => {

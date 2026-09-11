@@ -4,7 +4,7 @@ import type { WarzoneSchedule } from "@/types/warzone";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { DromeRotationInfo } from "@/types/drome";
 import type { MarketPriceId, MarketTrendBasis } from "@/types/market";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
+import { MINI_WORLD_CHANGE_DEFINITIONS, isUnannounced } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { toBriefingDate } from "@/lib/utils/date";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
@@ -28,6 +28,7 @@ import {
   getMiniWorldChangeAbsentNarrative,
   getMiniWorldChangeContentOptions,
   getMiniWorldChangeNarrative,
+  getMiniWorldChangeUncheckedNarrative,
 } from "./miniWorldChangeNarratives";
 import { notesForChange, type BriefingNote } from "./opportunityPhrases";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
@@ -160,11 +161,11 @@ export interface BriefingModel {
   marketPriceLines: MarketPriceLine[];
   /** Where the market numbers came from and how old they are, or null when there are none. */
   marketSourceLabel: string | null;
+  /**
+   * Never empty: the three changes nothing announces are in it every day, checked or not.
+   * See `isUnannounced` in lib/defaults/miniWorldChanges.ts for why.
+   */
   miniWorldChangeLines: ChangeLine[];
-  /** True once at least one Mini World Change has left "unknown" this session (a World
-   * Board paste was actually applied) — distinguishes "checked, none active" from "nothing
-   * has been checked yet" when miniWorldChangeLines is empty. */
-  miniWorldChangesVerified: boolean;
   worldChangeLines: ChangeLine[];
   /**
    * World Changes no Guide has been asked about, by short label. UNKNOWN is a distinct state
@@ -237,10 +238,16 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   const t = getTranslation(input.language);
   const locale = NUMBER_LOCALE[input.language];
 
-  // Mini World Changes. A change only produces a line when the player actually knows
-  // something: it is running (with the variant if a source named one), or a complete board
-  // reading proved it is not. "Not checked" produces nothing at all — the briefing must
-  // never present an unasked question as an answer.
+  // Mini World Changes. An **announced** change only produces a line when the player actually
+  // knows something: it is running (with the variant if a source named one), or a complete
+  // board reading proved it is not. "Not checked" produces nothing at all for those — the
+  // briefing must never present an unasked question as an answer, and for an announced change
+  // silence is itself an answer, because the board would have said so.
+  //
+  // The three **unannounced** ones are the exception, and they are in the section every day.
+  // Nothing in the game reports them, so no board reading can rule them out and their absence
+  // from the message says nothing whatsoever: a reader could not tell "nobody has been to
+  // Krailos" from "the coast is clear". Their unchecked line says which, in as many words.
   // Every established change carries its own opportunities, so the two are written once.
   const allOpportunities = deriveOpportunities({
     miniWorldChanges: overrides.miniWorldChanges,
@@ -258,19 +265,24 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     );
 
   const miniWorldChangeLines: ChangeLine[] = [];
-  let miniWorldChangesVerified = false;
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
     const value = overrides.miniWorldChanges[def.id];
-    if (!value || value.status === "unchecked") continue;
 
-    // An always-active change is running whether or not the player checked anything, so it
-    // must not count as evidence that a World Board reading happened — otherwise a fresh
-    // session would claim to have been verified.
-    if (def.detection !== "always-active") miniWorldChangesVerified = true;
-
-    // ...and with no variant known there is nothing specific to report about it. Saying
-    // "the mine rotated" every single day is noise, so it waits until the player has looked.
-    if (def.detection === "always-active" && value.variantId === null && !overrides.includeAllChanges) {
+    if (!value || value.status === "unchecked") {
+      // An announced change nobody asked about stays off the bulletin entirely.
+      const unchecked = isUnannounced(def)
+        ? getMiniWorldChangeUncheckedNarrative(def.id, input.language)
+        : null;
+      if (!unchecked) continue;
+      miniWorldChangeLines.push({
+        emoji: def.emoji,
+        name: def.name,
+        locations: briefingLocationsOf(def),
+        state: unchecked,
+        // Nothing is confirmed, so there is nothing to act on: an unchecked change derives no
+        // opportunities, and inventing any would be the bulletin answering its own question.
+        notes: [],
+      });
       continue;
     }
 
@@ -294,6 +306,27 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
         });
         continue;
       }
+
+      // An unannounced change with no "somebody looked and it was empty" wording is one that
+      // has no empty to look at: Forsaken is always-active, so "inactive" is not a state the
+      // game gives it and a stored one is stale or hand-set data. It still belongs in the
+      // section — that is the point of the three — and the only honest thing to say about a
+      // mine that is certainly occupied is that nobody has said by what. `t.notRunning` below
+      // would print "Not running." about a change that never stops.
+      if (isUnannounced(def)) {
+        const unknown = getMiniWorldChangeUncheckedNarrative(def.id, input.language);
+        if (unknown) {
+          miniWorldChangeLines.push({
+            emoji: def.emoji,
+            name: def.name,
+            locations: briefingLocationsOf(def),
+            state: unknown,
+            notes: [],
+          });
+          continue;
+        }
+      }
+
       if (!overrides.includeAllChanges) continue;
       miniWorldChangeLines.push({
         emoji: def.emoji,
@@ -503,7 +536,6 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     marketPriceLines,
     marketSourceLabel,
     miniWorldChangeLines,
-    miniWorldChangesVerified,
     worldChangeLines,
     worldChangesUnchecked,
     upcomingEventLines,

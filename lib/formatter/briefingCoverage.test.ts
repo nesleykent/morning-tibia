@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultOverrides } from "@/lib/defaults";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
+import { MINI_WORLD_CHANGE_DEFINITIONS, isUnannounced } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { generateBriefingMessage, generatePlainTextBriefing } from "./generateBriefing";
 import { nameLinePattern } from "@/lib/testing/briefingLines";
@@ -113,13 +113,7 @@ describe("every Mini World Change, with and without its variant", () => {
 
           const rich = generateBriefingMessage(input);
           expectWellFormed(rich, context);
-          // An always-active change with no variant known is deliberately left out: the
-          // Forsaken Mine rotates at every server save whether or not anyone looked, so
-          // "the mine changed again" is not news until the player has been down there.
-          const reportable = definition.detection !== "always-active" || variantId !== null;
-          if (reportable) {
-            expect(rich, context).toMatch(nameLinePattern(definition.emoji, definition.name));
-          }
+          expect(rich, context).toMatch(nameLinePattern(definition.emoji, definition.name));
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
       }
@@ -140,6 +134,49 @@ describe("every Mini World Change, with and without its variant", () => {
       expectWellFormed(message, `inactive/${language}`);
       expect(message, language).toContain("🎎");
       expect(message, language).toMatch(nameLinePattern("👑", "Kingsday"));
+    }
+  });
+});
+
+describe("the changes nothing announces", () => {
+  it("are in the section in every language, on a day nothing has been checked", () => {
+    // They are the section's permanent residents, and this is the day that matters: with no
+    // evidence at all, every announced change is correctly absent and these three still have
+    // to be there saying nobody has looked. No source reports them, so their absence would be
+    // silence a reader cannot tell apart from "nothing is happening".
+    const unannounced = MINI_WORLD_CHANGE_DEFINITIONS.filter(isUnannounced);
+    expect(unannounced.map((definition) => definition.id)).toEqual([
+      "beaver-breakout",
+      "shipwrecked",
+      "forsaken",
+    ]);
+
+    for (const language of LANGUAGES) {
+      for (const format of [generateBriefingMessage, generatePlainTextBriefing]) {
+        const message = format(inputFor(language));
+        for (const definition of unannounced) {
+          expect(message, `${definition.id}/${language}`).toContain(definition.name);
+        }
+      }
+    }
+  });
+
+  it("say nobody has looked, in a sentence, rather than by being missing", () => {
+    // The state line is the whole point of keeping them: it has to be a real sentence in each
+    // language, not a label, and it must not commit to either answer.
+    for (const language of LANGUAGES) {
+      const blocks = generateBriefingMessage(inputFor(language)).split(/\n\n+/);
+      for (const definition of MINI_WORLD_CHANGE_DEFINITIONS.filter(isUnannounced)) {
+        const block = blocks.find((part) => part.includes(`*${definition.name}*`));
+        const context = `${definition.id}/${language}`;
+        expect(block, context).toBeDefined();
+
+        const [, state] = block!.split("\n");
+        expect(state, context).toMatch(/^_.+\._$/);
+        expect(state!.length, context).toBeGreaterThan(40);
+        // Nothing is confirmed, so the block carries no opportunity lines at all.
+        expect(block!.split("\n"), context).toHaveLength(2);
+      }
     }
   });
 });

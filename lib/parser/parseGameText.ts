@@ -8,7 +8,7 @@ import type { BoardEvidence, GuideEvidence } from "@/types/evidence";
 import { parseBoardLog } from "./parseBoardLog";
 import { parseTowncryerLog } from "./parseTowncryerLog";
 import { parseGuideLog } from "./parseGuideLog";
-import { MINI_WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/miniWorldChanges";
+import { MINI_WORLD_CHANGE_DEFINITIONS, isUnannounced } from "@/lib/defaults/miniWorldChanges";
 
 /**
  * Checks one pasted block of text against all three in-game sources at once.
@@ -83,7 +83,7 @@ export function parseGameText(rawText: string): CombinedParseResult {
     // A Towncryer shout in the same paste can add a change but never subtract one, so
     // `byChangeId` (not just board.signals) is the right exclusion set.
     for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {
-      if (def.detection !== "announced") continue;
+      if (isUnannounced(def)) continue;
       if (!byChangeId.has(def.id)) inactiveMiniWorldChangeIds.push(def.id);
     }
 

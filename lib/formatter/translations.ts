@@ -54,8 +54,6 @@ export interface BriefingTranslation {
    * is addressing the wrong person.
    */
   notCheckedToday: string;
-  /** Checked via a World Board paste, and none came back active. */
-  miniWorldChangesNoneActive: string;
   /**
    * The World Change keywords nobody asked a Guide about. Its own small line so UNKNOWN reads
    * as unknown rather than as "nothing is happening there".
@@ -95,7 +93,6 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     running: "Está ativa.",
     notRunning: "Não está acontecendo.",
     notCheckedToday: "Não conferido hoje.",
-    miniWorldChangesNoneActive: "Nenhuma ativa no momento.",
     worldChangesUnchecked: (labels) => `Ainda sem resposta do Guide: ${labels.join(", ")}.`,
     orList: (items, separator = ", ") =>
       items.length <= 1
@@ -123,7 +120,6 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     running: "Running.",
     notRunning: "Not running.",
     notCheckedToday: "Not checked today.",
-    miniWorldChangesNoneActive: "None running right now.",
     worldChangesUnchecked: (labels) => `Still unasked: ${labels.join(", ")}.`,
     orList: (items, separator = ", ") =>
       items.length <= 1
@@ -151,7 +147,6 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     running: "Está activa.",
     notRunning: "No está ocurriendo.",
     notCheckedToday: "Sin comprobar hoy.",
-    miniWorldChangesNoneActive: "Ninguna activa ahora mismo.",
     worldChangesUnchecked: (labels) => `Aún sin preguntar al Guide: ${labels.join(", ")}.`,
     orList: (items, separator = ", ") =>
       items.length <= 1
@@ -179,7 +174,6 @@ const TRANSLATIONS: Record<BriefingLanguage, BriefingTranslation> = {
     running: "Aktywna.",
     notRunning: "Nieaktywna.",
     notCheckedToday: "Dziś niesprawdzone.",
-    miniWorldChangesNoneActive: "Żadna nie jest teraz aktywna.",
     worldChangesUnchecked: (labels) => `Wciąż bez odpowiedzi Guide'a: ${labels.join(", ")}.`,
     orList: (items, separator = ", ") =>
       items.length <= 1

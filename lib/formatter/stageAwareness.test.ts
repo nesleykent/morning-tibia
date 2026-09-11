@@ -6,6 +6,7 @@ import { OPPORTUNITIES } from "@/lib/defaults/opportunities";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
 import { notesForChange, notesForOpportunity } from "./opportunityPhrases";
+import { NAME_LINE } from "@/lib/testing/briefingLines";
 import type { OpportunityDefinition } from "@/types/opportunity";
 
 /**
@@ -81,8 +82,13 @@ function mini(
 function renderedNotes(message: string): string[] {
   // Scoped to the change blocks. The headline facts at the top of the bulletin use some of the
   // same glyphs (👹 is the boosted boss up there), and they are not opportunity lines.
-  const isNameLine = (line: string) =>
-    /^\S+ \*[^*]+\*$/.test(line) && line !== line.toUpperCase();
+  //
+  // The name line's shape comes from lib/testing/briefingLines.ts rather than a copy here.
+  // A copy is what this was, and when the place moved onto the name line it stopped matching
+  // anything: `renderedNotes` returned an empty array for every message, and the two leak
+  // checks at the bottom of this file — the most load-bearing assertions in it — passed
+  // vacuously instead of failing.
+  const isNameLine = (line: string) => NAME_LINE.test(line) && line !== line.toUpperCase();
   return message
     .split(/\n\n+/)
     .filter((block) => block.split("\n").some(isNameLine))
@@ -139,7 +145,9 @@ describe("manually checked states name their options instead of shrugging", () =
 
     const selected = mini("fury-gates", "thais");
     expect(selected).toContain("A fiery fury gate has opened near Thais.");
-    expect(selected).not.toMatch(/haven't checked/i);
+    // Scoped to this change's block: the bulletin as a whole always carries the three
+    // changes nothing announces, whose own lines say nobody has checked them.
+    expect(blockFor(selected, "Fury Gates")).not.toMatch(/haven't checked/i);
     // Either way the block still says what is behind the gate.
     for (const message of [unselected, selected]) {
       expect(message).toContain("Furyosa");
@@ -160,7 +168,7 @@ describe("manually checked states name their options instead of shrugging", () =
 
     const selected = mini("nomads", "south-of-the-tarpit-tomb");
     expect(selected).toContain("The nomads have camped in Kha'labal, south of the Tarpit Tomb.");
-    expect(selected).not.toMatch(/haven't checked/i);
+    expect(blockFor(selected, "Nomads")).not.toMatch(/haven't checked/i);
   });
 
   it("Jungle Camp: unselected names both factions and offers neither boss", () => {
@@ -177,6 +185,46 @@ describe("manually checked states name their options instead of shrugging", () =
     const dworcs = mini("jungle-camp", "dworcs");
     expect(dworcs).toContain("Oodok Witchmaster");
     expect(dworcs).not.toContain("Arthom");
+  });
+
+  it("Forsaken: unchecked and running-but-unnamed are the same sentence", () => {
+    // The mine is never off, so "nobody has looked" and "confirmed running, nobody said which
+    // rotation" are one knowledge state. Printing them differently would tell the reader about
+    // a distinction the app makes internally rather than about the mine.
+    const nobodyLooked = generateBriefingMessage(input());
+    const runningUnnamed = mini("forsaken");
+    const sentence =
+      "_We haven't checked which creatures are in the Forsaken Mine yet. It can be one of these rotations: Rorcs, Leaf Golems and Forest Furies, Cyclopes or Drillworms and Lost Dwarves._";
+
+    expect(nobodyLooked).toContain(sentence);
+    expect(runningUnnamed).toContain(sentence);
+
+    // Once a rotation is known the block names it, and drops the list of what else it could be.
+    const known = blockFor(mini("forsaken", "lost-dwarves"), "Forsaken");
+    expect(known).toContain("The Forsaken Mine is inhabited by Drillworms and Lost Dwarves today.");
+    expect(known).not.toMatch(/haven't checked/i);
+    expect(known).not.toContain("Rorcs");
+
+    // And it is never an errand: "look down from the first floor before descending" was an
+    // instruction addressed to whoever pasted the log, in a message forwarded to everyone else.
+    expect(nobodyLooked).not.toMatch(/look down|first floor|descending/i);
+  });
+
+  it("Forsaken: never says a mine that cannot stop is not running", () => {
+    // "inactive" is not a state an always-active change has, so a stored one is stale or
+    // hand-set data. It must not drop the change out of the section, and it must not print
+    // the flat "not running" line a board-ruled-out change gets: the mine is certainly
+    // occupied, and all that is unknown is by what.
+    const target = input();
+    target.overrides.miniWorldChanges["forsaken"] = {
+      id: "forsaken",
+      status: "inactive",
+      variantId: null,
+      updatedAt: null,
+    };
+    const block = blockFor(generateBriefingMessage(target), "Forsaken");
+    expect(block).toMatch(/haven't checked which creatures are in the Forsaken Mine/);
+    expect(block).not.toMatch(/not running/i);
   });
 
   it("Spirit Grounds: the gate and the ground behind it are two separate answers", () => {
@@ -211,7 +259,7 @@ describe("manually checked states name their options instead of shrugging", () =
     );
     // Phantasm is Hard where the other three are Medium, so it gets its own numbers.
     expect(answered).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
-    expect(answered).not.toMatch(/haven't checked/);
+    expect(blockFor(answered, "Spirit Grounds")).not.toMatch(/haven't checked/);
     // …and the question's option list is gone once it has been answered.
     expect(answered).not.toMatch(/⚔️ It can be/);
     // The other two grounds stay out of it.

@@ -149,7 +149,10 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
 
    An opportunity is only ever derived from a condition the app has actually *established*.
    Unchecked produces nothing, and neither does "not running", so a fresh session shows no
-   opportunities at all and the section simply isn't rendered.
+   opportunities at all. In the bulletin a fresh session still renders the Mini World Changes
+   section, because the three changes no source announces are in it every day — but their
+   blocks are a name, a place and a sentence saying nobody has looked, with nothing to act on
+   under them.
 
 6. **Merchants & market** — Yasir travels between exactly 3 cities (Carlin, Liberty Bay,
    Ankrahmun — confirmed against TibiaWiki, this is the "Oriental Trader" Mini World
@@ -537,6 +540,20 @@ in-game source announces; somebody has to go and look. The bulletin used to say 
 answer is out of reach. It now says *We haven't checked which Fury Gate is active yet. It can be
 near one of these cities: …*, with the list built from the same catalog the picker is built
 from, so adding a city to the catalog adds it to the sentence the same day.
+
+**The three changes nothing announces are in the section every day.** Beaver Breakout,
+Shipwrecked and Forsaken are never reported by the World Board or the Towncryer, so no paste
+can rule them out and their absence from the bulletin would be silence a reader cannot read:
+"nobody has been to Krailos" and "the coast is clear" would look identical. They get a block
+whether or not anybody has looked, and on a day nobody has, the sentence says so and names
+what the answer could be — *We haven't checked Krailos' north coast yet. Nothing announces this
+change: there may be a wreck with pirates on the steppe, or the coast may be clear.* This is
+the one exception to "unchecked produces nothing", and it exists for the same reason the rule
+does: an unasked question must not read as an answer, in either direction. The twenty
+*announced* changes keep the rule unchanged — for them absence **is** the answer, because the
+board would have said so. Forsaken is never "off", so for it "nobody has looked" and "running,
+nobody said which rotation" are one sentence, not two. See `isUnannounced` in
+[`lib/defaults/miniWorldChanges.ts`](lib/defaults/miniWorldChanges.ts).
 
 **Server-save causality is spelled out, in that order.** An action today, the next server save,
 then the result: "Once 1,000 corpses have been thrown in server-wide, the lake will become dirty

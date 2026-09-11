@@ -559,6 +559,28 @@ export const MINI_WORLD_CHANGES_BY_ID = new Map(
   MINI_WORLD_CHANGE_DEFINITIONS.map((def) => [def.id, def]),
 );
 
+/**
+ * The changes nothing in the game announces: Beaver Breakout, Shipwrecked and Forsaken.
+ *
+ * `silent` and `always-active` are different mechanics — the beavers and the wreck are either
+ * there or not, while the Forsaken Mine is never off and only rotates — but they share the one
+ * property the bulletin has to act on: **no source reports them.** The World Board never
+ * mentioned them, so a complete board reading cannot rule them out, and the Towncryer never
+ * shouts them. Somebody has to go and look, every day, at all three.
+ *
+ * That is why they are the section's permanent residents. For an announced change, absence
+ * from the bulletin means the board would have said so and did not; for these three it would
+ * mean nothing at all, and a reader cannot tell "nobody looked" from "nothing is happening"
+ * unless the bulletin says which. So they get a line every day, and on a day nobody has looked
+ * the line says exactly that.
+ *
+ * A predicate rather than a hardcoded list of three ids, so a fourth undocumented change added
+ * to the catalog joins them the day it is added.
+ */
+export function isUnannounced(definition: MiniWorldChangeDefinition): boolean {
+  return definition.detection !== "announced";
+}
+
 export function createDefaultMiniWorldChangeValues(): Record<string, MiniWorldChangeValue> {
   const values: Record<string, MiniWorldChangeValue> = {};
   for (const def of MINI_WORLD_CHANGE_DEFINITIONS) {

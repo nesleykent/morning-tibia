@@ -212,6 +212,31 @@ const FORSAKEN_SETS: Lang<Record<string, string>> = {
   },
 };
 
+/**
+ * "We haven't checked which creatures are in the Forsaken Mine yet. It can be…"
+ *
+ * The mine is never off, so this is the *only* thing there is not to know about it, and it
+ * reads the same whether nobody has looked at all or somebody confirmed the mine without
+ * naming the set. Those are one knowledge state, and printing them differently would tell the
+ * reader about a distinction the app makes internally rather than about the mine.
+ *
+ * It replaced "the inhabitants rotated at server save, look down from the first floor before
+ * descending" — an instruction, in a message that gets forwarded to a guild channel where it
+ * addresses the wrong person. The four rotations named plainly are what a reader can act on.
+ */
+function forsakenRotationUnknown(language: BriefingLanguage): string {
+  const sets = optionsOf("forsaken", FORSAKEN_SETS, language);
+  return pick(
+    {
+      pt: `Ainda não conferimos quais criaturas estão na Forsaken Mine. Pode ser uma destas rotações: ${sets}.`,
+      en: `We haven't checked which creatures are in the Forsaken Mine yet. It can be one of these rotations: ${sets}.`,
+      es: `Todavía no comprobamos qué criaturas están en la Forsaken Mine. Puede ser una de estas rotaciones: ${sets}.`,
+      pl: `Nie sprawdziliśmy jeszcze, jakie stwory są w Forsaken Mine. Może to być jedna z tych rotacji: ${sets}.`,
+    },
+    language,
+  );
+}
+
 const NARRATIVES: Record<string, Resolver> = {
   "fury-gates": (variantId, language) => {
     const city = variantId ? CITY_NAMES[variantId] : null;
@@ -506,24 +531,19 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "Un barco pirata naufragó en la costa norte de Krailos, el mejor respawn de Pirate Corsair del juego.",
     pl: "Statek piracki rozbił się na północnym wybrzeżu Krailos, najlepszy respawn Pirate Corsair w grze.",
   }),
-  forsaken: byNamedVariant(FORSAKEN_SETS, {
-    pt: (set) =>
-      set
-        ? `A Forsaken Mine está tomada por ${set}.`
-        : "A Forsaken Mine mudou de habitantes no server save. Olhe do primeiro andar antes de descer.",
-    en: (set) =>
-      set
-        ? `The Forsaken Mine is inhabited by ${set} today.`
-        : "The Forsaken Mine's inhabitants rotated at server save. Look down from the first floor before descending.",
-    es: (set) =>
-      set
-        ? `La Forsaken Mine está ocupada por ${set}.`
-        : "La Forsaken Mine cambió de habitantes en el server save. Mira desde el primer piso antes de bajar.",
-    pl: (set) =>
-      set
-        ? `Forsaken Mine zamieszkują dziś ${set}.`
-        : "Mieszkańcy Forsaken Mine zmienili się po server save. Zajrzyj z pierwszego piętra przed zejściem.",
-  }),
+  forsaken: (variantId, language) => {
+    const set = variantId ? pick(FORSAKEN_SETS, language)[variantId] : null;
+    if (!set) return forsakenRotationUnknown(language);
+    return pick(
+      {
+        pt: `A Forsaken Mine está tomada por ${set}.`,
+        en: `The Forsaken Mine is inhabited by ${set} today.`,
+        es: `La Forsaken Mine está ocupada por ${set}.`,
+        pl: `Forsaken Mine zamieszkują dziś ${set}.`,
+      },
+      language,
+    );
+  },
   chyllfroest: simple({
     pt: "Uma ponte de gelo liga Svargrond a uma ilha congelada onde monstros foram avistados.",
     en: "An ice bridge now connects Svargrond to a frosty island where monsters have been sighted.",
@@ -612,4 +632,53 @@ export function getMiniWorldChangeAbsentNarrative(
 ): string | null {
   const map = ABSENT_NARRATIVES[changeId];
   return map ? pick(map, language) : null;
+}
+
+/**
+ * What it reads like on a day nobody has been to look.
+ *
+ * Only the unannounced changes get one, because they are the only ones that appear in the
+ * bulletin unchecked: nothing in the game reports them, so their absence from the message
+ * would be silence a reader cannot interpret. The sentence's whole job is to close that gap —
+ * it says nobody has looked, and then names what the answer could be, which is the same move
+ * the Fury Gate and Bibby Bloodbath sentences make for an unnamed variant.
+ *
+ * Never an instruction. "Go to Silvertides and look at the pen" is what the catalog page's
+ * `howToCheck` is for, addressed to the player using the app; this line is read by a guild
+ * channel full of people who did not generate it.
+ */
+const UNCHECKED_NARRATIVES: Record<string, (language: BriefingLanguage) => string> = {
+  "beaver-breakout": (language) =>
+    pick(
+      {
+        pt: "Ainda não conferimos o cercado em Silvertides. Nada anuncia esta mudança: os Giant Beavers podem estar soltos ou ainda presos.",
+        en: "We haven't checked the pen at Silvertides yet. Nothing announces this change: the Giant Beavers may be loose or still penned.",
+        es: "Todavía no comprobamos el corral en Silvertides. Nada anuncia este cambio: los Giant Beavers pueden estar sueltos o seguir encerrados.",
+        pl: "Nie sprawdziliśmy jeszcze zagrody w Silvertides. Nic tego nie ogłasza: Giant Beavery mogą być na wolności albo wciąż w zagrodzie.",
+      },
+      language,
+    ),
+  shipwrecked: (language) =>
+    pick(
+      {
+        pt: "Ainda não conferimos a costa norte de Krailos. Nada anuncia esta mudança: pode haver um navio naufragado com piratas na estepe, ou a costa pode estar limpa.",
+        en: "We haven't checked Krailos' north coast yet. Nothing announces this change: there may be a wreck with pirates on the steppe, or the coast may be clear.",
+        es: "Todavía no comprobamos la costa norte de Krailos. Nada anuncia este cambio: puede haber un naufragio con piratas en la estepa, o la costa puede estar despejada.",
+        pl: "Nie sprawdziliśmy jeszcze północnego wybrzeża Krailos. Nic tego nie ogłasza: może tam być wrak z piratami na stepie, albo wybrzeże może być puste.",
+      },
+      language,
+    ),
+  forsaken: forsakenRotationUnknown,
+};
+
+/**
+ * The sentence for an unannounced change nobody has checked today, or null for a change that
+ * has none — which is every announced one, and they never reach here.
+ */
+export function getMiniWorldChangeUncheckedNarrative(
+  changeId: string,
+  language: BriefingLanguage,
+): string | null {
+  const resolve = UNCHECKED_NARRATIVES[changeId];
+  return resolve ? resolve(language) : null;
 }

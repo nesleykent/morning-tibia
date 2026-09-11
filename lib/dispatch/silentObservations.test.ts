@@ -151,10 +151,27 @@ describe("unverified", () => {
     expect(prose).toContain("north coast of Krailos");
   });
 
-  it("claims nothing in the briefing", () => {
+  it("names the change in the briefing while claiming neither sight", () => {
+    // Both are in the section every day. Nothing announces them, so leaving them off would be
+    // silence a reader cannot read: "nobody has been to Krailos" and "the coast is clear"
+    // would look identical. What the line may not do is pick one of the two sights.
     const message = briefingFor(overridesWith());
-    expect(message).not.toContain("Beaver Breakout");
-    expect(message).not.toContain("Shipwrecked");
+    for (const id of SILENT_IDS) {
+      const definition = MINI_WORLD_CHANGES_BY_ID.get(id)!;
+      expect(message, id).toContain(`${definition.emoji} *${definition.name}*`);
+    }
+    expect(message).toContain("Ainda não conferimos o cercado em Silvertides");
+    expect(message).toContain("Ainda não conferimos a costa norte de Krailos");
+
+    // Neither the confirmed sighting's wording nor the empty look's may appear.
+    for (const claim of [
+      "Os Giant Beavers estão soltos",
+      "continuam no cercado",
+      "navio pirata naufragou",
+      "está limpa, sem navio naufragado",
+    ]) {
+      expect(message, claim).not.toContain(claim);
+    }
   });
 });
 
@@ -189,10 +206,17 @@ describe("a confirmed sighting", () => {
   });
 
   it("distinguishes 'nobody looked' from 'looked, nothing there'", () => {
-    expect(briefingFor(overridesWith())).not.toContain("Beaver Breakout");
-    expect(briefingFor(overridesWith({ "beaver-breakout": "inactive" }))).toContain(
-      "Beaver Breakout",
-    );
+    // Both print a block now, so the distinction has moved into the sentence — which is the
+    // stronger place for it: the reader sees which of the two it is instead of inferring it
+    // from whether a heading had anything under it.
+    const unlooked = briefingFor(overridesWith());
+    const looked = briefingFor(overridesWith({ "beaver-breakout": "inactive" }));
+
+    expect(unlooked).toContain("Ainda não conferimos o cercado em Silvertides");
+    expect(unlooked).not.toContain("continuam no cercado");
+
+    expect(looked).toContain("continuam no cercado");
+    expect(looked).not.toContain("Ainda não conferimos o cercado em Silvertides");
   });
 
   it("stays revisable, showing the sight instead of the instruction", () => {
