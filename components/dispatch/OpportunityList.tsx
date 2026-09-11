@@ -63,7 +63,7 @@ export function OpportunityList({ opportunities }: { opportunities: Opportunity[
                   {definition.subject}
                 </a>
               </h3>
-              <span className="opportunity-kind">{definition.kind}</span>
+              <span className="opportunity-kind">{definition.kind.replaceAll("-", " ")}</span>
             </div>
             {opportunityMeta(definition) && <p className="opportunity-meta">{opportunityMeta(definition)}</p>}
             <p className="opportunity-detail">{definition.detail.en}</p>
@@ -91,7 +91,8 @@ export function OpportunityList({ opportunities }: { opportunities: Opportunity[
 const KIND_LABEL: Record<OpportunityKind, string> = {
   bestiary: "Bestiary", boss: "Bosses", mount: "Mounts", achievement: "Achievements",
   quest: "Quests", item: "Items", access: "Access", service: "Services",
-  hunting: "Hunting", progress: "Progress",
+  hunting: "Hunting", progress: "Progress", outfit: "Outfits",
+  timing: "Timing", "taming-item": "Taming items",
 };
 
 /**
