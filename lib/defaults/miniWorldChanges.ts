@@ -445,7 +445,15 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     variantKind: null,
     detection: "silent",
     howToCheck:
-      "Go to Silvertides in Marapur and look: if the Giant Beavers are out of their pen, it's running.",
+      "Go to Silvertides in Marapur and look at the beaver pen.",
+    // TibiaWiki BR illustrates this change with exactly these two pictures, captioned
+    // "Giant Beavers presos no cercado" and "Giant Beavers soltos". They are the only two
+    // things there are to see, which is why the change needs no state beyond them.
+    // Source: tibiawiki.com.br/wiki/Mini_World_Changes § Beaver Breakout.
+    observations: [
+      { id: "loose", label: "The beavers are out of the pen", establishes: "active" },
+      { id: "penned", label: "The beavers are still penned", establishes: "inactive" },
+    ],
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:
@@ -464,7 +472,16 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     variantKind: null,
     detection: "silent",
     howToCheck:
-      "Go and look at the north coast of Krailos. Or, with Krailos fully revealed by the Measuring Tibia Quest, check the map for active pirate respawns on the Krailos Steppe.",
+      "Look at the north coast of Krailos. With Krailos fully revealed by the Measuring Tibia Quest you can read it off the map, without travelling.",
+    // Either the wreck is on the coast with pirates all over the steppe, or it is not; the
+    // wiki documents no stage between them. The second way of looking is real and worth
+    // keeping in the instruction: a player who has finished the Measuring Tibia Quest reads
+    // the answer off their map instead of sailing to Krailos.
+    // Source: tibiawiki.com.br/wiki/Mini_World_Changes § Shipwrecked.
+    observations: [
+      { id: "wrecked-ship", label: "A wrecked ship, pirates on the steppe", establishes: "active" },
+      { id: "clear-coast", label: "The coast is clear, no pirates", establishes: "inactive" },
+    ],
     boardNamesVariant: false,
     towncryerNamesVariant: false,
     description:

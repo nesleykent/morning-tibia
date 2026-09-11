@@ -75,6 +75,7 @@ export function Reference({
         {mini.map(({ definition: d, value }) => {
           const variant = d.variants.find((v) => v.id === value.variantId);
           const pending = value.status === "active" && d.variants.length > 0 && !value.variantId;
+          // A silent change nobody has looked at yet is outstanding work, and gets the dot.
           const silentOpen = d.detection === "silent" && value.status === "unchecked";
           return (
             <Row
@@ -85,21 +86,23 @@ export function Reference({
               accent={pending || silentOpen}
               details={<MiniDetails definition={d} />}
             >
-              {silentOpen ? (
-                <span className="flex gap-1">
-                  <Tiny
-                    onClick={() => onMiniChange(d.id, { status: "active" })}
-                    label={`Mark ${d.name} as running`}
-                  >
-                    Running
-                  </Tiny>
-                  <Tiny
-                    onClick={() => onMiniChange(d.id, { status: "inactive", variantId: null })}
-                    label={`Mark ${d.name} as not running`}
-                  >
-                    No
-                  </Tiny>
-                </span>
+              {d.observations?.length ? (
+                // What the player can see, in their words, and always revisable — a silent
+                // change is settled by somebody's eyes and eyes make mistakes. "Running" and
+                // "No" were the app asking for its own answer instead of their observation.
+                <Inline
+                  value={
+                    d.observations.find((o) => o.establishes === value.status)?.id ?? null
+                  }
+                  placeholder="not looked yet"
+                  accent={value.status === "unchecked"}
+                  options={d.observations.map((o) => ({ id: o.id, label: o.label }))}
+                  onChange={(observationId) => {
+                    const seen = d.observations!.find((o) => o.id === observationId);
+                    if (seen) onMiniChange(d.id, { status: seen.establishes, variantId: null });
+                  }}
+                  label={`What you saw at ${d.name}`}
+                />
               ) : value.status === "active" && d.variants.length > 0 ? (
                 <Inline
                   value={value.variantId}
@@ -446,26 +449,5 @@ function Inline({
         ))}
       </SelectContent>
     </Select>
-  );
-}
-
-function Tiny({
-  children,
-  onClick,
-  label,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="min-h-[22px] rounded border border-line bg-surface px-1.5 text-[11.5px] text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 hover:text-ink"
-    >
-      {children}
-    </button>
   );
 }

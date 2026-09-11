@@ -64,6 +64,28 @@ export interface MiniWorldChangeVariant {
   label: string;
 }
 
+/**
+ * One thing a player can see when they go and look at a `silent` change.
+ *
+ * Silent changes are the only ones a player can settle *only* with their own eyes, and the
+ * app used to ask them for the answer in its own vocabulary: a "Running" button and a "No"
+ * button. Nobody stands on the Krailos steppe deciding whether the change is "running". They
+ * see a wrecked ship, or they see an empty coastline. These are those two sights, written the
+ * way the player would describe them.
+ *
+ * `establishes` is the whole mapping. A silent change is binary — TibiaWiki BR documents no
+ * stages for either of the two — so the sight the player reports determines the knowledge
+ * state exactly, and nothing extra needs storing: `status` alone says which observation was
+ * made. See `observations` on the definition.
+ */
+export interface MiniWorldChangeObservation {
+  id: string;
+  /** What the player sees, in the words they would use for it. */
+  label: string;
+  /** The knowledge state that seeing this establishes. */
+  establishes: Extract<MiniWorldChangeStatus, "active" | "inactive">;
+}
+
 export interface MiniWorldChangeDefinition {
   id: string;
   /** Canonical TibiaWiki Mini World Change name. */
@@ -105,6 +127,15 @@ export interface MiniWorldChangeDefinition {
    * short sentence. The UI shows this instead of pretending a paste could settle it.
    */
   howToCheck?: string;
+  /**
+   * The sights a player can come back with, for a `silent` change. Exactly two, because both
+   * documented silent changes are binary: the beavers are out or they are penned; the wreck
+   * is on the coast or the coast is clear.
+   *
+   * Present only where `detection === "silent"`. An announced change is settled by a board
+   * reading and an always-active one is never off, so neither has anything to observe.
+   */
+  observations?: readonly MiniWorldChangeObservation[];
   /** True when the World Board's own message text names which variant is running. */
   boardNamesVariant: boolean;
   /** True when the Towncryer's shout names which variant is running. */

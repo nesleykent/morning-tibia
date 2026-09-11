@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils/cn";
+import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
 import { buildDailyDigest } from "@/lib/dashboard/dailyDigest";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 import { composeDispatch } from "@/lib/dispatch/composeDispatch";
@@ -90,6 +91,20 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         return;
       }
       if (!id) return;
+      // What the player saw, for a change no source announces. The sight determines the
+      // knowledge state on its own, so nothing beyond `status` has to be written down.
+      if (kind === "obs") {
+        const observation = MINI_WORLD_CHANGES_BY_ID.get(id)?.observations?.find(
+          (candidate) => candidate.id === optionId,
+        );
+        if (observation) {
+          state.updateMiniWorldChange(id, {
+            status: observation.establishes,
+            variantId: null,
+          });
+        }
+        return;
+      }
       if (kind === "mwc") state.updateMiniWorldChange(id, { variantId: optionId });
       if (kind === "merchant") {
         state.updateMerchant("yasir", { location: optionId, activityState: "location-known" });

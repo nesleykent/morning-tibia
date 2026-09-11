@@ -22,7 +22,10 @@ import {
 } from "./phrases";
 import { getTranslation, type BriefingLanguage, type BriefingTranslation } from "./translations";
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
-import { getMiniWorldChangeNarrative } from "./miniWorldChangeNarratives";
+import {
+  getMiniWorldChangeAbsentNarrative,
+  getMiniWorldChangeNarrative,
+} from "./miniWorldChangeNarratives";
 import { notesForChange, type BriefingNote } from "./opportunityPhrases";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 
@@ -215,6 +218,25 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
     }
 
     if (value.status === "inactive") {
+      // A silent change the player went and looked at is the one negative worth printing.
+      // Every other negative comes twenty at a time from a board reading and is already
+      // reduced to a single sentence elsewhere; this one cost somebody a trip, and it is the
+      // only way the rest of the guild can learn the answer. Without it, "nobody checked"
+      // and "checked, nothing there" look identical in the bulletin.
+      const absent =
+        def.detection === "silent"
+          ? getMiniWorldChangeAbsentNarrative(def.id, input.language)
+          : null;
+      if (absent) {
+        miniWorldChangeLines.push({
+          emoji: def.emoji,
+          name: def.name,
+          location: def.briefingLocation || def.location || null,
+          state: absent,
+          notes: [],
+        });
+        continue;
+      }
       if (!overrides.includeAllChanges) continue;
       miniWorldChangeLines.push({
         emoji: def.emoji,

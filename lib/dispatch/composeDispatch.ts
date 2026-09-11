@@ -80,6 +80,32 @@ function blankFor(entry: MiniWorldChangeEntry): Segment {
 }
 
 /**
+ * The picker for a change only the player's own eyes can settle.
+ *
+ * It is a blank like any other, which is the point: the app already asks for a missing fact by
+ * leaving a gap in the sentence that needs it, and "did you see the beavers out?" is exactly
+ * that kind of gap. Unanswered it reads as a gold question; answered it reads as the sight the
+ * player reported, still clickable, because a mis-tap has to be correctable in place.
+ *
+ * The target is prefixed `obs:` rather than `mwc:` because the answer establishes whether the
+ * change is running at all, where a `mwc:` pick only ever names a variant of a change already
+ * known to be running.
+ */
+function observationBlankFor(entry: MiniWorldChangeEntry): Segment {
+  const { definition, value } = entry;
+  const observations = definition.observations ?? [];
+  const seen = observations.find((observation) => observation.establishes === value.status) ?? null;
+  return {
+    kind: "blank",
+    target: `obs:${definition.id}`,
+    ask: "what did you see",
+    value: seen?.label ?? null,
+    options: observations.map((observation) => ({ id: observation.id, label: observation.label })),
+    spatial: false,
+  };
+}
+
+/**
  * One clause per running change. The wording is deliberately concrete — a place, a creature,
  * a consequence — rather than the change's catalog name, because the name is an index entry
  * and the clause is the thing the player actually acts on.
@@ -261,6 +287,10 @@ export function composeDispatch(
   // no paste will ever settle them, so the ask is "go and look", not "paste more".
   const goAndLook = [
     ...digest.mini.silent,
+    // The ones already looked at that turned out to be nothing. They stay in this stanza
+    // rather than joining "quiet today", which is a sentence about what the board ruled out
+    // and was never capable of mentioning them.
+    ...digest.mini.silentAbsent,
     // Forsaken lives here too until the player has looked — see isUnresolvedAlwaysActive.
     ...[...digest.mini.needsVariant, ...digest.mini.running].filter(isUnresolvedAlwaysActive),
   ].filter((e, i, all) => all.findIndex((x) => x.definition.id === e.definition.id) === i);
@@ -273,8 +303,19 @@ export function composeDispatch(
         const line: Segment[] = [
           link(entry.definition.name, miniWorldChangeWikiUrl(entry.definition)),
           t(" — "),
-          em(entry.definition.howToCheck ?? ""),
         ];
+
+        // A change with sights to report carries its picker, and drops the instruction once
+        // it has been answered: telling somebody how to go and look at a thing they have
+        // already looked at is the page failing to notice it was answered.
+        if (entry.definition.observations?.length) {
+          const answered = entry.value.status !== "unchecked";
+          if (!answered) line.push(em(entry.definition.howToCheck ?? ""), t(" "));
+          line.push(observationBlankFor(entry));
+          return line;
+        }
+
+        line.push(em(entry.definition.howToCheck ?? ""));
         // Forsaken keeps its picker here rather than losing it: looking is the only way to
         // settle which creature set is down the mine, so the answer belongs beside the
         // instruction to go and look — not in a clause claiming it as news.

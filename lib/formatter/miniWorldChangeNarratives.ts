@@ -457,3 +457,39 @@ export function getMiniWorldChangeNarrative(
   const resolver = NARRATIVES[changeId];
   return resolver ? resolver(variantId, language) : null;
 }
+
+/**
+ * What it reads like when the player went and looked, and there was nothing there.
+ *
+ * Only silent changes get these, and only because only a silent change can produce a negative
+ * worth printing. An announced change's absence is proved by a board reading twenty at a time,
+ * and the bulletin already reduces those to one sentence; a silent change's absence costs
+ * somebody a trip to Krailos, and it answers a question the rest of the guild cannot answer
+ * any other way. Saying nothing would leave "not checked" and "checked, nothing there"
+ * looking identical in the one place they are most different.
+ *
+ * Written as observations rather than as states — what the player saw, not what the app
+ * concluded from it.
+ */
+const ABSENT_NARRATIVES: Record<string, Lang<string>> = {
+  "beaver-breakout": {
+    pt: "Os Giant Beavers continuam no cercado em Silvertides. Não dá para domar a montaria hoje.",
+    en: "The Giant Beavers are still penned at Silvertides. The mount cannot be tamed today.",
+    es: "Los Giant Beavers siguen en el corral de Silvertides. Hoy no se puede domar la montura.",
+    pl: "Giant Beavery wciąż siedzą w zagrodzie w Silvertides. Dziś nie oswoisz wierzchowca.",
+  },
+  shipwrecked: {
+    pt: "A costa norte de Krailos está limpa, sem navio naufragado nem piratas na estepe.",
+    en: "Krailos' north coast is clear, with no wreck and no pirates on the steppe.",
+    es: "La costa norte de Krailos está despejada, sin naufragio ni piratas en la estepa.",
+    pl: "Północne wybrzeże Krailos jest puste, bez wraku i bez piratów na stepie.",
+  },
+};
+
+export function getMiniWorldChangeAbsentNarrative(
+  changeId: string,
+  language: BriefingLanguage,
+): string | null {
+  const map = ABSENT_NARRATIVES[changeId];
+  return map ? pick(map, language) : null;
+}

@@ -47,6 +47,15 @@ export interface DailyDigest {
      */
     silent: MiniWorldChangeEntry[];
     /**
+     * Silent changes the player went and looked at, and found nothing.
+     *
+     * Deliberately not merged into `notRunning`: that group exists because a complete World
+     * Board reading ruled its members out, and the dispatch says so in those words. A silent
+     * change was never on the board, so filing it there would have the page claim a source
+     * said something it is structurally incapable of saying.
+     */
+    silentAbsent: MiniWorldChangeEntry[];
+    /**
      * Every silent change, resolved or not. The action list wants only the unresolved ones;
      * the reference view wants all of them, so the player can revise an answer later.
      */
@@ -76,6 +85,7 @@ export function buildDailyDigest(
   const notRunning: MiniWorldChangeEntry[] = [];
   const unchecked: MiniWorldChangeEntry[] = [];
   const silent: MiniWorldChangeEntry[] = [];
+  const silentAbsent: MiniWorldChangeEntry[] = [];
   const allSilent: MiniWorldChangeEntry[] = [];
   let miniChecked = false;
 
@@ -98,6 +108,11 @@ export function buildDailyDigest(
       // Only an unanswered one is outstanding work.
       if (value.status === "unchecked") {
         silent.push(entry);
+        continue;
+      }
+      // Looked at, and nothing there. Its own group, for the reason given on the field.
+      if (value.status === "inactive") {
+        silentAbsent.push(entry);
         continue;
       }
     }
@@ -144,13 +159,23 @@ export function buildDailyDigest(
   notRunning.sort(byName);
   unchecked.sort(byName);
   silent.sort(byName);
+  silentAbsent.sort(byName);
   allSilent.sort(byName);
   noteworthy.sort(byName);
   quiet.sort(byName);
   unasked.sort(byName);
 
   return {
-    mini: { running, needsVariant, notRunning, unchecked, silent, allSilent, checked: miniChecked },
+    mini: {
+      running,
+      needsVariant,
+      notRunning,
+      unchecked,
+      silent,
+      silentAbsent,
+      allSilent,
+      checked: miniChecked,
+    },
     world: { noteworthy, quiet, unasked, checked: worldChecked },
     attentionCount: needsVariant.length + silent.length,
   };
