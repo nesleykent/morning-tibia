@@ -234,7 +234,7 @@ function Numbers({
   const isStale = newestTimestamp !== null && nowMs > 0 && nowMs - newestTimestamp > STALE_PRICE_MS;
 
   return (
-    <footer className="mt-7 grid grid-cols-1 gap-x-10 gap-y-5 border-t border-line pt-5 sm:grid-cols-2">
+    <footer className="mt-7 grid grid-cols-1 gap-y-5 border-t border-line pt-5">
       {warzones.length > 0 && (
         <div>
           <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
@@ -242,11 +242,8 @@ function Numbers({
           </h3>
           <p className="tnum flex flex-wrap gap-x-3.5 gap-y-1 text-[14px] text-ink">
             {warzones.map((w) => (
-              <span key={w.id}>
-                {w.time}
-                {w.sequence && (
-                  <span className="ml-1 text-[11px] text-ink-faint">{w.sequence}</span>
-                )}
+              <span key={w.id} className="whitespace-nowrap">
+                {w.time}{w.sequence ? ` (${w.sequence})` : ""}
               </span>
             ))}
           </p>
@@ -255,13 +252,13 @@ function Numbers({
 
       {(priceEntries.length > 0 || marketUnavailable) && (
         <div>
-          <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.15em] text-ink-faint">
               Market
             </h3>
             {priceEntries.length > 0 && (
               <div
-                className="flex items-center gap-0.5"
+                className="inline-flex items-center rounded-md border border-line p-0.5"
                 role="group"
                 aria-label="Market average basis"
               >
@@ -296,31 +293,42 @@ function Numbers({
             </p>
           ) : (
             <>
-              <dl className={cn("grid grid-cols-2 gap-x-6 gap-y-1", isStale && "opacity-60")}>
-                {priceEntries.map(([id, price]) => {
-                  const trend = TREND[computeTrendForBasis(price.history, entryCount)];
-                  // The shown figure follows the selected basis, so "Avg 7" reads the
-                  // 7-entry average rather than the newest tick with a 7-entry arrow.
-                  const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] items-start gap-x-8 gap-y-3">
+                {MARKET_ASSETS.map(({ name, ids }) => {
+                  const entries = priceEntries.filter(([id]) => ids.includes(id));
+                  if (entries.length === 0) return null;
                   return (
-                    <div key={id} className="flex items-baseline justify-between gap-2">
-                      <dt className="truncate text-[12.5px] text-ink-soft">
-                        {shortPriceLabel(id)}
-                      </dt>
-                      <dd className="tnum shrink-0 text-[13.5px] text-ink">
-                        {Math.round(shown).toLocaleString("en-US")}
-                        <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
-                      </dd>
-                    </div>
+                    <section key={name} aria-label={name} className="min-w-max">
+                      <h4 className="mb-1 whitespace-nowrap text-[13.5px] font-semibold text-ink">
+                        {name}
+                      </h4>
+                      <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-1">
+                        {entries.map(([id, price]) => {
+                          const trend = TREND[computeTrendForBasis(price.history, entryCount)];
+                          const shown = averageOfLastEntries(price.history, entryCount) ?? price.value!;
+                          return (
+                            <div key={id} className="contents">
+                              <dt className="whitespace-nowrap text-[12.5px] text-ink-soft">
+                                {id === "tibiaCoinBuy" ? "Compra" : "Venda"}
+                              </dt>
+                              <dd className="tnum whitespace-nowrap text-right text-[13.5px] text-ink">
+                                {Math.round(shown).toLocaleString("pt-BR")}
+                                <span className={cn("ml-1", trend.tone)}>{trend.glyph}</span>
+                              </dd>
+                            </div>
+                          );
+                        })}
+                      </dl>
+                    </section>
                   );
                 })}
-              </dl>
+              </div>
               {ageLabel && (
                 <p className="mt-1.5 text-[11px] text-ink-faint">
                   tibiamarket.top, {ageLabel}
                   {isStale && (
-                    <span className="ml-1.5 font-semibold uppercase tracking-[0.08em]">
-                      (stale)
+                    <span title="Market prices are more than two days old">
+                      {" · stale"}
                     </span>
                   )}
                 </p>
@@ -346,19 +354,15 @@ function ServerSaveLine() {
   if (nowMs === 0) return null;
   const msLeft = getNextServerSave(new Date(nowMs)).getTime() - nowMs;
   return (
-    <p className="text-[12.5px] text-ink-faint sm:col-span-2">
+    <p className="text-[12.5px] text-ink-faint">
       Everything here resets at server save, in{" "}
       <span className="tnum">{formatCountdownClock(msLeft)}</span>.
     </p>
   );
 }
 
-function shortPriceLabel(id: MarketPriceId): string {
-  switch (id) {
-    case "tibiaCoinSell": return "Tibia Coin sell";
-    case "tibiaCoinBuy": return "Tibia Coin buy";
-    case "goldTokenSell": return "Gold token";
-    case "silverTokenSell": return "Silver token";
-    default: return id;
-  }
-}
+const MARKET_ASSETS: { name: string; ids: MarketPriceId[] }[] = [
+  { name: "Tibia Coin", ids: ["tibiaCoinSell", "tibiaCoinBuy"] },
+  { name: "Gold Token", ids: ["goldTokenSell"] },
+  { name: "Silver Token", ids: ["silverTokenSell"] },
+];
