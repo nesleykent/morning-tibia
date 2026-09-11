@@ -155,6 +155,41 @@ describe("manually checked states name their options instead of shrugging", () =
     expect(dworcs).not.toContain("Arthom");
   });
 
+  it("Spirit Grounds: the gate and the ground behind it are two separate answers", () => {
+    // TibiaWiki: "although there are 3 portals and 3 hunting grounds, they do not correspond".
+    // So naming the region answers nothing about what is inside, and the block has to say so.
+    const gateOnly = mini("spirit-grounds", "ghostlands");
+    expect(gateOnly).toContain("A Spirit Gate is open in Ghostlands.");
+    expect(gateOnly).toMatch(/We haven't checked which creature set is active in the Spirit Grounds yet/);
+    expect(gateOnly).toContain(
+      "It can be: Ghost, Ghoul, Bonelord and Mummy; Nightstalker, Banshee, Souleater and Braindeath; or Nightmare, Nightmare Scion, Spectre and Phantasm.",
+    );
+    // …and nothing that depends on the ground is offered until somebody looks.
+    expect(gateOnly).not.toMatch(/🎯 \*Bestiary:\*/);
+    expect(gateOnly).not.toContain("🎯 *Phantasm:*");
+    expect(gateOnly).not.toMatch(/check when you arrive/i);
+
+    const answered = generateBriefingMessage(
+      (() => {
+        const target = setMini(input(), "spirit-grounds", "ghostlands");
+        target.overrides.miniWorldChanges["spirit-grounds"]!.contentId = "nightmares";
+        return target;
+      })(),
+    );
+    expect(answered).toContain(
+      "Behind it are Nightmare, Nightmare Scion, Spectre and Phantasm.",
+    );
+    expect(answered).toContain(
+      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre, 1,000 kills and 25 Charm Points each.",
+    );
+    // Phantasm is Hard where the other three are Medium, so it gets its own numbers.
+    expect(answered).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
+    expect(answered).not.toMatch(/haven't checked which creature set/);
+    // The other two grounds stay out of it.
+    expect(answered).not.toContain("Ghoul");
+    expect(answered).not.toContain("Souleater");
+  });
+
   it("Deeplings: stage 3 says which Guardians it could be, having not checked", () => {
     const stage3 = world("deeplings", "arcanum-breached");
     expect(stage3).toMatch(/We haven't checked which Deepling Guardian is available today/);
@@ -165,9 +200,17 @@ describe("manually checked states name their options instead of shrugging", () =
   });
 
   it("never tells the reader a selectable fact is unknowable, in any language", () => {
-    const shrugs = /isn't known|not known yet|doesn't say who|no se sabe|nie wiadomo|não se sabe/i;
+    const shrugs =
+      /isn't known|not known yet|doesn't say who|check when you arrive|no se sabe|nie wiadomo|não se sabe/i;
     for (const language of ["pt", "en", "es", "pl"] as const) {
-      for (const id of ["fury-gates", "nomads", "jungle-camp", "warpath", "poacher-caves"]) {
+      for (const id of [
+        "fury-gates",
+        "nomads",
+        "jungle-camp",
+        "warpath",
+        "poacher-caves",
+        "spirit-grounds",
+      ]) {
         expect(mini(id, null, language), `${id}/${language}`).not.toMatch(shrugs);
       }
     }
@@ -308,14 +351,24 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const asleep = world("sea-serpent", "asleep");
     expect(asleep).toContain("🎯 *Seacrest Serpent:* 2,500 kills, 50 Charm Points.");
     expect(asleep).toContain("🐎 *Titanica:*");
-    // The stage advances the instant the kills land, not at a server save.
-    expect(asleep).toMatch(/the change lands at once rather than waiting for a server save/);
+    // The threshold is the one this stage is actually counting towards, and the stage advances
+    // the instant the kills land rather than at a server save.
+    expect(asleep).toMatch(
+      /🔄 \*Make the Serpent dream:\* 1,000 Seacrest Serpents killed server-wide take the Serpent into its dreaming stage\./,
+    );
+    expect(asleep).toMatch(/The change lands at once, without waiting for a server save\./);
+    expect(asleep).not.toMatch(/every 1,000/i);
     expect(asleep).not.toContain("Renegade Quara");
     // Snake Charmer needs the mission that only exists once it wakes.
     expect(asleep).not.toContain("Snake Charmer");
 
+    // …and the dreaming stage counts to the cumulative 2,000, not to another 1,000 from zero.
+    const dreaming = world("sea-serpent", "dreaming");
+    expect(dreaming).toMatch(/Another 1,000 Seacrest Serpents, 2,000 in all, wake the Serpent/);
+
     const awake = world("sea-serpent", "awake");
     expect(awake).toContain("Renegade Quara");
+    expect(awake).toMatch(/2,000 Renegade Quara killed server-wide send the Serpent back to sleep/);
     expect(awake).toContain("🏆 *Snake Charmer:*");
     expect(awake).not.toContain("🎯 *Seacrest Serpent:*");
   });
@@ -343,8 +396,24 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     const stage3 = world("hive-born", "fallen");
     expect(stage3).toMatch(/👹 \*Bosstiary:\* Chopper, Fleshslicer, Maw, Mindmasher, Rotspit and Shadowstalker/);
     expect(stage3).toContain("🎯 *Ladybug:* 500 kills, 15 Charm Points.");
-    expect(stage3).toMatch(/🐎 \*Lady Bug:\* Use a Four-Leaf Clover on a Ladybug/);
+    // Two steps, two lines, and the clover's line names no single source for the Gooey Mass:
+    // the Insectoid Cells are one, and Hive Overseer, Maw and The Mean Masher drop them too.
+    expect(stage3).toContain(
+      "🔄 *Four-Leaf Clover:* Use a Gooey Mass for a chance to obtain the Ladybug taming item.",
+    );
+    expect(stage3).toContain("🐎 *Ladybug:* Use a Four-Leaf Clover on a Ladybug to tame it.");
     expect(stage3).toContain("🏆 *Lovely Dots:* Tame a Ladybug, 3 achievement points.");
+    // TibiaWiki spells the mount "Lady Bug" and the creature "Ladybug"; the reader sees one.
+    expect(stage3).not.toContain("Lady Bug");
+    // The stage's own Bestiary, from the areas it opens, not one featured creature.
+    expect(stage3).toContain(
+      "🎯 *Bestiary:* Kollos, Spidris and Spidris Elite, 1,000 kills and 25 Charm Points each.",
+    );
+    expect(stage3).toContain("🎯 *Hive Overseer:* 2,500 kills, 50 Charm Points.");
+    // …and not the creatures that also live at the Hive Outpost, which are no reason to come.
+    for (const shared of ["Waspoid", "Crawler", "Spitter", "Insectoid Worker"]) {
+      expect(stage3, shared).not.toContain(shared);
+    }
     expect(stage3).toMatch(/👕 \*Insectoid Outfit:\* The quest room in the western inner Hive/);
     expect(stage3).toContain("🏆 *Hive Fighter:* Earn 300 War Exp");
     expect(stage3).toContain("🏆 *Hive War Veteran:* Earn 500 War Exp");
@@ -391,7 +460,18 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     expect(slumbering).toMatch(/🔄 \*Ornate Canopic Jars:\*/);
     expect(slumbering).toContain("🏆 *Fearless:* Break 50 Ornate Canopic Jars, 1 achievement point.");
     expect(slumbering).toMatch(/🐎 \*Scorpion King:\* Use a Scorpion Sceptre on a Sandstone Scorpion/);
-    expect(slumbering).toContain("🎯 *Sandstone Scorpion:* 1,000 kills, 25 Charm Points.");
+    // The tomb's whole undead population, not one featured creature. All seven live nowhere
+    // else and all seven cost the same, so they are one line rather than seven.
+    expect(slumbering).toContain(
+      "🎯 *Bestiary:* Death Priest, Elder Mummy, Ghoulish Hyaena, Grave Guard, Sacred Spider, Sandstone Scorpion and Tomb Servant, 1,000 kills and 25 Charm Points each.",
+    );
+    // Clay Guardian is in the same tomb and also at Middle Spike and Medusa Tower, so it is
+    // not a reason to come here.
+    expect(slumbering).not.toContain("Clay Guardian");
+    // The weakened, non-undead spawn belongs to the states after Horestis has been killed.
+    for (const after of ["Grave Robber", "Crypt Defiler", "Honour Guard"]) {
+      expect(slumbering, after).not.toContain(after);
+    }
     // The nuance everyone gets wrong: the hour is a penalty for failing, not a rate limit.
     expect(slumbering).toMatch(/Only a failed attempt locks the character out for a real-time hour/);
     expect(slumbering).not.toMatch(/one (broken )?jar per hour/i);
@@ -443,14 +523,19 @@ describe("markers say which game system a line belongs to", () => {
       setWorld(target, definition.trigger.changeId, definition.trigger.stateIds[0]!);
     } else if (definition.trigger.kind === "mini-world-change") {
       setMini(target, definition.trigger.changeId, definition.trigger.variantIds?.[0] ?? null);
+      const contentId = definition.trigger.contentIds?.[0];
+      if (contentId) {
+        target.overrides.miniWorldChanges[definition.trigger.changeId]!.contentId = contentId;
+      }
     } else {
       return null;
     }
-    const message = generateBriefingMessage(target);
-    const subject = definition.label?.en ?? definition.subject;
-    const line = message
+    // Matched on the entry's own rendered first line, not on its subject: a creature and the
+    // mount tamed from it share a name (Ladybug), so a subject match would find either.
+    const [first] = textsOf(definition);
+    const line = generateBriefingMessage(target)
       .split("\n")
-      .find((text) => text.includes(`*${subject}:*`) || text.endsWith(definition.detail.en));
+      .find((text) => text.replace(/^\S+\s+/, "").replace(/\*/g, "") === first);
     return line ? (line.split(" ")[0] ?? null) : null;
   }
 
@@ -465,9 +550,21 @@ describe("markers say which game system a line belongs to", () => {
   it("gives a mount 🐎, an achievement 🏆 and an outfit 👕", () => {
     expect(markerFor("horse-station-war-horse")).toBe("🐎");
     expect(markerFor("hive-born-lady-bug-mount")).toBe("🐎");
+    expect(markerFor("spirit-grounds-phantasm")).toBe("🎯");
     expect(markerFor("thawing-ice-harvester")).toBe("🏆");
     expect(markerFor("horestis-fearless")).toBe("🏆");
     expect(markerFor("hive-born-insectoid-outfits")).toBe("👕");
+  });
+
+  it("groups only creatures that really share one bestiary profile", () => {
+    // A grouped line states one kill count and one charm figure for everything it names, so a
+    // set with two difficulties in it has to be two entries. The numbers stay derived.
+    for (const definition of OPPORTUNITIES) {
+      if (!definition.creatures) continue;
+      expect(definition.bestiary, `${definition.id} groups without a profile`).toBeDefined();
+      expect(definition.creatures.length, `${definition.id} groups one creature`).toBeGreaterThan(1);
+      expect(definition.subject, `${definition.id}`).toBe("Bestiary");
+    }
   });
 
   it("never prints a boss or a mount as a Bestiary entry", () => {

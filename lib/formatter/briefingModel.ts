@@ -199,9 +199,10 @@ export function trendSymbol(trend: "up" | "down" | "unchanged"): string {
  * two War Exp achievements all open at once and stay open for a handful of days. The catalog
  * is curated per *state*, so the honest cap is "whatever this state actually offers", with a
  * ceiling high enough that no single change can swallow the message. Quiet states still
- * produce one or two lines, because that is all they have.
+ * produce one or two lines, because that is all they have, and only the fallen hive reaches
+ * the ceiling at all.
  */
-const OPPORTUNITIES_PER_CHANGE = 7;
+const OPPORTUNITIES_PER_CHANGE = 9;
 
 /** Where the market numbers come from. Lower-case: it is a domain, not a shout. */
 const MARKET_SOURCE = "tibiamarket.top";
@@ -281,7 +282,12 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
     const variantLabel =
       def.variants.find((variant) => variant.id === value.variantId)?.label ?? null;
-    const narrative = getMiniWorldChangeNarrative(def.id, value.variantId, input.language);
+    const narrative = getMiniWorldChangeNarrative(
+      def.id,
+      value.variantId,
+      input.language,
+      value.contentId ?? null,
+    );
 
     miniWorldChangeLines.push({
       emoji: def.emoji,

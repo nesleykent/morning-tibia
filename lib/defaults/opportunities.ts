@@ -1,5 +1,6 @@
 import type { LocalizedText, OpportunityDefinition } from "@/types/opportunity";
 import { bestiaryProfile } from "./bestiary";
+import { SPIRIT_GROUND_SETS } from "./miniWorldChanges";
 
 const WIKI = "https://tibia.fandom.com/wiki";
 
@@ -135,12 +136,12 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "mount",
     subject: "Scorpion King",
     availability: "available-today",
-    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
     detail: {
-      pt: "Use um Scorpion Sceptre em um Sandstone Scorpion do túmulo de Horestis.",
-      en: "Use a Scorpion Sceptre on a Sandstone Scorpion in the Horestis Tomb.",
-      es: "Usa un Scorpion Sceptre en un Sandstone Scorpion de la tumba de Horestis.",
-      pl: "Użyj Scorpion Sceptre na Sandstone Scorpionie w grobowcu Horestisa.",
+      pt: "Use um Scorpion Sceptre em um Sandstone Scorpion.",
+      en: "Use a Scorpion Sceptre on a Sandstone Scorpion.",
+      es: "Usa un Scorpion Sceptre en un Sandstone Scorpion.",
+      pl: "Użyj Scorpion Sceptre na Sandstone Scorpionie.",
     },
     caveat: {
       pt: "O Scorpion Sceptre pode quebrar no uso, como todo item de domesticação.",
@@ -152,19 +153,50 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [`${WIKI}/Scorpion_King`, `${WIKI}/Scorpion_Sceptre`],
   },
   {
-    id: "horestis-sandstone-scorpion",
+    id: "horestis-tomb-bestiary",
     kind: "bestiary",
-    subject: "Sandstone Scorpion",
+    subject: "Bestiary",
     availability: "available-today",
+    exclusive: true,
     bestiary: bestiaryProfile("Medium", "Rare"),
-    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering"] },
+    // The tomb's undead population, which is what is down there *before* Horestis is killed:
+    // TibiaWiki's Horestis Tomb page splits its creature lists into "when Horestis' Curse is
+    // active" and "not active", and the page's own prose says which is which ("normally
+    // populated with Undead creatures specific to the tomb... After Horestis is killed, on the
+    // next server save, the tomb's creatures will be replaced by non-undead weaker ones").
+    //
+    // All seven live nowhere else in Tibia and all seven are Medium/Rare, which is why they are
+    // one line: the kill count and the charm payout are the same fact seven times over. Clay
+    // Guardian is in the same tomb and is deliberately left out, because it also spawns at
+    // Middle Spike and Medusa Tower and so is not a reason to come here.
+    creatures: [
+      "Death Priest",
+      "Elder Mummy",
+      "Ghoulish Hyaena",
+      "Grave Guard",
+      "Sacred Spider",
+      "Sandstone Scorpion",
+      "Tomb Servant",
+    ],
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
     detail: {
-      pt: "Vivem nas Ankrahmun Pharaoh Tombs, o túmulo em que Horestis dorme.",
-      en: "They live in the Ankrahmun Pharaoh Tombs, the tomb Horestis sleeps in.",
-      es: "Viven en las Ankrahmun Pharaoh Tombs, la tumba donde duerme Horestis.",
-      pl: "Żyją w Ankrahmun Pharaoh Tombs, grobowcu, w którym śpi Horestis.",
+      pt: "A população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "The tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "La población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Nieumarła populacja grobowca, która istnieje tylko, póki Horestis nie zginie.",
     },
-    sources: [`${WIKI}/Sandstone_Scorpion`],
+    caveat: {
+      pt: "Cada jar quebrado enfraquece o spawn do seu andar no próximo Server Save.",
+      en: "Each jar broken weakens its floor's spawn at the next server save.",
+      es: "Cada jar roto debilita el spawn de su piso en el próximo Server Save.",
+      pl: "Każdy rozbity dzban osłabia spawn swojego piętra po następnym server save.",
+    },
+    sources: [
+      `${WIKI}/Horestis_Tomb`,
+      `${WIKI}/Grave_Guard`,
+      `${WIKI}/Sandstone_Scorpion`,
+      `${WIKI}/Death_Priest`,
+    ],
   },
 
   // ══ WORLD CHANGE: The Mage's Tower ═════════════════════════════════════════
@@ -326,6 +358,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "progress",
     subject: "Slime Gobbler",
     availability: "available-today",
+    leadsTo: "masters-voice-mad-mage",
     trigger: { kind: "world-change", changeId: "masters-voice", stateIds: ["passable"] },
     label: {
       pt: "Limpar o fungo",
@@ -334,10 +367,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Usunąć grzyb",
     },
     detail: {
-      pt: "Limpe pelo menos 25 Slime Fungi com o Slime Gobbler do Servant Sentry para se qualificar para o Mad Mage. Quando os 350 tiles caírem, começam as ondas de servos.",
-      en: "Clear at least 25 Slime Fungi with the Servant Sentry's Slime Gobbler to qualify for the Mad Mage. Once all 350 tiles are cleared, the servant waves begin.",
-      es: "Limpia al menos 25 Slime Fungi con el Slime Gobbler del Servant Sentry para clasificar al Mad Mage. Cuando caigan los 350 tiles, empiezan las oleadas de sirvientes.",
-      pl: "Usuń co najmniej 25 Slime Fungi Slime Gobblerem od Servant Sentry, by zakwalifikować się do Mad Mage'a. Gdy zniknie wszystkie 350 pól, ruszają fale sług.",
+      pt: "Limpe pelo menos 25 Slime Fungi com o Slime Gobbler do Servant Sentry para se qualificar para o Mad Mage. Quando todo o fungo cair, começam as ondas de servos.",
+      en: "Clear at least 25 Slime Fungi with the Servant Sentry's Slime Gobbler to qualify for the Mad Mage. Once all the fungus is cleared, the servant waves begin.",
+      es: "Limpia al menos 25 Slime Fungi con el Slime Gobbler del Servant Sentry para clasificar al Mad Mage. Cuando todo el hongo caiga, empiezan las oleadas de sirvientes.",
+      pl: "Usuń co najmniej 25 Slime Fungi Slime Gobblerem od Servant Sentry, by zakwalifikować się do Mad Mage'a. Gdy cały grzyb zniknie, ruszają fale sług.",
     },
     caveat: {
       pt: "Só é possível remover um fungo a cada 5 segundos, leve companhia.",
@@ -464,6 +497,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     kind: "item",
     subject: "Slug Drug",
     availability: "available-today",
+    leadsTo: "swamp-fever-doctor",
     trigger: { kind: "world-change", changeId: "swamp-fever", stateIds: ["under-control"] },
     detail: {
       pt: "Troque Medicine Pouches com Ottokar por Belongings of a Deceased, que podem conter o Slug Drug usado para domar um Slug e ganhar a montaria Tiger Slug.",
@@ -810,10 +844,16 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       stateIds: ["drained-quota-met", "drained-quota-open"],
     },
     detail: {
-      pt: "Pode aparecer no lado leste das Sunken Mines enquanto a mina estiver drenada, no máximo uma vez por Server Save.",
-      en: "Can appear on the east side of the Sunken Mines while the mine is drained, at most once per server save.",
-      es: "Puede aparecer en el lado este de las Sunken Mines mientras la mina esté drenada, como mucho una vez por Server Save.",
-      pl: "Może pojawić się po wschodniej stronie Sunken Mines, gdy kopalnia jest osuszona, najwyżej raz na server save.",
+      pt: "Pode aparecer na mina enquanto ela estiver drenada.",
+      en: "Can appear in the mine while it is drained.",
+      es: "Puede aparecer en la mina mientras esté drenada.",
+      pl: "Może pojawić się w kopalni, gdy jest osuszona.",
+    },
+    caveat: {
+      pt: "Ele aparece no lado leste das Sunken Mines, no máximo uma vez por Server Save.",
+      en: "He turns up on the east side of the Sunken Mines, at most once per server save.",
+      es: "Aparece en el lado este de las Sunken Mines, como mucho una vez por Server Save.",
+      pl: "Pojawia się po wschodniej stronie Sunken Mines, najwyżej raz na server save.",
     },
     achievement: {
       name: "Eye of the Deep",
@@ -1111,11 +1151,14 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       stateIds: ["stable", "dwindling", "leaving"],
     },
     detail: {
-      pt: "Vagam de Ab'Dendriel até Carlin e Ulderek's Rock, e desaparecem quando são caçados demais.",
-      en: "They roam from Ab'Dendriel out to Carlin and Ulderek's Rock, and vanish once too many are slain.",
-      es: "Vagan desde Ab'Dendriel hasta Carlin y Ulderek's Rock, y desaparecen si se cazan demasiados.",
-      pl: "Wędrują od Ab'Dendriel po Carlin i Ulderek's Rock i znikają, gdy zabije się ich zbyt wiele.",
+      pt: "Vagam de Ab'Dendriel até Carlin e Ulderek's Rock. Os chifres e o couro são vendidos a Cruleo, perto do Ferngrims Gate.",
+      en: "They roam from Ab'Dendriel out to Carlin and Ulderek's Rock. Their antlers and skin sell to Cruleo, near Ferngrims Gate.",
+      es: "Vagan desde Ab'Dendriel hasta Carlin y Ulderek's Rock. Los cuernos y la piel se venden a Cruleo, cerca de Ferngrims Gate.",
+      pl: "Wędrują od Ab'Dendriel po Carlin i Ulderek's Rock. Poroże i skóry sprzedasz Cruleo koło Ferngrims Gate.",
     },
+    // The vendor is here rather than on a line of its own: a bestiary entry's line is composed
+    // from its profile, so this reaches the catalog page without spending a line in a bulletin
+    // block that already carries the mount and two achievements.
     sources: [wc("Overhunting"), `${WIKI}/White_Deer`],
   },
   {
@@ -1192,36 +1235,6 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Enraged i Desperate White Deer pojawiają się po zabiciu zwykłego White Deera i nie mają własnego wpisu w Bestiary.",
     },
     sources: [wc("Overhunting"), `${WIKI}/Deer_Hunt`],
-  },
-  {
-    id: "overhunting-antlers",
-    kind: "item",
-    subject: "White Deer Antlers",
-    availability: "available-today",
-    trigger: {
-      kind: "world-change",
-      changeId: "overhunting",
-      stateIds: ["stable", "dwindling", "leaving"],
-    },
-    detail: {
-      pt: "Os chifres e o couro dos veados são vendidos a Cruleo, perto do Ferngrims Gate.",
-      en: "The antlers and skin sell to Cruleo, near Ferngrims Gate.",
-      es: "Los cuernos y la piel se venden a Cruleo, cerca de Ferngrims Gate.",
-      pl: "Poroże i skóry sprzedasz Cruleo koło Ferngrims Gate.",
-    },
-    caveat: {
-      pt: "Caçar demais hoje faz a população sumir amanhã.",
-      en: "Over-hunting today is what makes the population leave tomorrow.",
-      es: "Cazar de más hoy es lo que hace desaparecer la población mañana.",
-      pl: "Nadmierne polowanie dziś sprawia, że jutro populacja odejdzie.",
-    },
-    qualifier: {
-      pt: "vende para Cruleo",
-      en: "sells to Cruleo",
-      es: "se vende a Cruleo",
-      pl: "sprzedasz Cruleo",
-    },
-    sources: [wc("Overhunting")],
   },
   {
     id: "overhunting-starving-wolf",
@@ -1468,22 +1481,67 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [wc("The_Fire-Feathered_Serpent"), `${WIKI}/Seacrest_Serpent`],
   },
   {
+    // Three thresholds, not one repeated rule, and each stage is told the one that applies to
+    // it. The cumulative count is what the game counts: 1,000 Seacrest Serpents put the Serpent
+    // into its dreaming stage, and it is the 2,000th (not another 1,000 from zero) that wakes
+    // it. Saying "every 1,000 advances a stage" was close enough to sound right and wrong about
+    // the number a player is actually counting towards on the second leg.
     id: "sea-serpent-wake",
     kind: "progress",
     subject: "Fire-Feathered Serpent",
     availability: "progressable-today",
-    trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["asleep", "dreaming"] },
-    detail: {
-      pt: "Cada 1.000 Seacrest Serpents mortos no servidor avança a Serpent um estágio, e a mudança acontece na hora, sem esperar o Server Save.",
-      en: "Every 1,000 Seacrest Serpents killed server-wide advances the Serpent a stage, and the change lands at once rather than waiting for a server save.",
-      es: "Cada 1.000 Seacrest Serpents muertos en el servidor avanza una etapa, y el cambio ocurre al instante, sin esperar al Server Save.",
-      pl: "Każde 1000 zabitych Seacrest Serpentów na serwerze przesuwa etap, a zmiana następuje od razu, bez czekania na server save.",
+    trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["asleep"] },
+    label: {
+      pt: "Fazer a Serpent sonhar",
+      en: "Make the Serpent dream",
+      es: "Hacer soñar a la Serpent",
+      pl: "Wywołać sen Serpent",
     },
-    qualifier: {
-      pt: "1.000 Seacrest Serpents avançam o estágio",
-      en: "1,000 Seacrest Serpents advance the stage",
-      es: "1.000 Seacrest Serpents avanzan la etapa",
-      pl: "1000 Seacrest Serpentów przesuwa etap",
+    detail: {
+      pt: "1.000 Seacrest Serpents mortos no servidor levam a Serpent ao estágio de sonho. A mudança acontece na hora, sem esperar o Server Save.",
+      en: "1,000 Seacrest Serpents killed server-wide take the Serpent into its dreaming stage. The change lands at once, without waiting for a server save.",
+      es: "1.000 Seacrest Serpents muertos en el servidor llevan a la Serpent a su etapa de sueño. El cambio ocurre al instante, sin esperar al Server Save.",
+      pl: "1000 zabitych Seacrest Serpentów na serwerze wprowadza Serpent w etap snu. Zmiana następuje od razu, bez czekania na server save.",
+    },
+    sources: [wc("The_Fire-Feathered_Serpent")],
+  },
+  {
+    id: "sea-serpent-awaken",
+    kind: "progress",
+    subject: "Fire-Feathered Serpent",
+    availability: "progressable-today",
+    trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["dreaming"] },
+    label: {
+      pt: "Acordar a Serpent",
+      en: "Wake the Serpent",
+      es: "Despertar a la Serpent",
+      pl: "Obudzić Serpent",
+    },
+    detail: {
+      pt: "Mais 1.000 Seacrest Serpents, 2.000 no total, acordam a Serpent e trazem os Renegade Quara. A mudança acontece na hora, sem esperar o Server Save.",
+      en: "Another 1,000 Seacrest Serpents, 2,000 in all, wake the Serpent and bring the Renegade Quara. The change lands at once, without waiting for a server save.",
+      es: "Otros 1.000 Seacrest Serpents, 2.000 en total, despiertan a la Serpent y traen a los Renegade Quara. El cambio ocurre al instante, sin esperar al Server Save.",
+      pl: "Kolejne 1000 Seacrest Serpentów, łącznie 2000, budzi Serpent i sprowadza Renegade Quara. Zmiana następuje od razu, bez czekania na server save.",
+    },
+    sources: [wc("The_Fire-Feathered_Serpent")],
+  },
+  {
+    id: "sea-serpent-return-to-sleep",
+    kind: "progress",
+    subject: "Fire-Feathered Serpent",
+    availability: "progressable-today",
+    trigger: { kind: "world-change", changeId: "sea-serpent", stateIds: ["awake"] },
+    label: {
+      pt: "Fazer a Serpent dormir",
+      en: "Send the Serpent back to sleep",
+      es: "Hacer dormir a la Serpent",
+      pl: "Uśpić Serpent",
+    },
+    detail: {
+      pt: "2.000 Renegade Quara mortos no servidor devolvem a Serpent ao sono e trazem de volta as criaturas de sempre. A mudança acontece na hora, sem esperar o Server Save.",
+      en: "2,000 Renegade Quara killed server-wide send the Serpent back to sleep and bring the usual creatures back. The change lands at once, without waiting for a server save.",
+      es: "2.000 Renegade Quara muertos en el servidor devuelven a la Serpent al sueño y traen de vuelta las criaturas habituales. El cambio ocurre al instante, sin esperar al Server Save.",
+      pl: "2000 zabitych Renegade Quara na serwerze usypia Serpent i przywraca zwykłe stworzenia. Zmiana następuje od razu, bez czekania na server save.",
     },
     sources: [wc("The_Fire-Feathered_Serpent")],
   },
@@ -1536,10 +1594,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Przejęły zatopione regiony Oramond w miejsce zwykłych Quar, Sea Serpentów i Seacrest Serpentów.",
     },
     caveat: {
-      pt: "Este estado costuma durar pouco: acaba assim que 2000 Renegade Quara forem mortos.",
-      en: "This state rarely lasts long: it ends as soon as 2000 Renegade Quara are killed.",
-      es: "Este estado suele durar poco: termina en cuanto se maten 2000 Renegade Quara.",
-      pl: "Ten stan zwykle trwa krótko: kończy się po zabiciu 2000 Renegade Quar.",
+      pt: "Este estado costuma durar pouco.",
+      en: "This state rarely lasts long.",
+      es: "Este estado suele durar poco.",
+      pl: "Ten stan zwykle trwa krótko.",
     },
     sources: [wc("The_Fire-Feathered_Serpent")],
   },
@@ -1867,19 +1925,35 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [wc("Hive_Born"), `${WIKI}/Insectoid_Outfits_Quest`],
   },
   {
+    id: "hive-born-four-leaf-clover",
+    kind: "item",
+    subject: "Four-Leaf Clover",
+    availability: "available-today",
+    leadsTo: "hive-born-lady-bug-mount",
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    // Deliberately does not name a source for the Gooey Mass. There is more than one: the
+    // Insectoid Cells behind the Hive Gates yield one a week, and Hive Overseer, Maw and The
+    // Mean Masher drop them. Naming only the cells read as the only way in.
+    detail: {
+      pt: "Use uma Gooey Mass para ter chance de conseguir o item que doma a Ladybug.",
+      en: "Use a Gooey Mass for a chance to obtain the Ladybug taming item.",
+      es: "Usa una Gooey Mass para tener chance de obtener el objeto que doma a la Ladybug.",
+      pl: "Użyj Gooey Mass, by mieć szansę zdobyć przedmiot do oswojenia Ladybuga.",
+    },
+    sources: [`${WIKI}/Four-Leaf_Clover`, `${WIKI}/Gooey_Mass`],
+  },
+  {
     id: "hive-born-lady-bug-mount",
     kind: "mount",
-    subject: "Lady Bug",
+    subject: "Ladybug",
     availability: "available-today",
     exclusive: true,
     trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
-    // The clover comes from a Gooey Mass, which comes from an Insectoid Cell behind the Hive
-    // Gates. That is one chain and it is written once here, rather than a line apiece.
     detail: {
-      pt: "Use um Four-Leaf Clover em uma Ladybug. O clover sai ao usar uma Gooey Mass, obtida nas Insectoid Cells atrás dos Hive Gates com o feromônio de Orockle.",
-      en: "Use a Four-Leaf Clover on a Ladybug. The clover comes from using a Gooey Mass, taken from the Insectoid Cells behind the Hive Gates with Orockle's pheromone.",
-      es: "Usa un Four-Leaf Clover en una Ladybug. El clover sale al usar una Gooey Mass, obtenida en las Insectoid Cells tras los Hive Gates con la feromona de Orockle.",
-      pl: "Użyj Four-Leaf Clover na Ladybugu. Koniczyna wypada z użycia Gooey Mass, zdobytej z Insectoid Cells za Hive Gates z feromonem Orockle'a.",
+      pt: "Use um Four-Leaf Clover em uma Ladybug para domá-la.",
+      en: "Use a Four-Leaf Clover on a Ladybug to tame it.",
+      es: "Usa un Four-Leaf Clover en una Ladybug para domarla.",
+      pl: "Użyj Four-Leaf Clover na Ladybugu, by go oswoić.",
     },
     achievement: {
       name: "Lovely Dots",
@@ -1893,12 +1967,9 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
         pl: "Oswój Ladybuga",
       },
     },
-    sources: [
-      `${WIKI}/Lady_Bug`,
-      `${WIKI}/Four-Leaf_Clover`,
-      `${WIKI}/Gooey_Mass`,
-      `${WIKI}/Lovely_Dots`,
-    ],
+    // TibiaWiki files the mount under "Lady Bug" and the creature under "Ladybug". One name
+    // reaches the reader, and it is the creature's, because that is the one they are looking at.
+    sources: [`${WIKI}/Lady_Bug`, `${WIKI}/Four-Leaf_Clover`, `${WIKI}/Lovely_Dots`],
   },
   {
     id: "hive-born-hive-fighter",
@@ -1967,6 +2038,42 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Pojawiają się na parterze Hive i nie występują nigdzie indziej ani na innym etapie.",
     },
     sources: [wc("Hive_Born"), `${WIKI}/Ladybug`],
+  },
+  {
+    id: "hive-born-inner-hive-bestiary",
+    kind: "bestiary",
+    subject: "Bestiary",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    // The western tower's underground area, which TibiaWiki marks "only open in third stage".
+    // Waspoid, Crawler, Spitter and Insectoid Worker are in there too and are deliberately left
+    // out: they also spawn at the Hive Outpost, so they are not a reason this stage is worth a
+    // trip. Hive Overseer is in the same rooms and is Hard rather than Medium, so it is its own
+    // entry; the numbers here are derived, and a group states one cost for all of its members.
+    creatures: ["Kollos", "Spidris", "Spidris Elite"],
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "Ficam no subterrâneo da torre oeste da Hive interna, aberto só neste estágio.",
+      en: "They are in the western tower's underground area, which opens only in this stage.",
+      es: "Están en el subterráneo de la torre oeste de la Hive interna, abierto solo en esta fase.",
+      pl: "Są w podziemiach zachodniej wieży wewnętrznego Hive, otwartych tylko na tym etapie.",
+    },
+    sources: [`${WIKI}/The_Hive`, `${WIKI}/Spidris_Elite`, `${WIKI}/Kollos`],
+  },
+  {
+    id: "hive-born-hive-overseer",
+    kind: "bestiary",
+    subject: "Hive Overseer",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Hard", "Rare"),
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "O maior alvo das torres da Hive, e também uma fonte de Gooey Mass.",
+      en: "The biggest target in the Hive's towers, and a source of Gooey Mass as well.",
+      es: "El objetivo más grande de las torres de la Hive, y también una fuente de Gooey Mass.",
+      pl: "Największy cel w wieżach Hive, a przy okazji źródło Gooey Mass.",
+    },
+    sources: [`${WIKI}/Hive_Overseer`, `${WIKI}/Gooey_Mass`],
   },
 
   // ══ MINI WORLD CHANGE: Fury Gates ══════════════════════════════════════════
@@ -2147,10 +2254,10 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     exclusive: true,
     trigger: { kind: "mini-world-change", changeId: "spirit-grounds" },
     detail: {
-      pt: "Terreno de caça de undead aberto por um dia. Qual dos três conjuntos de criaturas está lá dentro não depende do portal, então confira ao chegar.",
-      en: "An undead hunting ground open for the day. Which of the three creature sets is inside does not follow the portal, so check when you arrive.",
-      es: "Terreno de caza de no-muertos abierto por un día. Cuál de los tres conjuntos de criaturas hay dentro no depende del portal, así que compruébalo al llegar.",
-      pl: "Teren łowiecki nieumarłych otwarty na jeden dzień. To, który z trzech zestawów stworzeń jest w środku, nie zależy od portalu. Sprawdź na miejscu.",
+      pt: "Terreno de caça de undead aberto por um dia.",
+      en: "An undead hunting ground open for the day.",
+      es: "Terreno de caza de no-muertos abierto por un día.",
+      pl: "Teren łowiecki nieumarłych otwarty na jeden dzień.",
     },
     caveat: {
       pt: "Contas Free não entram, nem pelo portal dos Ghostlands.",
@@ -2159,6 +2266,78 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       pl: "Konta Free nie wejdą, nawet portalem w Ghostlands.",
     },
     sources: [mwc("Spirit_Grounds"), `${WIKI}/Spirit_Grounds`],
+  },
+  // One entry per hunting ground, gated on the second axis so nothing is offered until
+  // somebody has looked through the gate. The creature names come from the same arrays the
+  // catalog and the picker use.
+  {
+    id: "spirit-grounds-ghosts",
+    kind: "bestiary",
+    subject: "Bestiary",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Easy", "Common"),
+    creatures: SPIRIT_GROUND_SETS[0].creatures,
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["ghosts"] },
+    detail: {
+      pt: "O conjunto mais leve dos três Spirit Grounds, todo ele Easy no Bestiary.",
+      en: "The lightest of the three Spirit Grounds, every entry in it Easy in the Bestiary.",
+      es: "El conjunto más ligero de los tres Spirit Grounds, todo él Easy en el Bestiary.",
+      pl: "Najlżejszy z trzech Spirit Grounds, w całości Easy w Bestiary.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`],
+  },
+  {
+    id: "spirit-grounds-nightstalkers",
+    kind: "bestiary",
+    subject: "Bestiary",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    creatures: SPIRIT_GROUND_SETS[1].creatures,
+    trigger: {
+      kind: "mini-world-change",
+      changeId: "spirit-grounds",
+      contentIds: ["nightstalkers"],
+    },
+    detail: {
+      pt: "O conjunto intermediário dos três Spirit Grounds, quatro entradas Medium juntas.",
+      en: "The middle of the three Spirit Grounds, four Medium entries in one place.",
+      es: "El conjunto intermedio de los tres Spirit Grounds, cuatro entradas Medium juntas.",
+      pl: "Środkowy z trzech Spirit Grounds, cztery wpisy Medium w jednym miejscu.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`],
+  },
+  {
+    id: "spirit-grounds-nightmares",
+    kind: "bestiary",
+    subject: "Bestiary",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    // Phantasm is Hard where the other three are Medium, so it cannot share this line: the
+    // numbers are derived from the profile and a group states one cost for all of its members.
+    creatures: SPIRIT_GROUND_SETS[2].creatures.filter((name) => name !== "Phantasm"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightmares"] },
+    detail: {
+      pt: "O conjunto mais pesado dos três Spirit Grounds.",
+      en: "The heaviest of the three Spirit Grounds.",
+      es: "El conjunto más pesado de los tres Spirit Grounds.",
+      pl: "Najcięższy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`],
+  },
+  {
+    id: "spirit-grounds-phantasm",
+    kind: "bestiary",
+    subject: "Phantasm",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Hard", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightmares"] },
+    detail: {
+      pt: "Divide o Spirit Ground mais pesado com os Nightmares, e é a única entrada Hard dos três conjuntos.",
+      en: "It shares the heaviest Spirit Ground with the Nightmares, and is the only Hard entry across the three sets.",
+      es: "Comparte el Spirit Ground más pesado con los Nightmares, y es la única entrada Hard de los tres conjuntos.",
+      pl: "Dzieli najcięższy Spirit Ground z Nightmare'ami i jest jedynym wpisem Hard w trzech zestawach.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Phantasm`],
   },
 
   // ══ MINI WORLD CHANGE: Nightmare Isles ═════════════════════════════════════

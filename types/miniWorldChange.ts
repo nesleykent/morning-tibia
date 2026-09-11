@@ -59,6 +59,12 @@ export type MiniWorldChangeStatus = "unchecked" | "inactive" | "active";
  */
 export type MiniWorldChangeVariantKind = "location" | "faction" | "phase";
 
+/**
+ * What a change's `contents` are a set of. One value today, and the field exists so a second
+ * change with a second axis has somewhere to say what its axis means.
+ */
+export type MiniWorldChangeContentKind = "creature-set";
+
 export interface MiniWorldChangeVariant {
   id: string;
   label: string;
@@ -120,6 +126,23 @@ export interface MiniWorldChangeDefinition {
    */
   variants: readonly MiniWorldChangeVariant[];
   variantKind: MiniWorldChangeVariantKind | null;
+  /**
+   * A second closed set, independent of `variants`, for a change that has two unknowns rather
+   * than one.
+   *
+   * Spirit Grounds is the case this exists for, and it is not a modelling nicety: TibiaWiki
+   * states plainly that "although there are 3 portals and 3 hunting grounds, they do not
+   * correspond", so knowing the gate is in Ghostlands tells you nothing about whether the
+   * ground behind it holds Ghouls or Phantasms. One slot could hold one of those facts and
+   * would have to throw the other away: the board and the Towncryer both name the gate, so
+   * `variants` keeps it, and what is inside has nowhere else to live.
+   *
+   * The two axes differ in kind as well as in value. A gate is announced; what is behind it is
+   * announced by nothing at all, so `contents` is settled only by going and looking, the same
+   * way an `observations` answer is.
+   */
+  contents?: readonly MiniWorldChangeVariant[];
+  contentKind?: MiniWorldChangeContentKind;
   /** Whether any in-game source announces this change at all — see the type's docs. */
   detection: MiniWorldChangeDetection;
   /**
@@ -154,5 +177,13 @@ export interface MiniWorldChangeValue {
   status: MiniWorldChangeStatus;
   /** Only meaningful while `status === "active"`; null means "active, variant unknown". */
   variantId: string | null;
+  /**
+   * Which of the definition's `contents` is inside, for the one change that has them. Null is
+   * the normal state rather than an error: nothing announces it.
+   *
+   * Optional because a value written to localStorage before this field existed parses back
+   * without it, and a stored day should keep working across a deploy.
+   */
+  contentId?: string | null;
   updatedAt: string | null;
 }

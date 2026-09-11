@@ -1,4 +1,4 @@
-import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
+import { MINI_WORLD_CHANGES_BY_ID, SPIRIT_GROUND_SETS } from "@/lib/defaults/miniWorldChanges";
 import { getTranslation, type BriefingLanguage } from "./translations";
 
 type Lang<T> = Record<BriefingLanguage, T>;
@@ -15,11 +15,24 @@ function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
  * northernmost coast": half Portuguese, half an English catalog string with its capitals
  * stripped. A variant is a closed set, so each language can simply name every member.
  */
-type Resolver = (variantId: string | null, language: BriefingLanguage) => string;
+type Resolver = (
+  variantId: string | null,
+  language: BriefingLanguage,
+  contentId: string | null,
+) => string;
 
 /** Wording that doesn't change with the variant. */
 function simple(map: Lang<string>): Resolver {
   return (_variantId, language) => pick(map, language);
+}
+
+/** "and" / "e" / "y" / "i" — the one word that changes when a list of Tibia nouns is localized. */
+const AND: Lang<string> = { pt: "e", en: "and", es: "y", pl: "i" };
+
+/** "Ghost, Ghoul, Bonelord and Mummy", with only the conjunction translated. */
+function creatureList(creatures: readonly string[], language: BriefingLanguage): string {
+  if (creatures.length <= 1) return creatures[0] ?? "";
+  return `${creatures.slice(0, -1).join(", ")} ${pick(AND, language)} ${creatures[creatures.length - 1]}`;
 }
 
 /**
@@ -266,12 +279,50 @@ const NARRATIVES: Record<string, Resolver> = {
     es: "Un gran iceberg encalló en la costa al norte de Port Hope, habitado por extrañas criaturas peludas.",
     pl: "Wielka góra lodowa osiadła na wybrzeżu na północ od Port Hope, zamieszkana przez dziwne włochate stwory.",
   }),
-  "spirit-grounds": byNamedVariant(everyLanguage(REGION_NAMES), {
-    pt: (region) => `Um Spirit Gate está aberto em ${region ?? "uma das três regiões"}.`,
-    en: (region) => `A Spirit Gate is open in ${region ?? "one of the three regions"}.`,
-    es: (region) => `Hay un Spirit Gate abierto en ${region ?? "una de las tres regiones"}.`,
-    pl: (region) => `Spirit Gate jest otwarta w ${region ?? "jednym z trzech regionów"}.`,
-  }),
+  // Two unknowns, answered separately: the board names the region, and nothing at all names
+  // which of the three hunting grounds is behind the gate.
+  "spirit-grounds": (variantId, language, contentId) => {
+    const region = variantId ? REGION_NAMES[variantId] : null;
+    const gate = pick(
+      {
+        pt: `Um Spirit Gate está aberto em ${region ?? "uma das três regiões"}.`,
+        en: `A Spirit Gate is open in ${region ?? "one of the three regions"}.`,
+        es: `Hay un Spirit Gate abierto en ${region ?? "una de las tres regiones"}.`,
+        pl: `Spirit Gate jest otwarta w ${region ?? "jednym z trzech regionów"}.`,
+      },
+      language,
+    );
+
+    const set = SPIRIT_GROUND_SETS.find((candidate) => candidate.id === contentId);
+    if (set) {
+      const creatures = creatureList(set.creatures, language);
+      return `${gate} ${pick(
+        {
+          pt: `Do outro lado estão ${creatures}.`,
+          en: `Behind it are ${creatures}.`,
+          es: `Del otro lado están ${creatures}.`,
+          pl: `Po drugiej stronie są ${creatures}.`,
+        },
+        language,
+      )}`;
+    }
+
+    // Semicolons, not commas: each option is itself a list of four creatures, and a comma
+    // join ran the twelve of them into one unreadable string.
+    const options = getTranslation(language).orList(
+      SPIRIT_GROUND_SETS.map((candidate) => creatureList(candidate.creatures, language)),
+      "; ",
+    );
+    return `${gate} ${pick(
+      {
+        pt: `Ainda não conferimos qual conjunto de criaturas está ativo nos Spirit Grounds. Pode ser: ${options}.`,
+        en: `We haven't checked which creature set is active in the Spirit Grounds yet. It can be: ${options}.`,
+        es: `Todavía no comprobamos qué conjunto de criaturas está activo en los Spirit Grounds. Puede ser: ${options}.`,
+        pl: `Nie sprawdziliśmy jeszcze, który zestaw stworzeń jest aktywny w Spirit Grounds. Może to być: ${options}.`,
+      },
+      language,
+    )}`;
+  },
   "nightmare-isles": byNamedVariant(NIGHTMARE_PORTALS, {
     pt: (place) =>
       place
@@ -496,9 +547,10 @@ export function getMiniWorldChangeNarrative(
   changeId: string,
   variantId: string | null,
   language: BriefingLanguage,
+  contentId: string | null = null,
 ): string | null {
   const resolver = NARRATIVES[changeId];
-  return resolver ? resolver(variantId, language) : null;
+  return resolver ? resolver(variantId, language, contentId) : null;
 }
 
 /**

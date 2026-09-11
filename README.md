@@ -501,13 +501,32 @@ used to reach a guild channel.
 two, which is right for a lake that is merely clean and wrong for a fallen hive, where six Bane
 bosses, a mount that exists nowhere else, an outfit room and two War Exp achievements open at
 once. The catalog is curated per *state*, so a state contributes what it actually offers, up to
-a ceiling of seven, plus any deadline-bound line, which is admitted on top of the cap because it
+a ceiling of nine, plus any deadline-bound line, which is admitted on top of the cap because it
 is the only tier that is worthless read tomorrow. Quiet states still produce one or two lines,
-because that is all they have.
+because that is all they have, and only the fallen hive reaches the ceiling.
+
+**Creatures that share a bestiary profile share a line.** Seven creatures live in the Horestis
+Tomb and nowhere else, and every one of them is Medium/Rare, so seven lines would print the same
+kill count and charm figure seven times. Named together they read as what they are, and the
+numbers are still derived from the profile rather than typed, so a set with two difficulties in
+it has to be two entries: Phantasm is Hard where the rest of its Spirit Ground is Medium, and
+gets its own line for exactly that reason.
+
+**A step sorts in front of what it feeds.** A Gooey Mass gives a Four-Leaf Clover and the clover
+tames the Ladybug. The mount outranks the clover on every ordering key, which had the bulletin
+telling a reader to use an item two lines before it said where one comes from; `leadsTo` places
+the step directly ahead of its target, after the comparator has run rather than inside it.
+
+**Some changes have two unknowns, not one.** TibiaWiki says outright that the Spirit Grounds'
+"3 portals and 3 hunting grounds... do not correspond", so knowing the gate is in Ghostlands
+says nothing about whether Ghouls or Phantasms are behind it. The board and the Towncryer name
+the gate, and nothing names the ground, so the definition carries a second closed set
+(`contents`) alongside `variants` and the page asks for both. One slot would have had to throw
+one of the two facts away.
 
 **An unchecked selectable state names its options.** Fury Gates, the Nomad camps, Trapwood's
-two factions and the rest are closed sets that no in-game source announces; somebody has to go
-and look. The bulletin used to say "which one isn't known yet", which tells the reader the
+two factions, the Spirit Grounds' three hunting grounds and the rest are closed sets that no
+in-game source announces; somebody has to go and look. The bulletin used to say "which one isn't known yet", which tells the reader the
 answer is out of reach. It now says *We haven't checked which Fury Gate is active yet. It can be
 near one of these cities: …*, with the list built from the same catalog the picker is built
 from, so adding a city to the catalog adds it to the sentence the same day.

@@ -167,6 +167,17 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
           next.variantId = null;
         }
 
+        // The second axis, held to the same two rules: it cannot outlive the change being
+        // active, and it cannot hold a value the definition does not list.
+        const contentId = next.contentId ?? null;
+        if (
+          next.status !== "active" ||
+          (contentId !== null &&
+            !definition?.contents?.some((content) => content.id === contentId))
+        ) {
+          next.contentId = null;
+        }
+
         return {
           ...prev,
           miniWorldChanges: { ...prev.miniWorldChanges, [id]: next },

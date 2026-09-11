@@ -14,9 +14,18 @@ import type { LocalizedText } from "@/types/opportunity";
  * ## Shape
  *
  * One entry per event, matched on the title the wiki's own Upcoming Events gadget prints (see
- * lib/data/wikiContentClient.ts), the same way `eventEmoji` matches. Each carries at most two
+ * lib/data/wikiContentClient.ts), the same way `eventEmoji` matches. Each carries two or three
  * notes, because this is a preview and not the quest spoiler: enough to decide whether to
  * prepare, never enough to replace the wiki.
+ *
+ * ## What earns a line
+ *
+ * Only something specific to, or characteristic of, *this* event: a boss that exists nowhere
+ * else, an achievement only this event grants, a mount, an outfit, a reward you cannot buy. An
+ * achievement that happens to be obtainable here and in five other places is not a reason to
+ * come. I Did My Part is the case that made the rule: it is granted by every world quest going
+ * (Rise of Devovorga, the Lightbearer, Bewitched, A Piece of Cake, the Colours of Magic), so
+ * listing it under one of them told the reader it was that event's prize.
  *
  * `dayOfMonth` is the one piece of derived data here. An event with a boss or a window on a
  * fixed day of the month (Feroxa, always the 13th) has that day rendered as a real date, worked
@@ -95,24 +104,38 @@ export const EVENT_PREVIEWS: readonly EventPreview[] = [
       {
         emoji: "🔴🔵🟢",
         text: {
-          pt: "Escolha uma cor e ajude seu mago entregando os pós da cor certa. A cor vencedora decide a recompensa disponível depois do evento.",
-          en: "Choose a colour and help your wizard by delivering colour-specific powders. The winning colour determines the reward available after the event.",
-          es: "Elige un color y ayuda a tu mago entregando los polvos de ese color. El color ganador decide la recompensa disponible tras el evento.",
-          pl: "Wybierz kolor i pomóż swojemu magowi, dostarczając proszki w jego barwie. Zwycięski kolor decyduje o nagrodzie po wydarzeniu.",
+          pt: "Escolha uma cor e ajude seu mago entregando os pós da cor certa. A cor vencedora decide o bônus que o servidor inteiro recebe por uma semana.",
+          en: "Choose a colour and help your wizard by delivering colour-specific powders. The winning colour decides the bonus the whole server gets for a week.",
+          es: "Elige un color y ayuda a tu mago entregando los polvos de ese color. El color ganador decide el bono que todo el servidor recibe por una semana.",
+          pl: "Wybierz kolor i pomóż swojemu magowi, dostarczając proszki w jego barwie. Zwycięski kolor decyduje o bonusie dla całego serwera na tydzień.",
+        },
+      },
+      {
+        emoji: "🎁",
+        subject: "Zaoan Chess Pieces",
+        text: {
+          pt: "Entrar em um mago e marcar outros jogadores rende bonus points, que compram peças no representante do seu mago. São 30 por personagem, no máximo.",
+          en: "Joining a wizard and tagging other players earns bonus points, which buy pieces at your wizard's representative. 30 per character at most.",
+          es: "Unirte a un mago y marcar a otros jugadores da bonus points, que compran piezas en el representante de tu mago. 30 por personaje como máximo.",
+          pl: "Dołączenie do maga i oznaczanie innych graczy daje bonus points, za które kupisz figury u przedstawiciela swojego maga. Najwyżej 30 na postać.",
         },
       },
       {
         emoji: "🏆",
-        subject: "I Did My Part",
+        subject: "True Colours",
         text: {
-          pt: "Basta combinar seu pó com o de outro jogador de cor diferente para entrar em um dos três magos.",
-          en: "Combining your powder with a differently marked player is enough to join one of the three wizards.",
-          es: "Basta combinar tu polvo con el de otro jugador de color distinto para unirte a uno de los tres magos.",
-          pl: "Wystarczy połączyć swój proszek z proszkiem gracza w innym kolorze, by dołączyć do jednego z trzech magów.",
+          pt: "Participe do evento três vezes, 3 achievement points.",
+          en: "Take part in the event three times, 3 achievement points.",
+          es: "Participa en el evento tres veces, 3 achievement points.",
+          pl: "Weź udział w wydarzeniu trzy razy, 3 pkt achievement.",
         },
       },
     ],
-    sources: [`${WIKI}/The_Colours_of_Magic/Spoiler`, `${WIKI}/I_Did_My_Part`],
+    sources: [
+      `${WIKI}/The_Colours_of_Magic/Spoiler`,
+      `${WIKI}/Zaoan_Chess_Piece`,
+      `${WIKI}/True_Colours`,
+    ],
   },
   {
     match: "Rise of Devovorga",
@@ -121,10 +144,10 @@ export const EVENT_PREVIEWS: readonly EventPreview[] = [
         emoji: "👹",
         subject: "Devovorga",
         text: {
-          pt: "Cinco encarnações levam ao boss principal em Ferumbras' Tower; entrar em qualquer sala já dá o I Did My Part.",
-          en: "Five incarnations lead to the main boss at Ferumbras' Tower; entering any of their rooms already grants I Did My Part.",
-          es: "Cinco encarnaciones llevan al boss principal en Ferumbras' Tower; entrar en cualquier sala ya da I Did My Part.",
-          pl: "Pięć wcieleń prowadzi do głównego bossa w Ferumbras' Tower; wejście do dowolnej sali już daje I Did My Part.",
+          pt: "Cinco encarnações espalhadas pelo mundo levam ao boss principal em Ferumbras' Tower, com as Devovorga's Tentacles como loot exclusivo.",
+          en: "Five incarnations around the world lead to the main boss at Ferumbras' Tower, with Devovorga's Tentacles as the event's own loot.",
+          es: "Cinco encarnaciones por todo el mundo llevan al boss principal en Ferumbras' Tower, con las Devovorga's Tentacles como loot propio del evento.",
+          pl: "Pięć wcieleń rozsianych po świecie prowadzi do głównego bossa w Ferumbras' Tower, z Devovorga's Tentacles jako własnym lootem wydarzenia.",
         },
       },
     ],
@@ -211,14 +234,14 @@ export const EVENT_PREVIEWS: readonly EventPreview[] = [
       {
         emoji: "🎃",
         text: {
-          pt: "O Bewitched world quest abre o caldeirão de Wyda; ajudar com ingredientes ou lenha já dá o I Did My Part.",
-          en: "The Bewitched world quest opens Wyda's cauldron; adding an ingredient or wood already grants I Did My Part.",
-          es: "El world quest Bewitched abre el caldero de Wyda; añadir un ingrediente o leña ya da I Did My Part.",
-          pl: "World quest Bewitched otwiera kocioł Wydy; dorzucenie składnika lub drewna już daje I Did My Part.",
+          pt: "O Bewitched world quest abre o caldeirão de Wyda, e a sala de recompensa dá os itens de Halloween do ano.",
+          en: "The Bewitched world quest opens Wyda's cauldron, and its reward room holds the year's Halloween items.",
+          es: "El world quest Bewitched abre el caldero de Wyda, y su sala de recompensa da los objetos de Halloween del año.",
+          pl: "World quest Bewitched otwiera kocioł Wydy, a sala nagród kryje tegoroczne przedmioty na Halloween.",
         },
       },
     ],
-    sources: [`${WIKI}/Bewitched`, `${WIKI}/I_Did_My_Part`],
+    sources: [`${WIKI}/Bewitched`],
   },
   {
     match: "Winterlight Solstice",

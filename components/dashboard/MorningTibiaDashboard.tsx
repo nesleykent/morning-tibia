@@ -106,6 +106,8 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
         return;
       }
       if (kind === "mwc") state.updateMiniWorldChange(id, { variantId: optionId });
+      // What is behind the gate, which is a different question from where the gate is.
+      if (kind === "content") state.updateMiniWorldChange(id, { contentId: optionId });
       if (kind === "merchant") {
         state.updateMerchant("yasir", { location: optionId, activityState: "location-known" });
       }

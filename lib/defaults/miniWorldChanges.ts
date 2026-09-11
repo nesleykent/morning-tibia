@@ -77,6 +77,25 @@ const NOMAD_CAMPS = [
   "Northeast of the Ancient Ruins Tomb",
 ] as const;
 
+/**
+ * The three hunting grounds behind a Spirit Gate, which do not follow the gate: TibiaWiki says
+ * outright that "although there are 3 portals and 3 hunting grounds, they do not correspond".
+ * Named by their creatures rather than by "easy/hard", because the creature set is what a
+ * player is deciding about.
+ */
+export const SPIRIT_GROUND_SETS = [
+  { id: "ghosts", creatures: ["Ghost", "Ghoul", "Bonelord", "Mummy"] },
+  { id: "nightstalkers", creatures: ["Nightstalker", "Banshee", "Souleater", "Braindeath"] },
+  { id: "nightmares", creatures: ["Nightmare", "Nightmare Scion", "Spectre", "Phantasm"] },
+] as const;
+
+/** "Ghost, Ghoul, Bonelord and Mummy" — the set's creatures, as an English label. */
+function englishList(items: readonly string[]): string {
+  return items.length <= 1
+    ? (items[0] ?? "")
+    : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 const WARPATH_LOCATIONS = [
   "North of the Jakundaf Desert",
   "North of Carlin",
@@ -192,11 +211,20 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     briefingLocation: "Ghostlands",
     variants: toVariants(["Darama", "Ghostlands", "Vengoth"]),
     variantKind: "location",
+    // Built from the creature arrays rather than typed out again, so the picker, the catalog
+    // page, the bulletin's sentence and the opportunity entries all name the same creatures.
+    contents: SPIRIT_GROUND_SETS.map((set) => ({
+      id: set.id,
+      label: englishList(set.creatures),
+    })),
+    contentKind: "creature-set",
     detection: "announced",
     boardNamesVariant: true,
     towncryerNamesVariant: true,
+    howToCheck:
+      "Step through the gate and look at what is in there; no source names which of the three hunting grounds it is.",
     description:
-      "A gate to the spirit grounds opens in one of three regions. Both the board and the Towncryer name which one.",
+      "A gate to the spirit grounds opens in one of three regions, and one of three undead hunting grounds is behind it. Both the board and the Towncryer name the region. Neither names the hunting ground, which does not follow the region.",
   },
   {
     id: "nightmare-isles",

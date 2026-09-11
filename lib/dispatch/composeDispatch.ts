@@ -91,6 +91,28 @@ function blankFor(entry: MiniWorldChangeEntry): Segment {
  * change is running at all, where a `mwc:` pick only ever names a variant of a change already
  * known to be running.
  */
+/**
+ * The picker for the second thing a change can leave open.
+ *
+ * Spirit Grounds is the only one: the board names the region and names nothing about the
+ * hunting ground behind the gate, which does not follow the region. `content:` rather than
+ * `mwc:` because it writes a different field, and a plain list rather than the spatial picker
+ * because a creature set is not a place.
+ */
+function contentBlankFor(entry: MiniWorldChangeEntry): Segment {
+  const { definition, value } = entry;
+  const contents = definition.contents ?? [];
+  const known = contents.find((content) => content.id === (value.contentId ?? null)) ?? null;
+  return {
+    kind: "blank",
+    target: `content:${definition.id}`,
+    ask: "which creatures",
+    value: known?.label ?? null,
+    options: contents.map((content) => ({ id: content.id, label: content.label })),
+    spatial: false,
+  };
+}
+
 function observationBlankFor(entry: MiniWorldChangeEntry): Segment {
   const { definition, value } = entry;
   const observations = definition.observations ?? [];
@@ -128,7 +150,13 @@ function clauseFor(entry: MiniWorldChangeEntry): Segment[] {
     case "jungle-camp":
       return [t("Hunters and dworcs are fighting over Trapwood; "), blankFor(entry), t(".")];
     case "spirit-grounds":
-      return [t("A spirit gate stands open in "), blankFor(entry), t(".")];
+      return [
+        t("A spirit gate stands open in "),
+        blankFor(entry),
+        t(", and behind it are "),
+        contentBlankFor(entry),
+        t("."),
+      ];
     case "nightmare-isles":
       return [t("A sandstorm has opened the Nightmare Isles at "), blankFor(entry), t(".")];
     case "poacher-caves":

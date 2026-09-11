@@ -176,7 +176,7 @@ describe("opportunity catalog", () => {
     // Nothing about White Deer may be offered in the starving-wolf state, and nothing about
     // Wild Horses while the horses are penned.
     const deerStates = ["stable", "dwindling", "leaving"];
-    for (const id of ["overhunting-white-deer", "overhunting-kingly-deer", "overhunting-antlers"]) {
+    for (const id of ["overhunting-white-deer", "overhunting-kingly-deer", "overhunting-deer-hunt"]) {
       const trigger = byId.get(id)!.trigger;
       expect(trigger.kind === "world-change" && trigger.stateIds, id).toEqual(deerStates);
     }

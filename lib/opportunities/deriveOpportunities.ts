@@ -55,6 +55,12 @@ export function deriveOpportunities(input: OpportunityInput): Opportunity[] {
       if (trigger.variantIds && (value.variantId === null || !trigger.variantIds.includes(value.variantId))) {
         continue;
       }
+      // The second axis, gated exactly like the first: nobody has looked behind the Spirit
+      // Gate, so nothing that depends on which ground is back there may be offered.
+      const contentId = value.contentId ?? null;
+      if (trigger.contentIds && (contentId === null || !trigger.contentIds.includes(contentId))) {
+        continue;
+      }
 
       const variantLabel = def.variants.find((v) => v.id === value.variantId)?.label ?? null;
       opportunities.push({
@@ -99,7 +105,8 @@ export function deriveOpportunities(input: OpportunityInput): Opportunity[] {
     });
   }
 
-  return opportunities.sort((a, b) => {
+  return orderChains(
+    opportunities.sort((a, b) => {
     const byAvailability =
       AVAILABILITY_RANK[a.definition.availability] - AVAILABILITY_RANK[b.definition.availability];
     if (byAvailability !== 0) return byAvailability;
@@ -121,5 +128,38 @@ export function deriveOpportunities(input: OpportunityInput): Opportunity[] {
     // would have to be defined for every kind, and a boss has no charm value to define it
     // with, so the tie is broken by name and the choice stays predictable.
     return a.definition.subject.localeCompare(b.definition.subject);
-  });
+    }),
+  );
+}
+
+/**
+ * Moves a step to sit directly in front of the thing it is a step towards.
+ *
+ * Applied after the ordering rules rather than inside them, because it is not a ranking: the
+ * two entries could rank anywhere relative to each other and the reader still has to meet the
+ * item before the line that says to use it. Running it afterwards also keeps the comparator a
+ * clean total order, which is the property the ordering test exists to protect.
+ *
+ * A feeder whose target is not on today's list stays where the comparator put it, and a cycle
+ * cannot form, because each entry is placed at most once.
+ */
+function orderChains(ordered: Opportunity[]): Opportunity[] {
+  const feeders = new Map<string, Opportunity[]>();
+  for (const opportunity of ordered) {
+    const target = opportunity.definition.leadsTo;
+    if (!target) continue;
+    if (!ordered.some((candidate) => candidate.definition.id === target)) continue;
+    feeders.set(target, [...(feeders.get(target) ?? []), opportunity]);
+  }
+  if (feeders.size === 0) return ordered;
+
+  const moved = new Set(
+    [...feeders.values()].flat().map((opportunity) => opportunity.definition.id),
+  );
+  const result: Opportunity[] = [];
+  for (const opportunity of ordered) {
+    if (moved.has(opportunity.definition.id)) continue;
+    result.push(...(feeders.get(opportunity.definition.id) ?? []), opportunity);
+  }
+  return result;
 }

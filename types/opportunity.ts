@@ -41,6 +41,12 @@ export type OpportunityTrigger =
        * unknown variant therefore does NOT satisfy it.
        */
       variantIds?: readonly string[];
+      /**
+       * Restrict to particular `contents` of the change, for one that has a second axis.
+       * Same rule as `variantIds`: an unknown value does NOT satisfy it, which is what keeps
+       * the briefing from offering Phantasms on a day nobody has looked behind the gate.
+       */
+      contentIds?: readonly string[];
     }
   | { kind: "world-change"; changeId: string; stateIds: readonly string[] }
   | { kind: "merchant"; merchantId: MerchantId };
@@ -128,6 +134,19 @@ export interface OpportunityDefinition {
   /** Set for `kind: "bestiary"`. Derived, never hand-typed — see lib/defaults/bestiary.ts. */
   bestiary?: BestiaryProfile;
   /**
+   * Several creatures that share one bestiary profile, written as one line instead of five.
+   *
+   * The Horestis Tomb is the case that forced it: seven creatures live there and nowhere else,
+   * and every one of them is Medium/Rare, so five kills and a charm figure repeated seven times
+   * is the same fact printed seven times. Named together they read as what they are, a tomb
+   * full of 1,000-kill entries, and the block stays short enough to scan.
+   *
+   * Only valid alongside `bestiary`, and only where the profile really is shared: the numbers
+   * still come from `bestiaryProfile`, so a set with two difficulties in it has to be two
+   * entries. A test enforces both.
+   */
+  creatures?: readonly string[];
+  /**
    * Set for `kind: "achievement"`, and for any other kind that also grants one.
    *
    * `requirement` is what earns it, in one clause, and it is a field of its own rather than a
@@ -177,6 +196,16 @@ export interface OpportunityDefinition {
   /** Anything that must already be true of the character before today helps at all. English:
    * these are quest and item names, and they are only rendered on the English catalog page. */
   prerequisites?: readonly string[];
+  /**
+   * The id of the opportunity this one is a step towards, when two entries are one errand.
+   *
+   * The Ladybug is the case: a Gooey Mass gives a Four-Leaf Clover and the clover tames the
+   * mount. Both deserve their own line, and the ordering rules put the mount first because it
+   * is the thing that exists only in this stage, which left the bulletin telling a reader to
+   * use an item two lines before saying where the item comes from. A feeder sorts immediately
+   * ahead of what it feeds, and is otherwise ordered normally.
+   */
+  leadsTo?: string;
   /** Where every claim above was verified. At least one URL. */
   sources: readonly string[];
 }

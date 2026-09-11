@@ -30,14 +30,14 @@ describe("deriveOpportunities", () => {
   });
 
   describe("the same change offers different things in different states", () => {
-    it("offers the deer, the mount and the antler trade while deer are in the region", () => {
+    it("offers the deer and the mount while deer are in the region", () => {
       const input = baseInput();
       setWorldChange(input, "overhunting", "stable");
       expect(ids(input)).toEqual(
         expect.arrayContaining([
           "overhunting-white-deer",
           "overhunting-kingly-deer",
-          "overhunting-antlers",
+          "overhunting-deer-hunt",
         ]),
       );
       expect(ids(input)).not.toContain("overhunting-starving-wolf");
@@ -51,7 +51,7 @@ describe("deriveOpportunities", () => {
       for (const blocked of [
         "overhunting-white-deer",
         "overhunting-kingly-deer",
-        "overhunting-antlers",
+        "overhunting-deer-hunt",
       ]) {
         expect(ids(input)).not.toContain(blocked);
       }
@@ -187,7 +187,16 @@ describe("deriveOpportunities", () => {
         o.definition.prerequisites?.length ?? 0,
       ] as const;
 
-    const sorted = deriveOpportunities(input);
+    // Chain steps are placed after the comparator has run and are deliberately not ranked, so
+    // they are excluded here: this test is about the comparator being a total order.
+    const sorted = deriveOpportunities(input).filter(
+      (o) => !o.definition.leadsTo && !sortedIsChainTarget(o),
+    );
+    function sortedIsChainTarget(candidate: ReturnType<typeof deriveOpportunities>[number]) {
+      return deriveOpportunities(input).some(
+        (other) => other.definition.leadsTo === candidate.definition.id,
+      );
+    }
     for (let i = 1; i < sorted.length; i += 1) {
       const previous = rank(sorted[i - 1]!);
       const current = rank(sorted[i]!);
@@ -202,6 +211,23 @@ describe("deriveOpportunities", () => {
         expect(previous[firstDifference]!, `position ${i}`).toBeLessThan(current[firstDifference]!);
       }
     }
+  });
+
+  it("puts a chain step directly in front of what it feeds", () => {
+    // Two entries, one errand: a Gooey Mass gives the clover and the clover tames the mount.
+    // The mount outranks the clover on every ordering key, which left the bulletin saying "use
+    // a Four-Leaf Clover" two lines before it said where one comes from.
+    const input = baseInput();
+    setWorldChange(input, "hive-born", "fallen");
+    const order = ids(input);
+    expect(order.indexOf("hive-born-four-leaf-clover")).toBe(
+      order.indexOf("hive-born-lady-bug-mount") - 1,
+    );
+
+    // A step whose target is not on today's list is ordered normally, not dropped.
+    const alone = baseInput();
+    setWorldChange(alone, "masters-voice", "passable");
+    expect(ids(alone)).toContain("masters-voice-gobbling");
   });
 
   it("represents Their Master's Voice by one servant, with the set named in its own line", () => {

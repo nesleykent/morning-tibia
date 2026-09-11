@@ -75,6 +75,28 @@ describe("Mini World Change catalog", () => {
     );
   });
 
+  it("gives Spirit Grounds its second axis, and nothing else one", () => {
+    // TibiaWiki: "although there are 3 portals and 3 hunting grounds, they do not correspond".
+    // Two independent unknowns, so two fields; one slot would have to discard one of them.
+    const withContents = MINI_WORLD_CHANGE_DEFINITIONS.filter((d) => (d.contents?.length ?? 0) > 0);
+    expect(withContents.map((d) => d.id)).toEqual(["spirit-grounds"]);
+
+    const spirit = withContents[0]!;
+    expect(spirit.contents).toHaveLength(3);
+    expect(spirit.contentKind).toBe("creature-set");
+    // The gate is announced by both sources; what is behind it is announced by neither, so it
+    // needs the same "go and look" sentence a silent change gets.
+    expect(spirit.boardNamesVariant).toBe(true);
+    expect(spirit.howToCheck).toBeTruthy();
+
+    const ids = spirit.contents!.map((content) => content.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    // Every option really names its creatures, so the picker and the bulletin can print it.
+    for (const content of spirit.contents!) {
+      expect(content.label.split(/,| and /).length, content.id).toBe(4);
+    }
+  });
+
   it("records that Fury Gates can appear at any of ten cities", () => {
     const fury = MINI_WORLD_CHANGE_DEFINITIONS.find((d) => d.id === "fury-gates")!;
     expect(fury.variants).toHaveLength(10);

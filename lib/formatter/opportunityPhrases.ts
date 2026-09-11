@@ -113,6 +113,27 @@ function killsPhrase(kills: number, language: BriefingLanguage): string {
   );
 }
 
+/** "Death Priest, Elder Mummy and Grave Guard" — Tibia nouns, localized conjunction only. */
+function creatureListPhrase(creatures: readonly string[], language: BriefingLanguage): string {
+  if (creatures.length <= 1) return creatures[0] ?? "";
+  const and = pick({ pt: "e", en: "and", es: "y", pl: "i" }, language);
+  return `${creatures.slice(0, -1).join(", ")} ${and} ${creatures[creatures.length - 1]}`;
+}
+
+/** "1.000 mortes e 25 Charm Points cada" — the shared cost of a grouped bestiary line. */
+function eachPhrase(kills: number, charmPoints: number, language: BriefingLanguage): string {
+  const count = kills.toLocaleString(NUMBER_LOCALE[language]);
+  return pick(
+    {
+      pt: `${count} mortes e ${charmPoints} Charm Points cada`,
+      en: `${count} kills and ${charmPoints} Charm Points each`,
+      es: `${count} muertes y ${charmPoints} Charm Points cada uno`,
+      pl: `po ${count} zabójstw i ${charmPoints} Charm Points`,
+    },
+    language,
+  );
+}
+
 function pointsPhrase(points: number, language: BriefingLanguage): string {
   return pick(
     {
@@ -204,10 +225,15 @@ function headlineNote(
   const { availability } = definition;
 
   if (definition.bestiary) {
-    const facts = [
-      killsPhrase(definition.bestiary.kills, language),
-      `${definition.bestiary.charmPoints} Charm Points`,
-    ];
+    const { kills, charmPoints } = definition.bestiary;
+    // A group names its creatures and then says the cost once, with "each", because that is
+    // the whole reason it is one line: the numbers are the same for all of them.
+    const facts = definition.creatures
+      ? [
+          creatureListPhrase(definition.creatures, language),
+          eachPhrase(kills, charmPoints, language),
+        ]
+      : [killsPhrase(kills, language), `${charmPoints} Charm Points`];
     if (qualifier) facts.push(qualifier);
     return {
       icon: "bestiary",

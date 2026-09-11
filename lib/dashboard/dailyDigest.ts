@@ -93,8 +93,12 @@ export function buildDailyDigest(
     const value = miniValues[definition.id];
     if (!value) continue;
 
+    // Either axis being open is work only the player can do. Spirit Grounds has two, and a
+    // named region with nobody having looked through the gate is still a half-answered day.
     const wantsVariant =
-      value.status === "active" && definition.variants.length > 0 && value.variantId === null;
+      value.status === "active" &&
+      ((definition.variants.length > 0 && value.variantId === null) ||
+        ((definition.contents?.length ?? 0) > 0 && (value.contentId ?? null) === null));
     const entry: MiniWorldChangeEntry = { definition, value, needsVariant: wantsVariant };
 
     // An always-active change (Forsaken) is running by definition, so it never counts as
