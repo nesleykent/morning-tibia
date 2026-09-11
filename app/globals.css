@@ -321,3 +321,8 @@ body {
   }
 }
 .dispatch-silent-entry > :first-child { font-weight: 600; color: hsl(var(--ink)); }
+
+/* Very small phones need two chrome rows to keep the clock and timezone legible. */
+@media (max-width: 379px) {
+  :root { --appbar-h: 4.5rem; }
+}
