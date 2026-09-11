@@ -1,6 +1,5 @@
 import type { LocalizedText, OpportunityDefinition } from "@/types/opportunity";
 import { bestiaryProfile } from "./bestiary";
-import { SPIRIT_GROUND_SETS } from "./miniWorldChanges";
 
 const WIKI = "https://tibia.fandom.com/wiki";
 
@@ -153,53 +152,117 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [`${WIKI}/Scorpion_King`, `${WIKI}/Scorpion_Sceptre`],
   },
   {
-    id: "horestis-tomb-bestiary",
+    id: "horestis-death-priest",
     kind: "bestiary",
-    subject: "Bestiary",
+    subject: "Death Priest",
     availability: "available-today",
     exclusive: true,
     bestiary: bestiaryProfile("Medium", "Rare"),
-    // The tomb's undead population, which is what is down there *before* Horestis is killed:
-    // TibiaWiki's Horestis Tomb page splits its creature lists into "when Horestis' Curse is
-    // active" and "not active", and the page's own prose says which is which ("normally
-    // populated with Undead creatures specific to the tomb... After Horestis is killed, on the
-    // next server save, the tomb's creatures will be replaced by non-undead weaker ones").
-    //
-    // All seven live nowhere else in Tibia and all seven are Medium/Rare, which is why they are
-    // one line: the kill count and the charm payout are the same fact seven times over. Clay
-    // Guardian is in the same tomb and is deliberately left out, because it also spawns at
-    // Middle Spike and Medusa Tower and so is not a reason to come here.
-    creatures: [
-      "Death Priest",
-      "Elder Mummy",
-      "Ghoulish Hyaena",
-      "Grave Guard",
-      "Sacred Spider",
-      "Sandstone Scorpion",
-      "Tomb Servant",
-    ],
     trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
     detail: {
-      pt: "A população undead do túmulo, que só existe enquanto Horestis não for morto.",
-      en: "The tomb's undead population, which only exists while Horestis is still unkilled.",
-      es: "La población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
-      pl: "Nieumarła populacja grobowca, która istnieje tylko, póki Horestis nie zginie.",
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
     },
-    caveat: {
-      pt: "Cada jar quebrado enfraquece o spawn do seu andar no próximo Server Save.",
-      en: "Each jar broken weakens its floor's spawn at the next server save.",
-      es: "Cada jar roto debilita el spawn de su piso en el próximo Server Save.",
-      pl: "Każdy rozbity dzban osłabia spawn swojego piętra po następnym server save.",
-    },
-    sources: [
-      `${WIKI}/Horestis_Tomb`,
-      `${WIKI}/Grave_Guard`,
-      `${WIKI}/Sandstone_Scorpion`,
-      `${WIKI}/Death_Priest`,
-    ],
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Death_Priest`],
   },
-
-  // ══ WORLD CHANGE: The Mage's Tower ═════════════════════════════════════════
+  {
+    id: "horestis-elder-mummy",
+    kind: "bestiary",
+    subject: "Elder Mummy",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Elder_Mummy`],
+  },
+  {
+    id: "horestis-ghoulish-hyaena",
+    kind: "bestiary",
+    subject: "Ghoulish Hyaena",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Ghoulish_Hyaena`],
+  },
+  {
+    id: "horestis-grave-guard",
+    kind: "bestiary",
+    subject: "Grave Guard",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Grave_Guard`],
+  },
+  {
+    id: "horestis-sacred-spider",
+    kind: "bestiary",
+    subject: "Sacred Spider",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Sacred_Spider`],
+  },
+  {
+    id: "horestis-sandstone-scorpion",
+    kind: "bestiary",
+    subject: "Sandstone Scorpion",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Sandstone_Scorpion`],
+  },
+  {
+    id: "horestis-tomb-servant",
+    kind: "bestiary",
+    subject: "Tomb Servant",
+    availability: "available-today",
+    exclusive: true,
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "horestis", stateIds: ["slumbering", "risen"] },
+    detail: {
+      pt: "Parte da população undead do túmulo, que só existe enquanto Horestis não for morto.",
+      en: "Part of the tomb's undead population, which only exists while Horestis is still unkilled.",
+      es: "Parte de la población no-muerta de la tumba, que solo existe mientras Horestis no sea asesinado.",
+      pl: "Część nieumarłej populacji grobowca, która istnieje tylko, póki Horestis nie zginie.",
+    },
+    sources: [`${WIKI}/Horestis_Tomb`, `${WIKI}/Tomb_Servant`],
+  },
   {
     id: "mage-tower-dimension",
     kind: "access",
@@ -494,7 +557,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   // ══ WORLD CHANGE: Swamp Fever ══════════════════════════════════════════════
   {
     id: "swamp-fever-slug-drug",
-    kind: "item",
+    kind: "taming-item",
     subject: "Slug Drug",
     availability: "available-today",
     leadsTo: "swamp-fever-doctor",
@@ -1926,7 +1989,7 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   },
   {
     id: "hive-born-four-leaf-clover",
-    kind: "item",
+    kind: "taming-item",
     subject: "Four-Leaf Clover",
     availability: "available-today",
     leadsTo: "hive-born-lady-bug-mount",
@@ -2040,25 +2103,49 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
     sources: [wc("Hive_Born"), `${WIKI}/Ladybug`],
   },
   {
-    id: "hive-born-inner-hive-bestiary",
+    id: "hive-born-kollos",
     kind: "bestiary",
-    subject: "Bestiary",
+    subject: "Kollos",
     availability: "available-today",
     bestiary: bestiaryProfile("Medium", "Rare"),
-    // The western tower's underground area, which TibiaWiki marks "only open in third stage".
-    // Waspoid, Crawler, Spitter and Insectoid Worker are in there too and are deliberately left
-    // out: they also spawn at the Hive Outpost, so they are not a reason this stage is worth a
-    // trip. Hive Overseer is in the same rooms and is Hard rather than Medium, so it is its own
-    // entry; the numbers here are derived, and a group states one cost for all of its members.
-    creatures: ["Kollos", "Spidris", "Spidris Elite"],
     trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
     detail: {
-      pt: "Ficam no subterrâneo da torre oeste da Hive interna, aberto só neste estágio.",
-      en: "They are in the western tower's underground area, which opens only in this stage.",
-      es: "Están en el subterráneo de la torre oeste de la Hive interna, abierto solo en esta fase.",
-      pl: "Są w podziemiach zachodniej wieży wewnętrznego Hive, otwartych tylko na tym etapie.",
+      pt: "Fica no subterrâneo da torre oeste da Hive interna, aberto só neste estágio.",
+      en: "It is in the western tower's underground area, which opens only in this stage.",
+      es: "Está en el subterráneo de la torre oeste de la Hive interna, abierto solo en esta fase.",
+      pl: "Jest w podziemiach zachodniej wieży wewnętrznego Hive, otwartych tylko na tym etapie.",
     },
-    sources: [`${WIKI}/The_Hive`, `${WIKI}/Spidris_Elite`, `${WIKI}/Kollos`],
+    sources: [`${WIKI}/The_Hive`, `${WIKI}/Kollos`],
+  },
+  {
+    id: "hive-born-spidris",
+    kind: "bestiary",
+    subject: "Spidris",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "Fica no subterrâneo da torre oeste da Hive interna, aberto só neste estágio.",
+      en: "It is in the western tower's underground area, which opens only in this stage.",
+      es: "Está en el subterráneo de la torre oeste de la Hive interna, abierto solo en esta fase.",
+      pl: "Jest w podziemiach zachodniej wieży wewnętrznego Hive, otwartych tylko na tym etapie.",
+    },
+    sources: [`${WIKI}/The_Hive`, `${WIKI}/Spidris`],
+  },
+  {
+    id: "hive-born-spidris-elite",
+    kind: "bestiary",
+    subject: "Spidris Elite",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Rare"),
+    trigger: { kind: "world-change", changeId: "hive-born", stateIds: ["fallen"] },
+    detail: {
+      pt: "Fica no subterrâneo da torre oeste da Hive interna, aberto só neste estágio.",
+      en: "It is in the western tower's underground area, which opens only in this stage.",
+      es: "Está en el subterráneo de la torre oeste de la Hive interna, abierto solo en esta fase.",
+      pl: "Jest w podziemiach zachodniej wieży wewnętrznego Hive, otwartych tylko na tym etapie.",
+    },
+    sources: [`${WIKI}/The_Hive`, `${WIKI}/Spidris_Elite`],
   },
   {
     id: "hive-born-hive-overseer",
@@ -2248,7 +2335,11 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   // ══ MINI WORLD CHANGE: Spirit Grounds ══════════════════════════════════════
   {
     id: "spirit-grounds-hunt",
-    kind: "hunting",
+    // `access`, not `hunting`: with the three possible grounds on their own line, "an undead
+    // hunting ground open for the day" is the state sentence restated, which is exactly what
+    // the ambient kinds exist to keep out of the bulletin. The Free-account rule stays on the
+    // catalog page, where it has always been.
+    kind: "access",
     subject: "Spirit Grounds",
     availability: "available-today",
     exclusive: true,
@@ -2271,50 +2362,131 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
   // somebody has looked through the gate. The creature names come from the same arrays the
   // catalog and the picker use.
   {
-    id: "spirit-grounds-ghosts",
+    id: "spirit-grounds-ghost",
     kind: "bestiary",
-    subject: "Bestiary",
+    subject: "Ghost",
     availability: "available-today",
     bestiary: bestiaryProfile("Easy", "Common"),
-    creatures: SPIRIT_GROUND_SETS[0].creatures,
     trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["ghosts"] },
     detail: {
-      pt: "O conjunto mais leve dos três Spirit Grounds, todo ele Easy no Bestiary.",
-      en: "The lightest of the three Spirit Grounds, every entry in it Easy in the Bestiary.",
-      es: "El conjunto más ligero de los tres Spirit Grounds, todo él Easy en el Bestiary.",
-      pl: "Najlżejszy z trzech Spirit Grounds, w całości Easy w Bestiary.",
+      pt: "O conjunto mais leve dos três Spirit Grounds.",
+      en: "The lightest of the three Spirit Grounds.",
+      es: "El conjunto más ligero de los tres Spirit Grounds.",
+      pl: "Najlżejszy z trzech Spirit Grounds.",
     },
-    sources: [`${WIKI}/Spirit_Grounds`],
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Ghost`],
   },
   {
-    id: "spirit-grounds-nightstalkers",
+    id: "spirit-grounds-ghoul",
     kind: "bestiary",
-    subject: "Bestiary",
+    subject: "Ghoul",
     availability: "available-today",
-    bestiary: bestiaryProfile("Medium", "Common"),
-    creatures: SPIRIT_GROUND_SETS[1].creatures,
-    trigger: {
-      kind: "mini-world-change",
-      changeId: "spirit-grounds",
-      contentIds: ["nightstalkers"],
-    },
+    bestiary: bestiaryProfile("Easy", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["ghosts"] },
     detail: {
-      pt: "O conjunto intermediário dos três Spirit Grounds, quatro entradas Medium juntas.",
-      en: "The middle of the three Spirit Grounds, four Medium entries in one place.",
-      es: "El conjunto intermedio de los tres Spirit Grounds, cuatro entradas Medium juntas.",
-      pl: "Środkowy z trzech Spirit Grounds, cztery wpisy Medium w jednym miejscu.",
+      pt: "O conjunto mais leve dos três Spirit Grounds.",
+      en: "The lightest of the three Spirit Grounds.",
+      es: "El conjunto más ligero de los tres Spirit Grounds.",
+      pl: "Najlżejszy z trzech Spirit Grounds.",
     },
-    sources: [`${WIKI}/Spirit_Grounds`],
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Ghoul`],
   },
   {
-    id: "spirit-grounds-nightmares",
+    id: "spirit-grounds-bonelord",
     kind: "bestiary",
-    subject: "Bestiary",
+    subject: "Bonelord",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Easy", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["ghosts"] },
+    detail: {
+      pt: "O conjunto mais leve dos três Spirit Grounds.",
+      en: "The lightest of the three Spirit Grounds.",
+      es: "El conjunto más ligero de los tres Spirit Grounds.",
+      pl: "Najlżejszy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Bonelord`],
+  },
+  {
+    id: "spirit-grounds-mummy",
+    kind: "bestiary",
+    subject: "Mummy",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Easy", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["ghosts"] },
+    detail: {
+      pt: "O conjunto mais leve dos três Spirit Grounds.",
+      en: "The lightest of the three Spirit Grounds.",
+      es: "El conjunto más ligero de los tres Spirit Grounds.",
+      pl: "Najlżejszy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Mummy`],
+  },
+  {
+    id: "spirit-grounds-nightstalker",
+    kind: "bestiary",
+    subject: "Nightstalker",
     availability: "available-today",
     bestiary: bestiaryProfile("Medium", "Common"),
-    // Phantasm is Hard where the other three are Medium, so it cannot share this line: the
-    // numbers are derived from the profile and a group states one cost for all of its members.
-    creatures: SPIRIT_GROUND_SETS[2].creatures.filter((name) => name !== "Phantasm"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightstalkers"] },
+    detail: {
+      pt: "O conjunto intermediário dos três Spirit Grounds.",
+      en: "The middle of the three Spirit Grounds.",
+      es: "El conjunto intermedio de los tres Spirit Grounds.",
+      pl: "Środkowy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Nightstalker`],
+  },
+  {
+    id: "spirit-grounds-banshee",
+    kind: "bestiary",
+    subject: "Banshee",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightstalkers"] },
+    detail: {
+      pt: "O conjunto intermediário dos três Spirit Grounds.",
+      en: "The middle of the three Spirit Grounds.",
+      es: "El conjunto intermedio de los tres Spirit Grounds.",
+      pl: "Środkowy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Banshee`],
+  },
+  {
+    id: "spirit-grounds-souleater",
+    kind: "bestiary",
+    subject: "Souleater",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightstalkers"] },
+    detail: {
+      pt: "O conjunto intermediário dos três Spirit Grounds.",
+      en: "The middle of the three Spirit Grounds.",
+      es: "El conjunto intermedio de los tres Spirit Grounds.",
+      pl: "Środkowy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Souleater`],
+  },
+  {
+    id: "spirit-grounds-braindeath",
+    kind: "bestiary",
+    subject: "Braindeath",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightstalkers"] },
+    detail: {
+      pt: "O conjunto intermediário dos três Spirit Grounds.",
+      en: "The middle of the three Spirit Grounds.",
+      es: "El conjunto intermedio de los tres Spirit Grounds.",
+      pl: "Środkowy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Braindeath`],
+  },
+  {
+    id: "spirit-grounds-nightmare",
+    kind: "bestiary",
+    subject: "Nightmare",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
     trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightmares"] },
     detail: {
       pt: "O conjunto mais pesado dos três Spirit Grounds.",
@@ -2322,7 +2494,37 @@ export const OPPORTUNITIES: OpportunityDefinition[] = [
       es: "El conjunto más pesado de los tres Spirit Grounds.",
       pl: "Najcięższy z trzech Spirit Grounds.",
     },
-    sources: [`${WIKI}/Spirit_Grounds`],
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Nightmare`],
+  },
+  {
+    id: "spirit-grounds-nightmare-scion",
+    kind: "bestiary",
+    subject: "Nightmare Scion",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightmares"] },
+    detail: {
+      pt: "O conjunto mais pesado dos três Spirit Grounds.",
+      en: "The heaviest of the three Spirit Grounds.",
+      es: "El conjunto más pesado de los tres Spirit Grounds.",
+      pl: "Najcięższy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Nightmare_Scion`],
+  },
+  {
+    id: "spirit-grounds-spectre",
+    kind: "bestiary",
+    subject: "Spectre",
+    availability: "available-today",
+    bestiary: bestiaryProfile("Medium", "Common"),
+    trigger: { kind: "mini-world-change", changeId: "spirit-grounds", contentIds: ["nightmares"] },
+    detail: {
+      pt: "O conjunto mais pesado dos três Spirit Grounds.",
+      en: "The heaviest of the three Spirit Grounds.",
+      es: "El conjunto más pesado de los tres Spirit Grounds.",
+      pl: "Najcięższy z trzech Spirit Grounds.",
+    },
+    sources: [`${WIKI}/Spirit_Grounds`, `${WIKI}/Spectre`],
   },
   {
     id: "spirit-grounds-phantasm",

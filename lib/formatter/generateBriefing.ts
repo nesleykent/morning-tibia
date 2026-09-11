@@ -40,9 +40,10 @@ export { BRIEFING_LANGUAGES } from "./translations";
  * ```
  *
  * The markers are the whole editorial idea. Every subordinate line declares its own kind with
- * a glyph — 🎯 bestiary, 👹 boss, 🐎 mount, 👕 outfit, 🏆 achievement, 🔄 something to do,
- * ⚔️ what spawns, 💡 advice, ⏳ what changes at server save — so a reader scanning for "what
- * can I actually do today" finds it without reading a word of connective tissue. It replaces the old approach, which
+ * a glyph — 🎯 bestiary, 👹 boss, 🐎 mount, 🍀 the item that tames one, 👕 outfit,
+ * 🏆 achievement, 🔄 something to do, ⚔️ what spawns, 💡 advice, ⏳ what changes at server save
+ * — so a reader scanning for "what can I actually do today" finds it without reading a word of
+ * connective tissue. It replaces the old approach, which
  * appended the app's own vocabulary to each line ("só neste estado", "vale após o Server
  * Save") and made a forwarded message read like a database dump.
  *
@@ -84,6 +85,7 @@ const ICON: Record<NoteIcon, string> = {
   bestiary: "🎯",
   boss: "👹",
   mount: "🐎",
+  tamingItem: "🍀",
   outfit: "👕",
   achievement: "🏆",
   progress: "🔄",

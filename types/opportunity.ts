@@ -71,6 +71,12 @@ export type OpportunityKind =
   | "timing"
   | "quest"
   | "item"
+  /**
+   * The item that tames something: a Four-Leaf Clover, a Sugar Oat, a Giant Shrimp. Separate
+   * from `item` because getting one is not an errand in its own right, it is the first half of
+   * a mount, and the bulletin's errand marker said the wrong thing about it.
+   */
+  | "taming-item"
   | "access"
   | "service"
   | "hunting"
@@ -133,19 +139,6 @@ export interface OpportunityDefinition {
   exclusive?: boolean;
   /** Set for `kind: "bestiary"`. Derived, never hand-typed — see lib/defaults/bestiary.ts. */
   bestiary?: BestiaryProfile;
-  /**
-   * Several creatures that share one bestiary profile, written as one line instead of five.
-   *
-   * The Horestis Tomb is the case that forced it: seven creatures live there and nowhere else,
-   * and every one of them is Medium/Rare, so five kills and a charm figure repeated seven times
-   * is the same fact printed seven times. Named together they read as what they are, a tomb
-   * full of 1,000-kill entries, and the block stays short enough to scan.
-   *
-   * Only valid alongside `bestiary`, and only where the profile really is shared: the numbers
-   * still come from `bestiaryProfile`, so a set with two difficulties in it has to be two
-   * entries. A test enforces both.
-   */
-  creatures?: readonly string[];
   /**
    * Set for `kind: "achievement"`, and for any other kind that also grants one.
    *

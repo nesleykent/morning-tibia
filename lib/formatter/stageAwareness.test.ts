@@ -5,7 +5,7 @@ import { createDefaultOverrides } from "@/lib/defaults";
 import { OPPORTUNITIES } from "@/lib/defaults/opportunities";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
 import { MINI_WORLD_CHANGES_BY_ID } from "@/lib/defaults/miniWorldChanges";
-import { notesForOpportunity } from "./opportunityPhrases";
+import { notesForChange, notesForOpportunity } from "./opportunityPhrases";
 import type { OpportunityDefinition } from "@/types/opportunity";
 
 /**
@@ -99,6 +99,28 @@ function textsOf(definition: OpportunityDefinition): string[] {
   ).map((note) => (note.subject ? `${note.subject}: ${note.text}` : note.text));
 }
 
+/**
+ * Every line a given set of catalog entries could produce together.
+ *
+ * Runs the renderer's own `notesForChange`, which is the point: grouping is a property of the
+ * *set* (three creatures that cost the same become one line), so a per-entry comparison cannot
+ * recognise a legitimate grouped line and would report it as a leak.
+ */
+function allowedLines(definitions: OpportunityDefinition[]): Set<string> {
+  return new Set(
+    notesForChange(
+      definitions.map((definition) => ({
+        definition,
+        conditionName: "",
+        conditionState: null,
+        emoji: "",
+      })),
+      "en",
+      Number.MAX_SAFE_INTEGER,
+    ).map((note) => (note.subject ? `${note.subject}: ${note.text}` : note.text)),
+  );
+}
+
 /** The block a named change contributed, so a leak is attributed to the right subject. */
 function blockFor(message: string, name: string): string {
   const block = message.split(/\n\n+/).find((part) => part.includes(`*${name}*`));
@@ -131,8 +153,10 @@ describe("manually checked states name their options instead of shrugging", () =
     for (const camp of ["Shadow Tomb", "Tarpit Tomb", "Ancient Ruins Tomb"]) {
       expect(unselected, camp).toContain(camp);
     }
-    expect(unselected).toContain("🎯 *Nomad (Blue):* 500 kills, 15 Charm Points.");
-    expect(unselected).toContain("🎯 *Nomad (Female):* 500 kills, 15 Charm Points.");
+    // Both nomads cost the same, so they share a line.
+    expect(unselected).toContain(
+      "🎯 *Bestiary:* Nomad (Blue) and Nomad (Female), 500 kills and 15 Charm Points each.",
+    );
 
     const selected = mini("nomads", "south-of-the-tarpit-tomb");
     expect(selected).toContain("The nomads have camped in Kha'labal, south of the Tarpit Tomb.");
@@ -158,11 +182,14 @@ describe("manually checked states name their options instead of shrugging", () =
   it("Spirit Grounds: the gate and the ground behind it are two separate answers", () => {
     // TibiaWiki: "although there are 3 portals and 3 hunting grounds, they do not correspond".
     // So naming the region answers nothing about what is inside, and the block has to say so.
+    // The question is the state line; the twelve names it could be answered with are a line of
+    // their own, so the italic paragraph stays short enough to read on a phone.
     const gateOnly = mini("spirit-grounds", "ghostlands");
-    expect(gateOnly).toContain("A Spirit Gate is open in Ghostlands.");
-    expect(gateOnly).toMatch(/We haven't checked which creature set is active in the Spirit Grounds yet/);
     expect(gateOnly).toContain(
-      "It can be: Ghost, Ghoul, Bonelord and Mummy; Nightstalker, Banshee, Souleater and Braindeath; or Nightmare, Nightmare Scion, Spectre and Phantasm.",
+      "_A Spirit Gate is open in Ghostlands. We haven't checked which of the three hunting grounds is behind it._",
+    );
+    expect(gateOnly).toContain(
+      "⚔️ It can be Ghost, Ghoul, Bonelord and Mummy; Nightstalker, Banshee, Souleater and Braindeath; or Nightmare, Nightmare Scion, Spectre and Phantasm.",
     );
     // …and nothing that depends on the ground is offered until somebody looks.
     expect(gateOnly).not.toMatch(/🎯 \*Bestiary:\*/);
@@ -184,7 +211,9 @@ describe("manually checked states name their options instead of shrugging", () =
     );
     // Phantasm is Hard where the other three are Medium, so it gets its own numbers.
     expect(answered).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
-    expect(answered).not.toMatch(/haven't checked which creature set/);
+    expect(answered).not.toMatch(/haven't checked/);
+    // …and the question's option list is gone once it has been answered.
+    expect(answered).not.toMatch(/⚔️ It can be/);
     // The other two grounds stay out of it.
     expect(answered).not.toContain("Ghoul");
     expect(answered).not.toContain("Souleater");
@@ -220,7 +249,7 @@ describe("manually checked states name their options instead of shrugging", () =
 describe("a stage offers what it has, and nothing a neighbouring stage has", () => {
   it("Swamp Fever: contained trades medicine, spreading hunts the citizens", () => {
     const contained = world("swamp-fever", "under-control");
-    expect(contained).toContain("🔄 *Slug Drug:*");
+    expect(contained).toContain("🍀 *Slug Drug:*");
     expect(contained).toContain("🏆 *Doctor! Doctor!:* Deliver 100 Medicine Pouches to Ottokar, 2 achievement points.");
     // The spawn is throttled by the medicine deliveries, so this is not a hunt worth walking to.
     expect(contained).not.toContain("Feverish Citizen");
@@ -291,9 +320,11 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
 
   it("Horse Station: escaped horses offer every horse, the mount and the recall", () => {
     const escaped = world("horse-station", "escaped");
-    for (const horse of ["Horse (Brown)", "Horse (Grey)", "Horse (Taupe)"]) {
-      expect(escaped, horse).toContain(`🎯 *${horse}:* 250 kills, 5 Charm Points.`);
-    }
+    // The three ordinary horses cost the same and share a line; the Wild Horse does not, and
+    // the mount points at it by name anyway.
+    expect(escaped).toContain(
+      "🎯 *Bestiary:* Horse (Brown), Horse (Grey) and Horse (Taupe), 250 kills and 5 Charm Points each.",
+    );
     expect(escaped).toContain("🎯 *Wild Horse:* 5 kills, 10 Charm Points.");
     expect(escaped).toContain("🐎 *War Horse:* Use Sugar Oat or a Music Box on a Wild Horse to tame it.");
     expect(escaped).toContain("🏆 *Lucky Horseshoe:* Tame a Wild Horse, 1 achievement point.");
@@ -334,8 +365,9 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
   it("Demon War: the stalemate has its Demons, and neither Lords nor Princes", () => {
     const stalemate = world("demon-war", "stalemate");
     expect(stalemate).toContain("The war between the Shaburak and Askarak is currently in a stalemate.");
-    expect(stalemate).toContain("🎯 *Askarak Demon:* 1,000 kills, 25 Charm Points.");
-    expect(stalemate).toContain("🎯 *Shaburak Demon:* 1,000 kills, 25 Charm Points.");
+    expect(stalemate).toContain(
+      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon, 1,000 kills and 25 Charm Points each.",
+    );
     expect(stalemate).toMatch(/🔄 \*Shift the balance:\* A 100-kill advantage.*400-kill advantage/s);
     // The state sentence names Lords and Princes to say there are none; no line may offer them.
     expect(stalemate).not.toMatch(/🎯 \*(Shaburak|Askarak) (Lord|Prince):\*/);
@@ -399,7 +431,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     // Two steps, two lines, and the clover's line names no single source for the Gooey Mass:
     // the Insectoid Cells are one, and Hive Overseer, Maw and The Mean Masher drop them too.
     expect(stage3).toContain(
-      "🔄 *Four-Leaf Clover:* Use a Gooey Mass for a chance to obtain the Ladybug taming item.",
+      "🍀 *Four-Leaf Clover:* Use a Gooey Mass for a chance to obtain the Ladybug taming item.",
     );
     expect(stage3).toContain("🐎 *Ladybug:* Use a Four-Leaf Clover on a Ladybug to tame it.");
     expect(stage3).toContain("🏆 *Lovely Dots:* Tame a Ladybug, 3 achievement points.");
@@ -489,8 +521,9 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     expect(passable).toMatch(/🔄 \*Clear the fungus:\* Clear at least 25 Slime Fungi/);
     expect(passable).toContain("🏆 *Slimer:* Clear 500 Slime Fungi, 1 achievement point.");
     expect(passable).toContain("🎯 *Iron Servant:* 5 kills, 30 Charm Points.");
-    expect(passable).toContain("🎯 *Golden Servant:* 5 kills, 50 Charm Points.");
-    expect(passable).toContain("🎯 *Diamond Servant:* 5 kills, 50 Charm Points.");
+    expect(passable).toContain(
+      "🎯 *Bestiary:* Diamond Servant and Golden Servant, 5 kills and 50 Charm Points each.",
+    );
     expect(passable).toMatch(/👹 \*Mad Mage:\*/);
   });
 
@@ -556,15 +589,57 @@ describe("markers say which game system a line belongs to", () => {
     expect(markerFor("hive-born-insectoid-outfits")).toBe("👕");
   });
 
-  it("groups only creatures that really share one bestiary profile", () => {
-    // A grouped line states one kill count and one charm figure for everything it names, so a
-    // set with two difficulties in it has to be two entries. The numbers stay derived.
-    for (const definition of OPPORTUNITIES) {
-      if (!definition.creatures) continue;
-      expect(definition.bestiary, `${definition.id} groups without a profile`).toBeDefined();
-      expect(definition.creatures.length, `${definition.id} groups one creature`).toBeGreaterThan(1);
-      expect(definition.subject, `${definition.id}`).toBe("Bestiary");
-    }
+  it("groups only creatures that really share one kill count and charm payout", () => {
+    // A grouped line states one cost for everything it names, so a set with two difficulties in
+    // it stays two lines. Phantasm is the case: Hard where the rest of its Spirit Ground is
+    // Medium, and its own line for exactly that reason.
+    const ground = generateBriefingMessage(
+      (() => {
+        const target = setMini(input(), "spirit-grounds", "ghostlands");
+        target.overrides.miniWorldChanges["spirit-grounds"]!.contentId = "nightmares";
+        return target;
+      })(),
+    );
+    expect(ground).toContain(
+      "🎯 *Bestiary:* Nightmare, Nightmare Scion and Spectre, 1,000 kills and 25 Charm Points each.",
+    );
+    expect(ground).toContain("🎯 *Phantasm:* 2,500 kills, 50 Charm Points.");
+
+    // Iron Servant is 5/30 where the other two are 5/50, so it is not folded in with them.
+    const servants = world("masters-voice", "passable");
+    expect(servants).toContain(
+      "🎯 *Bestiary:* Diamond Servant and Golden Servant, 5 kills and 50 Charm Points each.",
+    );
+    expect(servants).toContain("🎯 *Iron Servant:* 5 kills, 30 Charm Points.");
+  });
+
+  it("keeps a creature on its own line when something else hangs off its name", () => {
+    // Grouping is a presentation rule and it has to give way to information. A creature that
+    // carries an achievement, or that a mount points at by name, keeps a line to be pointed at.
+    const deer = world("overhunting", "dwindling");
+    expect(deer).toContain("🎯 *White Deer:* 250 kills, 5 Charm Points.");
+
+    const hive = world("hive-born", "fallen");
+    // Ladybug is named by the mount line, so it is never swallowed into a group.
+    expect(hive).toContain("🎯 *Ladybug:* 500 kills, 15 Charm Points.");
+
+    // The Princes carry their faction's Nemesis achievement and stay apart from the Lords.
+    const dominant = world("demon-war", "shaburak-dominant");
+    expect(dominant).toContain("🎯 *Shaburak Prince:* 1,000 kills, 25 Charm Points.");
+    expect(dominant).toContain("🏆 *Shaburak Nemesis:*");
+  });
+
+  it("never groups across two different changes", () => {
+    // Both crypts pay 1,000 kills and 25 Charm Points, and so does the Deepling Scout in a
+    // different change entirely. A group is always one change's own creatures.
+    const both = setWorld(input(), "demon-war", "stalemate");
+    setWorld(both, "awash", "drained-quota-open");
+    const message = generateBriefingMessage(both);
+    expect(message).toContain(
+      "🎯 *Bestiary:* Askarak Demon and Shaburak Demon, 1,000 kills and 25 Charm Points each.",
+    );
+    expect(message).toContain("🎯 *Deepling Scout:* 1,000 kills, 25 Charm Points.");
+    expect(message).not.toContain("Deepling Scout and");
   });
 
   it("never prints a boss or a mount as a Bestiary entry", () => {
@@ -621,13 +696,13 @@ describe("every stage of every change renders without leaking another's content"
         const notes = renderedNotes(
           generateBriefingMessage(setWorld(input(), definition.id, state.id)),
         );
-        const allowed = new Set(
+        const allowed = allowedLines(
           OPPORTUNITIES.filter(
             (entry) =>
               entry.trigger.kind === "world-change" &&
               entry.trigger.changeId === definition.id &&
               entry.trigger.stateIds.includes(state.id),
-          ).flatMap(textsOf),
+          ),
         );
         for (const line of notes) {
           expect(allowed.has(line), `${definition.id}/${state.id} printed "${line}"`).toBe(true);
@@ -650,22 +725,25 @@ describe("every stage of every change renders without leaking another's content"
       const unchecked = renderedNotes(generateBriefingMessage(setMini(input(), changeId)));
       for (const entry of scoped) {
         expect(
-          unchecked.some((line) => textsOf(entry).includes(line)),
+          unchecked.some((line) => allowedLines([entry]).has(line)),
           `${entry.id} leaked with no variant`,
         ).toBe(false);
       }
 
-      // …and each variant shows only its own.
+      // …and each variant prints only what that variant allows.
       for (const variant of definition.variants) {
         const notes = renderedNotes(generateBriefingMessage(setMini(input(), changeId, variant.id)));
-        for (const entry of scoped) {
-          const belongs =
-            entry.trigger.kind === "mini-world-change" &&
-            (entry.trigger.variantIds ?? []).includes(variant.id);
-          expect(
-            notes.some((line) => textsOf(entry).includes(line)),
-            `${changeId}/${variant.id} vs ${entry.id}`,
-          ).toBe(belongs);
+        const allowed = allowedLines(
+          OPPORTUNITIES.filter(
+            (entry) =>
+              entry.trigger.kind === "mini-world-change" &&
+              entry.trigger.changeId === changeId &&
+              !entry.trigger.contentIds &&
+              (entry.trigger.variantIds ?? [variant.id]).includes(variant.id),
+          ),
+        );
+        for (const line of notes) {
+          expect(allowed.has(line), `${changeId}/${variant.id} printed "${line}"`).toBe(true);
         }
       }
     }

@@ -68,6 +68,7 @@ export type NoteIcon =
   | "bestiary"
   | "boss"
   | "mount"
+  | "tamingItem"
   | "outfit"
   | "achievement"
   | "progress"
@@ -111,6 +112,11 @@ function killsPhrase(kills: number, language: BriefingLanguage): string {
     },
     language,
   );
+}
+
+/** The Bestiary's own name, which is what a grouped line is about rather than any one creature. */
+function bestiaryWord(language: BriefingLanguage): string {
+  return pick({ pt: "Bestiary", en: "Bestiary", es: "Bestiary", pl: "Bestiary" }, language);
 }
 
 /** "Death Priest, Elder Mummy and Grave Guard" — Tibia nouns, localized conjunction only. */
@@ -201,6 +207,7 @@ const KIND_ICON: Partial<Record<OpportunityDefinition["kind"], NoteIcon>> = {
   mount: "mount",
   outfit: "outfit",
   timing: "deadline",
+  "taming-item": "tamingItem",
 };
 
 /**
@@ -226,14 +233,7 @@ function headlineNote(
 
   if (definition.bestiary) {
     const { kills, charmPoints } = definition.bestiary;
-    // A group names its creatures and then says the cost once, with "each", because that is
-    // the whole reason it is one line: the numbers are the same for all of them.
-    const facts = definition.creatures
-      ? [
-          creatureListPhrase(definition.creatures, language),
-          eachPhrase(kills, charmPoints, language),
-        ]
-      : [killsPhrase(kills, language), `${charmPoints} Charm Points`];
+    const facts = [killsPhrase(kills, language), `${charmPoints} Charm Points`];
     if (qualifier) facts.push(qualifier);
     return {
       icon: "bestiary",
@@ -269,6 +269,7 @@ function headlineNote(
     definition.kind === "mount" ||
     definition.kind === "outfit" ||
     definition.kind === "item" ||
+    definition.kind === "taming-item" ||
     definition.kind === "quest";
   if (definition.kind === "timing") {
     return {
@@ -336,13 +337,118 @@ export function notesForOpportunity(
 }
 
 /**
- * The notes one change contributes, from at most `limit` of its opportunities.
+ * Bestiary entries of one change that cost exactly the same, as one line instead of several.
  *
- * The cap counts opportunities rather than lines, so an entry never loses its own deadline or
- * its own advisory halfway through. Ordering is the catalog's, with one exception: an
- * `unlocks-future` entry is pulled in even when the cap is spent, because that tier is the
- * only one with a deadline. "Kill enough deeplings today or the mine refloods" is worth
- * nothing read tomorrow; a bestiary entry that will still be there all week loses nothing.
+ * ## Why
+ *
+ * A bestiary line is a name and two numbers. When a change offers seven creatures that all
+ * complete at 1,000 kills for 25 Charm Points, seven lines print the same two numbers seven
+ * times and the block stops being scannable. Named together they read as what they are: a tomb
+ * full of 1,000-kill entries.
+ *
+ * ## What may be grouped
+ *
+ * Only within one change, and only on an exact match of kills *and* Charm Points, because the
+ * grouped line states one cost for everything it names. A creature that carries anything else
+ * worth a line stays on its own, since a group has nowhere to put it:
+ *
+ * - an achievement, which would otherwise be a 🏆 line hanging off a name no longer present;
+ * - a `qualifier`, which is per-creature text appended to its own line;
+ * - an `advisory`, for the same reason;
+ * - a place in a chain (`leadsTo`, or being another entry's target);
+ * - a subject that some *other* opportunity of this change also names, which is how a creature
+ *   with a mount hanging off it (Crystal Wolf, Ladybug) keeps a line the mount can point at.
+ */
+function groupKeyOf(opportunity: Opportunity): string | null {
+  const { definition } = opportunity;
+  if (definition.kind !== "bestiary" || !definition.bestiary) return null;
+  if (definition.achievement || definition.qualifier || definition.advisory) return null;
+  if (definition.leadsTo) return null;
+  return `${definition.bestiary.kills}/${definition.bestiary.charmPoints}`;
+}
+
+/** One rendered unit: a single opportunity, or several creatures that share a bestiary line. */
+type Unit =
+  | { kind: "single"; opportunity: Opportunity }
+  | { kind: "group"; opportunities: Opportunity[] };
+
+function unitsFor(opportunities: Opportunity[]): Unit[] {
+  const chainTargets = new Set(
+    opportunities.map((o) => o.definition.leadsTo).filter(Boolean) as string[],
+  );
+  /** Subjects an opportunity of some *other* kind also claims, so the creature keeps its line. */
+  const claimedSubjects = new Set(
+    opportunities
+      .filter((o) => o.definition.kind !== "bestiary")
+      .map((o) => o.definition.subject),
+  );
+
+  const keyed = opportunities.map((opportunity) => {
+    const key = groupKeyOf(opportunity);
+    if (key === null) return { opportunity, key: null };
+    if (chainTargets.has(opportunity.definition.id)) return { opportunity, key: null };
+    if (claimedSubjects.has(opportunity.definition.subject)) return { opportunity, key: null };
+    return { opportunity, key };
+  });
+
+  // A key with one member is not a group; it renders as itself, in its own place in the order.
+  const counts = new Map<string, number>();
+  for (const { key } of keyed) {
+    if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const units: Unit[] = [];
+  const emitted = new Set<string>();
+  for (const { opportunity, key } of keyed) {
+    if (!key || (counts.get(key) ?? 0) < 2) {
+      units.push({ kind: "single", opportunity });
+      continue;
+    }
+    // The group takes the position of its first member, so ordering stays the catalog's.
+    if (emitted.has(key)) continue;
+    emitted.add(key);
+    units.push({
+      kind: "group",
+      opportunities: keyed
+        .filter((candidate) => candidate.key === key)
+        .map((candidate) => candidate.opportunity),
+    });
+  }
+  return units;
+}
+
+/** `🎯 *Bestiary:* Kollos, Spidris and Spidris Elite, 1,000 kills and 25 Charm Points each.` */
+function groupedBestiaryNote(
+  opportunities: Opportunity[],
+  language: BriefingLanguage,
+): BriefingNote {
+  const { bestiary, availability } = opportunities[0]!.definition;
+  const names = opportunities
+    .map((opportunity) => opportunity.definition.subject)
+    .sort((a, b) => a.localeCompare(b));
+  return {
+    icon: "bestiary",
+    subject: bestiaryWord(language),
+    text: sentence(
+      `${creatureListPhrase(names, language)}, ${eachPhrase(
+        bestiary!.kills,
+        bestiary!.charmPoints,
+        language,
+      )}`,
+    ),
+    availability,
+  };
+}
+
+/**
+ * The notes one change contributes, from at most `limit` of its rendered units.
+ *
+ * The cap counts units rather than raw opportunities, so grouping seven creatures into one line
+ * buys back six places for things that are not creatures. An entry never loses its own deadline
+ * or advisory halfway through, and ordering is the catalog's, with one exception: an
+ * `unlocks-future` entry is pulled in even when the cap is spent, because that tier is the only
+ * one with a deadline. "Kill enough deeplings today or the mine refloods" is worth nothing read
+ * tomorrow; a bestiary entry that will still be there all week loses nothing.
  */
 export function notesForChange(
   opportunities: Opportunity[],
@@ -350,11 +456,19 @@ export function notesForChange(
   limit: number,
 ): BriefingNote[] {
   const relevant = opportunities.filter((o) => !isAmbient(o.definition));
-  const kept = relevant.slice(0, Math.max(0, limit));
-  const deadline = relevant.find(
-    (opportunity) => opportunity.definition.availability === "unlocks-future",
+  const units = unitsFor(relevant);
+  const kept = units.slice(0, Math.max(0, limit));
+
+  const deadline = units.find(
+    (unit) =>
+      unit.kind === "single" &&
+      unit.opportunity.definition.availability === "unlocks-future",
   );
   if (deadline && !kept.includes(deadline)) kept.push(deadline);
 
-  return kept.flatMap((opportunity) => notesForOpportunity(opportunity, language));
+  return kept.flatMap((unit) =>
+    unit.kind === "group"
+      ? [groupedBestiaryNote(unit.opportunities, language)]
+      : notesForOpportunity(unit.opportunity, language),
+  );
 }

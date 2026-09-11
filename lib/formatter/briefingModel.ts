@@ -26,6 +26,7 @@ import { getTranslation, type BriefingLanguage, type BriefingTranslation } from 
 import { getWorldChangeNarrative } from "./worldChangeNarratives";
 import {
   getMiniWorldChangeAbsentNarrative,
+  getMiniWorldChangeContentOptions,
   getMiniWorldChangeNarrative,
 } from "./miniWorldChangeNarratives";
 import { notesForChange, type BriefingNote } from "./opportunityPhrases";
@@ -288,6 +289,11 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       input.language,
       value.contentId ?? null,
     );
+    const contentOptions = getMiniWorldChangeContentOptions(
+      def.id,
+      value.contentId ?? null,
+      input.language,
+    );
 
     miniWorldChangeLines.push({
       emoji: def.emoji,
@@ -298,7 +304,22 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
       // line nobody reads on a phone, and a hint the player still has to go and verify is
       // exactly the kind of bulk the catalog view exists to hold.
       state: narrative ?? variantLabel ?? t.running,
-      notes: notesFor(def.name),
+      // An unanswered second axis is a line of its own, ahead of the opportunities: it is the
+      // set of answers the state sentence just said nobody has picked from, and ⚔️ is the
+      // marker for what is spawning, which is exactly what the three sets are.
+      notes: [
+        ...(contentOptions
+          ? [
+              {
+                icon: "creatures" as const,
+                subject: null,
+                text: contentOptions,
+                availability: "available-today" as const,
+              },
+            ]
+          : []),
+        ...notesFor(def.name),
+      ],
     });
   }
 

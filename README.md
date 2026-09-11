@@ -505,12 +505,20 @@ a ceiling of nine, plus any deadline-bound line, which is admitted on top of the
 is the only tier that is worthless read tomorrow. Quiet states still produce one or two lines,
 because that is all they have, and only the fallen hive reaches the ceiling.
 
-**Creatures that share a bestiary profile share a line.** Seven creatures live in the Horestis
-Tomb and nowhere else, and every one of them is Medium/Rare, so seven lines would print the same
-kill count and charm figure seven times. Named together they read as what they are, and the
-numbers are still derived from the profile rather than typed, so a set with two difficulties in
-it has to be two entries: Phantasm is Hard where the rest of its Spirit Ground is Medium, and
-gets its own line for exactly that reason.
+**Creatures that share a bestiary profile share a line.** A bestiary line is a name and two
+numbers, so seven Horestis Tomb creatures that all complete at 1,000 kills for 25 Charm Points
+print the same two numbers seven times. The renderer groups them, and the rule is the renderer's
+rather than the author's: every change gets it, which is why the three ordinary Horses, the two
+Nomads and the Diamond and Golden Servants now share lines too. Grouping is on an exact match of
+kills *and* Charm Points within one change, never across changes, and a creature keeps its own
+line whenever something else needs to point at it by name: an achievement, a per-creature
+qualifier, an advisory, a place in a chain, or a mount that tames it. Phantasm is Hard where the
+rest of its Spirit Ground is Medium and gets its own line for that reason; Ladybug keeps one
+because the Lady Bug mount names it.
+
+**Markers for the two halves of a taming.** 🍀 is the item that tames something (a Four-Leaf
+Clover, a Slug Drug) and 🐎 is the mount it earns. They used to share the errand marker, which
+said the wrong thing about both.
 
 **A step sorts in front of what it feeds.** A Gooey Mass gives a Four-Leaf Clover and the clover
 tames the Ladybug. The mount outranks the clover on every ordering key, which had the bulletin

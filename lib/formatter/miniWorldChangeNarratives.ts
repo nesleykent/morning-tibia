@@ -307,18 +307,15 @@ const NARRATIVES: Record<string, Resolver> = {
       )}`;
     }
 
-    // Semicolons, not commas: each option is itself a list of four creatures, and a comma
-    // join ran the twelve of them into one unreadable string.
-    const options = getTranslation(language).orList(
-      SPIRIT_GROUND_SETS.map((candidate) => creatureList(candidate.creatures, language)),
-      "; ",
-    );
+    // Just the question. The twelve creature names it could be answered with are a line of
+    // their own (see spiritGroundOptionsLine), because a state sentence carrying all three
+    // sets was a 240-character italic paragraph that a reader on a phone skipped.
     return `${gate} ${pick(
       {
-        pt: `Ainda não conferimos qual conjunto de criaturas está ativo nos Spirit Grounds. Pode ser: ${options}.`,
-        en: `We haven't checked which creature set is active in the Spirit Grounds yet. It can be: ${options}.`,
-        es: `Todavía no comprobamos qué conjunto de criaturas está activo en los Spirit Grounds. Puede ser: ${options}.`,
-        pl: `Nie sprawdziliśmy jeszcze, który zestaw stworzeń jest aktywny w Spirit Grounds. Może to być: ${options}.`,
+        pt: "Ainda não conferimos qual dos três terrenos de caça está do outro lado.",
+        en: "We haven't checked which of the three hunting grounds is behind it.",
+        es: "Todavía no comprobamos cuál de los tres terrenos de caza está del otro lado.",
+        pl: "Nie sprawdziliśmy jeszcze, który z trzech terenów łowieckich jest po drugiej stronie.",
       },
       language,
     )}`;
@@ -551,6 +548,34 @@ export function getMiniWorldChangeNarrative(
 ): string | null {
   const resolver = NARRATIVES[changeId];
   return resolver ? resolver(variantId, language, contentId) : null;
+}
+
+/**
+ * The three hunting grounds a Spirit Gate could be hiding, as its own scannable line.
+ *
+ * Semicolons, not commas: each option is itself a list of four creatures, and a comma join ran
+ * the twelve of them together into one unreadable string. Returns null for every change that
+ * has no second axis, and for a Spirit Gate somebody has already looked through.
+ */
+export function getMiniWorldChangeContentOptions(
+  changeId: string,
+  contentId: string | null,
+  language: BriefingLanguage,
+): string | null {
+  if (changeId !== "spirit-grounds" || contentId !== null) return null;
+  const options = getTranslation(language).orList(
+    SPIRIT_GROUND_SETS.map((candidate) => creatureList(candidate.creatures, language)),
+    "; ",
+  );
+  return pick(
+    {
+      pt: `Pode ser ${options}.`,
+      en: `It can be ${options}.`,
+      es: `Puede ser ${options}.`,
+      pl: `Może to być ${options}.`,
+    },
+    language,
+  );
 }
 
 /**
