@@ -539,7 +539,7 @@ describe("a stage offers what it has, and nothing a neighbouring stage has", () 
     // The boss is gone for this cycle, so the achievement that needs him is not on offer.
     expect(slain).not.toContain("Mageslayer");
     // And the app has no kill timestamp, so it may not put a clock on the collapse.
-    const tower = blockFor(slain, "Mage Tower");
+    const tower = blockFor(slain, "The Mage's Tower");
     expect(tower).not.toMatch(/\b\d+\s*(minutes?|minutos?|minut)\b/i);
     expect(tower).not.toMatch(/has closed|already closed/i);
   });

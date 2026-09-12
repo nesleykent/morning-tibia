@@ -454,8 +454,7 @@ and message files agree.
 // Mini World Change
 {
   id: "unique-id",
-  name: "Canonical TibiaWiki Name",
-  shortLabel: "Short Name",
+  name: "Canonical TibiaWiki Name",   // exactly as the wiki spells it; the only name shown
   emoji: "✨",
   location: "Where it happens, per TibiaWiki's Location field",
   variants: [],          // only if the game really has distinct forms
@@ -468,8 +467,7 @@ and message files agree.
 // World Change
 {
   id: "unique-id",
-  name: "Canonical TibiaWiki Name",
-  shortLabel: "Short Name",
+  name: "Canonical TibiaWiki Name",   // e.g. "Their Master's Voice", not "Master's Voice"
   emoji: "✨",
   guideKeyword: "Keyword",   // exactly what you say to a Guide NPC
   location: "Where it happens",
@@ -488,6 +486,23 @@ is a report of today's world state and a quiet answer is still an answer.
 
 The bulletin is what the reader takes away — a message pasted into WhatsApp or Discord — so
 its shape is driven by that destination rather than by the app's own structure.
+
+**Every change is called what TibiaWiki calls it.** The catalog's `name` is the only name the
+bulletin prints, with its articles, plurals, punctuation and possessives intact: "The Mummy's
+Curse", "The Mage's Tower", "Their Master's Voice", "Demon Wars", "The Fire-Feathered Serpent".
+The bulletin used to print a shorter internal label for those five — "Horestis", "Mage Tower",
+"Master's Voice", "Demon War", "Sea Serpent" — which is the Guide keyword or an abbreviation of
+it, and not the name of any article on the wiki. A reader who took one of those names to
+TibiaWiki found nothing. The Guide keyword still lives on `guideKeyword`, where the reference
+view shows it as the thing you type into the game.
+
+**Both change sections are ordered alphabetically by that name.** The catalog order is the
+game's — the Guide NPC's keyword recitation, and the wiki's own list — and neither is an order a
+reader of a forwarded message can navigate, so finding one change meant reading the section end
+to end. Alphabetical by the printed name can be scanned, and it is the key the reference view
+and the dispatch already sort on. The still-unasked line under the World Changes uses the same
+names in the same order. Yasir is not in it: he is the Oriental Trader Mini World Change, but he
+feeds the Merchants section rather than getting a card of his own.
 
 **One entry per change, state and opportunities together.** The two used to be separate
 sections, which meant a reader met "Overhunting: starving wolves" near the top and

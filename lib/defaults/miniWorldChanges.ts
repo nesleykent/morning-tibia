@@ -133,7 +133,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "fury-gates",
     name: "Fury Gates",
-    shortLabel: "Fury Gates",
     emoji: "🔥",
     location: "Fury Dungeon, near one of ten cities",
     briefingLocations: ["Fury Dungeon"],
@@ -148,7 +147,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "hive-outpost",
     name: "Hive Outpost",
-    shortLabel: "Hive Outpost",
     emoji: "👾",
     location: "Hive Outpost (Vandura), south-west of Liberty Bay",
     briefingLocations: ["Vandura"],
@@ -162,7 +160,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "warpath",
     name: "Warpath",
-    shortLabel: "Warpath",
     emoji: "🏴‍☠️",
     location: "Jakundaf Desert, Carlin or Femor Hills",
     briefingLocations: ["Jakundaf Desert", "Carlin", "Femor Hills"],
@@ -177,7 +174,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "devovorgas-essence",
     name: "Devovorga's Essence",
-    shortLabel: "Devovorga",
     emoji: "🧪",
     location: "Vengoth",
     variants: [],
@@ -191,7 +187,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "chakoya-iceberg",
     name: "Chakoya Iceberg",
-    shortLabel: "Iceberg",
     emoji: "🧊",
     location: "Northern Tiquanda, coast north of Port Hope",
     briefingLocations: ["Tiquanda, Port Hope"],
@@ -205,7 +200,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "spirit-grounds",
     name: "Spirit Grounds",
-    shortLabel: "Spirit Grounds",
     emoji: "🌀",
     location: "Reached via Darama, Ghostlands or Vengoth",
     briefingLocations: ["Darama", "Ghostlands", "Vengoth"],
@@ -230,7 +224,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "nightmare-isles",
     name: "Nightmare Isles",
-    shortLabel: "Nightmare Isles",
     emoji: "🌑",
     location: "Nightmare Isles, via Kha'labal or Devourer",
     briefingLocations: ["Kha'labal"],
@@ -249,7 +242,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "fire-from-the-earth",
     name: "Fire from the Earth",
-    shortLabel: "Fire from the Earth",
     emoji: "🌋",
     location: "Goroma",
     variants: [],
@@ -263,7 +255,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "nomads",
     name: "Nomads",
-    shortLabel: "Nomads",
     emoji: "🐫",
     location: "Kha'labal, north of Ankrahmun",
     briefingLocations: ["Kha'labal"],
@@ -278,7 +269,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "bored",
     name: "Bored",
-    shortLabel: "Bored Witch",
     emoji: "🧙",
     location: "Green Claw Swamp",
     variants: [],
@@ -291,7 +281,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "noodles-is-gone",
     name: "Noodles is Gone",
-    shortLabel: "Noodles",
     emoji: "🐕",
     location: "Thais and its surroundings",
     briefingLocations: ["Thais"],
@@ -307,7 +296,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "kingsday",
     name: "Kingsday",
-    shortLabel: "Kingsday",
     emoji: "👑",
     location: "Thais",
     variants: [],
@@ -320,7 +308,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "thawing",
     name: "Thawing",
-    shortLabel: "Thawing",
     emoji: "❄️",
     location: "Svargrond",
     variants: [],
@@ -333,7 +320,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "spider-nest",
     name: "Spider Nest",
-    shortLabel: "Spider Nest",
     emoji: "🕷️",
     location: "Thaian–Venorean road, close to Venore",
     briefingLocations: ["Venore"],
@@ -347,7 +333,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "poacher-caves",
     name: "Poacher Caves",
-    shortLabel: "Poacher Caves",
     emoji: "🏹",
     location: "Poacher Caves, north of the Green Claw Swamp",
     briefingLocations: ["Green Claw Swamp"],
@@ -366,7 +351,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "jungle-camp",
     name: "Jungle Camp",
-    shortLabel: "Jungle Camp",
     emoji: "🏕️",
     location: "Hunter Camp / Dworc Camp, Tiquanda",
     briefingLocations: ["Tiquanda"],
@@ -384,7 +368,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "grimvale",
     name: "Grimvale",
-    shortLabel: "Grimvale",
     emoji: "🌲",
     location: "Grimvale",
     variants: [],
@@ -397,7 +380,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "stampede",
     name: "Stampede",
-    shortLabel: "Stampede",
     emoji: "🐘",
     location: "Tiquanda",
     variants: [],
@@ -410,7 +392,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "bank-robbery",
     name: "Bank Robbery",
-    shortLabel: "Bank Robbery",
     emoji: "💰",
     location: "Ab'Dendriel, Carlin, Thais and Venore",
     briefingLocations: ["Ab'Dendriel", "Carlin", "Thais", "Venore"],
@@ -425,7 +406,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "river-runs-deep",
     name: "River Runs Deep",
-    shortLabel: "River Runs Deep",
     emoji: "🎣",
     location: "Zao Steppe",
     variants: [],
@@ -438,7 +418,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "lumberjack",
     name: "Lumberjack",
-    shortLabel: "Lumberjack",
     emoji: "🪓",
     location: "Fields of Glory, north of Carlin",
     briefingLocations: ["Fields of Glory"],
@@ -452,7 +431,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "down-the-drain",
     name: "Down the Drain",
-    shortLabel: "Down the Drain",
     emoji: "🌊",
     location: "Outlaw Camp",
     variants: [],
@@ -467,7 +445,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     name: "Beaver Breakout",
     // No English TibiaWiki article — only TibiaWiki BR documents this silent change.
     wikiTitle: null,
-    shortLabel: "Beaver Breakout",
     emoji: "🦫",
     location: "Silvertides, Marapur",
     variants: [],
@@ -493,7 +470,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     name: "Shipwrecked",
     // No English TibiaWiki article — only TibiaWiki BR documents this silent change.
     wikiTitle: null,
-    shortLabel: "Shipwrecked",
     emoji: "🏝️",
     location: "North coast of Krailos",
     briefingLocations: ["Krailos"],
@@ -521,7 +497,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
     name: "Forsaken",
     // Not documented as a Mini World Change; the mine itself is the article.
     wikiTitle: "Forsaken Mine",
-    shortLabel: "Forsaken",
     emoji: "⛏️",
     location: "Forsaken Mine, south of Ab'Dendriel",
     briefingLocations: ["Forsaken Mine"],
@@ -543,7 +518,6 @@ export const MINI_WORLD_CHANGE_DEFINITIONS: MiniWorldChangeDefinition[] = [
   {
     id: "chyllfroest",
     name: "Chyllfroest",
-    shortLabel: "Chyllfroest",
     emoji: "🥶",
     location: "Chyllfroest",
     variants: [],

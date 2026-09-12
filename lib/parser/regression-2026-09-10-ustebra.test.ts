@@ -261,7 +261,7 @@ describe("2026-09-10 Ustebra regression — briefing output", () => {
 
   it("keeps every one of the fourteen recognised World Changes", () => {
     for (const def of WORLD_CHANGE_DEFINITIONS) {
-      expect(message, def.id).toMatch(nameLinePattern(def.emoji, def.shortLabel));
+      expect(message, def.id).toMatch(nameLinePattern(def.emoji, def.name));
     }
     // Six of these were previously deleted for being "quiet" states.
     for (const label of [

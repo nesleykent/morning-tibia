@@ -205,7 +205,7 @@ describe("copy the reader sees", () => {
 
   /** Every player-facing string a catalog entry can put on the page. */
   const copyOf = (entry: Record<string, unknown>): string[] =>
-    ["name", "shortLabel", "location", "description", "howToCheck", "alternativeSource"]
+    ["name", "location", "description", "howToCheck", "alternativeSource"]
       .map((key) => entry[key])
       .filter((value): value is string => typeof value === "string")
       .concat(

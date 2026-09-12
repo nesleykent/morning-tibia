@@ -43,12 +43,21 @@ export interface WorldChangeStateOption {
 
 export interface WorldChangeDefinition {
   id: string;
-  /** Canonical TibiaWiki World Change name. */
+  /**
+   * Canonical TibiaWiki World Change name, and the *only* name anything shows a player: the
+   * bulletin's block heading, the reference view's row, the opportunity's "From" line.
+   *
+   * There used to be a `shortLabel` beside it — "Horestis", "Master's Voice", "Demon War" —
+   * carrying the catalog's own convenient abbreviation, and the bulletin printed that instead.
+   * So the message a guild forwards named five of the fourteen changes something TibiaWiki
+   * does not call them, and a reader who went to look one up was searching for a name that
+   * does not exist. One name, spelled the way the source spells it, with its articles,
+   * plurals and possessives intact.
+   */
   name: string;
   /** Override for the TibiaWiki article title, when it isn't `<name> World Change`;
    * explicit `null` means no article exists. See lib/utils/tibiaWiki.ts. */
   wikiTitle?: string | null;
-  shortLabel: string;
   emoji: string;
   /** The exact keyword to say to a Guide NPC, verbatim from the official list. */
   guideKeyword: string;

@@ -79,7 +79,12 @@ export interface BriefingInput {
  */
 export interface ChangeLine {
   emoji: string;
-  /** Official name, in its own casing — never upper-cased. */
+  /**
+   * The catalog's canonical name, in its own casing — never upper-cased, and never the short
+   * label the catalog also carries for its own convenience. The bulletin is forwarded to
+   * people who will go and look the change up, so it has to call it what TibiaWiki and the
+   * rest of the app call it: "Their Master's Voice", not "Master's Voice".
+   */
   name: string;
   /**
    * Where it happens, one entry per distinct place, from the catalog's own Location field.
@@ -164,13 +169,19 @@ export interface BriefingModel {
   /**
    * Never empty: the three changes nothing announces are in it every day, checked or not.
    * See `isUnannounced` in lib/defaults/miniWorldChanges.ts for why.
+   *
+   * Alphabetical by `name`, like every other list of changes in this model — see
+   * `compareDisplayNames`.
    */
   miniWorldChangeLines: ChangeLine[];
+  /** Alphabetical by `name`, the same way `miniWorldChangeLines` is. */
   worldChangeLines: ChangeLine[];
   /**
-   * World Changes no Guide has been asked about, by short label. UNKNOWN is a distinct state
-   * from every recognised one, so it gets a distinct — and deliberately tiny — line rather
-   * than being indistinguishable from "nothing is happening there".
+   * World Changes no Guide has been asked about, by canonical name and in the same
+   * alphabetical order as `worldChangeLines`, so the two halves of the section are one list a
+   * reader can scan. UNKNOWN is a distinct state from every recognised one, so it gets a
+   * distinct — and deliberately tiny — line rather than being indistinguishable from "nothing
+   * is happening there".
    */
   worldChangesUnchecked: string[];
   upcomingEventLines: EventLine[];
@@ -231,6 +242,34 @@ function briefingLocationsOf(definition: {
     return definition.briefingLocations;
   }
   return definition.location ? [definition.location] : [];
+}
+
+/**
+ * Both change sections are ordered alphabetically by the name the bulletin prints.
+ *
+ * The order used to be the catalog's, which is the order the *game* hands the changes over in:
+ * the Guide NPC's keyword recitation for World Changes, and the wiki's own list for the Mini
+ * ones. That is an order with a reason behind it, and none of the reasons are the reader's —
+ * somebody scanning a forwarded message for one change has no way to guess where in it that
+ * change sits, so they read the whole section every morning.
+ *
+ * Alphabetical by the printed name is the one order a reader can navigate without being told
+ * it, and the canonical name is already what the site sorts on — lib/dashboard/dailyDigest.ts
+ * orders every group by it, and the dispatch orders its Guide entries by it. The bulletin has
+ * no groups to order within, so here it is the whole order. Sorting on that name rather than
+ * on the id or the location also means what the eye scans is exactly what the comparator
+ * sorted: "The Mummy's Curse" files under T, where a reader looking at the printed name will
+ * look for it, and not under H for the Horestis the catalog happens to call it.
+ *
+ * Pinned to "en" so ninety worlds in four bulletin languages all produce the same order: the
+ * names themselves are English, and a machine's own locale is not a fact about the bulletin.
+ */
+function compareDisplayNames(a: string, b: string): number {
+  return a.localeCompare(b, "en");
+}
+
+function byDisplayName(a: ChangeLine, b: ChangeLine): number {
+  return compareDisplayNames(a.name, b.name);
 }
 
 export function buildBriefingModel(input: BriefingInput): BriefingModel {
@@ -406,22 +445,26 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
 
     if (!state) {
       // UNKNOWN, and kept as such: never asked is not the same as nothing happening.
-      worldChangesUnchecked.push(def.shortLabel);
+      worldChangesUnchecked.push(def.name);
       continue;
     }
 
     const narrative = getWorldChangeNarrative(def.id, state.id, input.language);
     worldChangeLines.push({
       emoji: def.emoji,
-      name: def.shortLabel,
+      name: def.name,
       locations: briefingLocationsOf(def),
       // Headline and body are one paragraph about one state, so they are joined into one
       // line. Split across two they read as two separate facts, and the second — "no White
       // Deer while the wolves are there" — is the half that decides what the morning is worth.
       state: [narrative?.headline ?? state.label, narrative?.body].filter(Boolean).join(" "),
-      notes: notesFor(def.shortLabel),
+      notes: notesFor(def.name),
     });
   }
+
+  miniWorldChangeLines.sort(byDisplayName);
+  worldChangeLines.sort(byDisplayName);
+  worldChangesUnchecked.sort(compareDisplayNames);
 
   const marketEntryCount = ENTRIES_BY_BASIS[input.marketTrendBasis];
   const marketPriceLines: MarketPriceLine[] = (
