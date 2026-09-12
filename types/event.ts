@@ -1,6 +1,6 @@
 /**
- * Sourced at build time from Tibia.com's official calendar, with TibiaWiki as an
- * availability fallback (see lib/data/eventContentClient.ts). Refreshes on deploy.
+ * Sourced at build time from Tibia.com's official calendar. A last verified
+ * official snapshot is used only when the unattended fetch is challenged.
  * Carries structured timestamps rather than pre-formatted prose so the formatter can
  * render relative dates in the selected briefing language.
  */

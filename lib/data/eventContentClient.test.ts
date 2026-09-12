@@ -18,16 +18,17 @@ describe("event source integration", () => {
     expect(fetcher).toHaveBeenCalledTimes(4);
   });
 
-  it("logs an official failure and uses the existing wiki source without mixing sources", async () => {
+  it("logs an official failure and uses only the verified official snapshot", async () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input.startsWith("https://www.tibia.com/")) return { ok: false, status: 403 };
-      return { ok: true, json: async () => ({ parse: { text: { "*": '<div data-type="upcoming"><a href="/wiki/Grimvale" title="Grimvale">Grimvale</a> starts in <b>1 day</b>.</div>' } } }) };
+      return { ok: true, json: async () => ({}) };
     }));
     const result = await fetchEventContent(new Date("2026-09-11T12:00:00Z"));
-    expect(warning).toHaveBeenCalledWith(expect.stringContaining("TibiaWiki fallback"), expect.stringContaining("HTTP 403"));
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining("verified official snapshot"), expect.stringContaining("HTTP 403"));
     expect(result.activeEvents).toEqual([]);
-    expect(result.upcomingEvents[0]).toMatchObject({ title: "Grimvale", source: "tibiawiki" });
+    expect(result.upcomingEvents[0]).toMatchObject({ title: "Full Moon", source: "tibia.com", startAt: "2026-09-12T08:00:00.000Z" });
+    expect(result.upcomingEvents.every((event) => event.source === "tibia.com")).toBe(true);
   });
 
   it("does not fall back for a genuinely empty official calendar", async () => {
