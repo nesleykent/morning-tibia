@@ -1,25 +1,24 @@
 import type { PriceSnapshot } from "@/types/market";
 
+/** One row of api.tibiamarket.top's `/item_history` — its `MarketValues` schema, narrowed
+ * to the fields this app reads. `time` is seconds since the epoch, as a float. */
 export interface RawMarketHistoryEntry {
   time: number;
   day_average_sell?: number;
   day_average_buy?: number;
 }
 
-export interface RawMarketHistoryFile {
-  snapshots?: RawMarketHistoryEntry[][];
-}
-
-/** The dataset spans years of daily entries, but the widest basis this app offers is
- * "avg14" — keep a few months' worth (bounding what gets stored in localStorage) rather
- * than persisting the full history for no functional benefit. */
+/** A ceiling on what gets stored in localStorage, below the window each request asks for
+ * (MARKET_HISTORY_DAYS) and far above the widest basis this app offers, "avg14" — so a
+ * feed that one day returns more than it was asked for still cannot grow a saved day
+ * without bound. */
 export const MAX_STORED_HISTORY_ENTRIES = 90;
 
 /**
- * Turns tibia-warzones-schedule's raw daily market-history rows into this app's
+ * Turns api.tibiamarket.top's raw daily market-history rows into this app's
  * PriceSnapshot[] shape: picks one price field (`day_average_sell` or
- * `day_average_buy`), drops the `-1`-sentinel/missing entries the upstream feed uses for
- * "not tracked that day", sorts oldest-first, and caps the length.
+ * `day_average_buy`), drops the `-1`-sentinel/missing entries the feed uses for "not
+ * traded that day", sorts oldest-first, and caps the length.
  */
 export function mapMarketHistoryEntries(
   entries: RawMarketHistoryEntry[],

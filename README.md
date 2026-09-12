@@ -171,19 +171,21 @@ branding. It does not scrape or reuse Tibiopedia's UI, parsing logic, or assets.
    and Silver Token Sell Offer prices — named literally after the underlying market-order
    fields, not reinterpreted into a "what the player pays/receives" framing — are **fully
    read-only**, the same reasoning as Rashid: nobody can know the current market price
-   better than the data itself, so a manual override could only ever be wrong. Rather than
-   a live current-tick API (which only ever gives one snapshot per page load, leaving
-   almost nothing for a trend to compare against), Morning Tibia sources real day-by-day
-   history — the same published dataset [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule)'s
-   own trend/ranking calculations are built on (years of daily `day_average_sell`/
-   `day_average_buy` entries) — giving every price meaningful history from the very first
-   load. A basis selector on the dashboard (Last entry / Avg 3 / Avg 7 / Avg 14 entries,
+   better than the data itself, so a manual override could only ever be wrong. They come
+   straight from [TibiaMarket](https://www.tibiamarket.top)'s own API
+   ([`api.tibiamarket.top`](https://api.tibiamarket.top/docs)), whose `/item_history`
+   endpoint answers with real day-by-day history (daily `day_average_sell`/
+   `day_average_buy` entries) rather than the single current tick a "market values" call
+   would give — so every price has meaningful history from the very first load. That API
+   rate-limits by address and has no endpoint returning several items at once, so the three
+   items are fetched one after another and **each is shown the moment it arrives**: Tibia
+   Coin within a second, the tokens over the next few. A basis selector on the dashboard (Last entry / Avg 3 / Avg 7 / Avg 14 entries,
    `lib/utils/priceTrend.ts`) controls both the shown gp figure and the up/down/unchanged
    trend arrow: the trend compares that basis's average including the latest entry against
    the same basis computed one entry earlier, so "Avg 7" reflects whether the 7-entry (day)
    average actually moved, not just whether the single newest tick did. An "as of X ago"
    snapshot-freshness label (next to an **auto** badge meaning "sourced automatically", not
-   literally "this second" — the dataset itself refreshes about once a day) also appears in
+   literally "this second" — the feed itself gains an entry about once a day) also appears in
    the generated briefing text next to the price, which itself reflects the same selected
    basis.
 7. **Briefing generator** — turns all of the above into a formatted daily message (rich
@@ -218,7 +220,7 @@ defaults and stay manually editable.
 |---|---|---|
 | World list, PvP type, BattlEye, transfer type, online count, boosted creature/boss | [TibiaData API v4](https://docs.tibiadata.com/) | Public, no auth, CORS-open — fetched directly from the browser (`lib/data/worldProvider.ts`). |
 | Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
-| Tibia Coin, Gold Token, Silver Token sell/buy offers | [nesleykent/tibia-warzones-schedule](https://github.com/nesleykent/tibia-warzones-schedule) (published `data/market/world/{World}/{world}_{item}.json`, one file per item per world) | CORS-open, re-fetched every 15 minutes while the dashboard is open (`lib/data/marketHistoryMapping.ts` + `worldProvider.ts`). Fully read-only — no manual override. Real day-by-day history (years of `day_average_sell`/`day_average_buy` entries, refreshed upstream about once a day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
+| Tibia Coin, Gold Token, Silver Token sell/buy offers | [TibiaMarket](https://www.tibiamarket.top) — [`api.tibiamarket.top/item_history`](https://api.tibiamarket.top/docs), one call per item per world (item ids 22118 / 22721 / 22516) | No token, CORS-open, fetched straight from the browser (`lib/data/tibiaMarketClient.ts` + `marketHistoryMapping.ts` + `worldProvider.ts`), re-fetched every 15 minutes while the dashboard is open and cached per world for the session. Fully read-only — no manual override. Real day-by-day history (90 days of `day_average_sell`/`day_average_buy` entries, one per day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. The API rate-limits by address, so requests are queued one at a time with a gap between them, refusals are backed off and retried, and each item is published to the page as it lands instead of the panel waiting on the slowest. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active events, upcoming events, Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) gadget pages (`Active_Events`, `Upcoming_Events`, `Tibiadrome/Rotation`) — community-maintained live mirrors of tibia.com's own event calendar (which sits behind a Cloudflare bot check and can't be fetched directly) and Tibiadrome's documented fixed bi-weekly rotation | Fetched **at build time** via the MediaWiki API (`lib/data/wikiContentClient.ts`), since that API doesn't send CORS headers and can only be called server-side. A scheduled GitHub Actions rebuild (every 6h, see `.github/workflows/deploy.yml`) keeps it current. Read-only in the UI — not user-editable. |
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
 | All 14 World Changes | Guide NPC chat log, pasted by the user, parsed against [verbatim reply text](lib/parser/guideMessages.ts) | One keyword per change (`guideKeyword`), shown on the card. A reply establishes one documented state, matched as a *prefix* so a live reply that continues past the transcript still resolves; silence about a keyword only ever means "not asked". A line that is unmistakably a Guide speaking but whose wording isn't in the catalog is reported as unread rather than dropped. Each card also has a picker limited to that change's documented states, for a player who read the reply but didn't copy it. |
@@ -263,12 +265,14 @@ lib/
                    (above the page) and useBriefingState (inside the page) — they don't
                    share a React tree position, so this avoids two independent copies of
                    the same localStorage value drifting apart
-  data/          — worldProvider.ts (client hooks fetching TibiaData and
-                   tibia-warzones-schedule directly — both CORS-open, so this works from a
-                   static, server-less deploy), tibiaDataMapping.ts (pure, unit tested),
-                   marketHistoryMapping.ts (pure, unit tested — parses the market history
-                   JSON worldProvider.ts fetches), wikiContentClient.ts (build-time-only
-                   TibiaWiki fetcher, unit tested)
+  data/          — worldProvider.ts (client hooks fetching TibiaData,
+                   tibia-warzones-schedule and api.tibiamarket.top directly — all
+                   CORS-open, so this works from a static, server-less deploy),
+                   tibiaMarketClient.ts (the rate-limit-aware TibiaMarket caller: one
+                   request at a time, spaced, retried on a refusal — unit tested),
+                   tibiaDataMapping.ts (pure, unit tested), marketHistoryMapping.ts (pure,
+                   unit tested — turns /item_history rows into price snapshots),
+                   wikiContentClient.ts (build-time-only TibiaWiki fetcher, unit tested)
   parser/        — boardMessages.ts / towncryerMessages.ts / guideMessages.ts (verbatim
                    catalogs, one per in-game source) + parseBoardLog.ts (which alone can
                    report a complete reading, from the board's own messages) /
@@ -315,7 +319,8 @@ means implementing that interface once.
 
 The app ships as a fully static site (`next.config.ts` sets `output: "export"`) — there
 is no server at runtime. Everything that can be fetched from the browser (TibiaData,
-tibia-warzones-schedule) is; everything that can only be fetched server-side due to CORS
+tibia-warzones-schedule, api.tibiamarket.top) is; everything that can only be fetched
+server-side due to CORS
 (TibiaWiki) is resolved once at build time and baked into the static HTML, refreshed by a
 scheduled CI rebuild.
 

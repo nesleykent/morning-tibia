@@ -15,7 +15,8 @@ import { BriefingPanel } from "./BriefingPanel";
 import { formatList } from "./formatList";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils/cn";
@@ -38,6 +39,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
   const { copy, copied } = useCopyToClipboard();
   const [copyFailed, setCopyFailed] = useState(false);
   const [view, setView] = useState<"today" | "everything">("today");
+  const [resetOpen, setResetOpen] = useState(false);
   const [briefingPanelOnScreen, watchBriefingPanel] = useOnScreen();
 
   const digest = useMemo(
@@ -186,7 +188,13 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
             <IconAction label="Refresh live data" onClick={state.refreshLiveData}>
               <RefreshCw className={cn("h-4 w-4", state.boostedQuery.isLoading && "animate-spin")} />
             </IconAction>
-            <Dialog>
+            {/*
+              Controlled, because confirming has to dismiss the thing that asked. Left
+              uncontrolled, Radix only closes on the X, Escape or the scrim — so the one
+              button in the dialog cleared the day and then left the dialog sitting over
+              the page it had just rewritten, which reads exactly like nothing happened.
+            */}
+            <Dialog open={resetOpen} onOpenChange={setResetOpen}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DialogTrigger asChild>
@@ -208,7 +216,20 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="destructive" onClick={state.resetOverrides}>Reset</Button>
+                  {/* Backing out of a destructive question needs a button of its own, not
+                      the close affordance in the corner. */}
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      state.resetOverrides();
+                      setResetOpen(false);
+                    }}
+                  >
+                    Reset
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

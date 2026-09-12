@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { World, WorldDetail } from "@/types/world";
 import type { BoostedEntity } from "@/types/boosted";
 import type { WarzoneSchedule, WarzoneHealthMark } from "@/types/warzone";
-import type { MarketPriceId, PriceSnapshot } from "@/types/market";
+import type { MarketHistory } from "@/types/market";
 import {
   mapBoostedBoss,
   mapBoostedCreature,
@@ -15,20 +15,18 @@ import {
   type RawWorldDetailResponse,
   type RawWorldsResponse,
 } from "./tibiaDataMapping";
-import {
-  mapMarketHistoryEntries,
-  type RawMarketHistoryEntry,
-  type RawMarketHistoryFile,
-} from "./marketHistoryMapping";
+import { mapMarketHistoryEntries, type RawMarketHistoryEntry } from "./marketHistoryMapping";
+import { fetchItemHistory, MARKET_ITEM_IDS } from "./tibiaMarketClient";
 
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
 const WARZONES_SCHEDULE_ORIGIN = "https://nesleykent.github.io/tibia-warzones-schedule";
 const WARZONE_SCHEDULE_URL = `${WARZONES_SCHEDULE_ORIGIN}/data/worlds.json`;
 
 /**
- * Fetches straight from TibiaData and nesleykent/tibia-warzones-schedule in the browser —
- * both set permissive CORS, so this works from a static, server-less deploy (GitHub
- * Pages) exactly the same as it does in local dev. No proxy route needed.
+ * Fetches straight from TibiaData, nesleykent/tibia-warzones-schedule and
+ * api.tibiamarket.top in the browser — all three set permissive CORS, so this works from a
+ * static, server-less deploy (GitHub Pages) exactly the same as it does in local dev. No
+ * proxy route needed.
  */
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -112,44 +110,39 @@ async function fetchWarzoneScheduleDirect(
   };
 }
 
-/** tibia-warzones-schedule's own item-slug convention (scripts/common.py's slugify:
- * lowercase, spaces to underscores) for the 3 items Morning Tibia tracks. */
-const MARKET_ITEM_SLUGS = {
-  tibiaCoin: "tibia_coins",
-  goldToken: "gold_token",
-  silverToken: "silver_token",
-} as const;
-
-async function fetchItemHistory(worldName: string, itemSlug: string): Promise<RawMarketHistoryEntry[]> {
-  const url = `${WARZONES_SCHEDULE_ORIGIN}/data/market/world/${encodeURIComponent(worldName)}/${worldName.toLowerCase()}_${itemSlug}.json`;
-  const data = await fetchJson<RawMarketHistoryFile>(url);
-  return data.snapshots?.[0] ?? [];
-}
+/**
+ * The three items the app tracks, in the order they are fetched, each with the price ids
+ * one item's rows produce. Tibia Coins come first because their single response carries two
+ * of the four numbers, and because they are the figure every reader looks for.
+ */
+const MARKET_ITEMS: { id: number; toHistory: (entries: RawMarketHistoryEntry[]) => MarketHistory }[] = [
+  {
+    id: MARKET_ITEM_IDS.tibiaCoin,
+    toHistory: (entries) => ({
+      tibiaCoinSell: mapMarketHistoryEntries(entries, "day_average_sell"),
+      tibiaCoinBuy: mapMarketHistoryEntries(entries, "day_average_buy"),
+    }),
+  },
+  {
+    id: MARKET_ITEM_IDS.goldToken,
+    toHistory: (entries) => ({ goldTokenSell: mapMarketHistoryEntries(entries, "day_average_sell") }),
+  },
+  {
+    id: MARKET_ITEM_IDS.silverToken,
+    toHistory: (entries) => ({ silverTokenSell: mapMarketHistoryEntries(entries, "day_average_sell") }),
+  },
+];
 
 /**
- * Real day-by-day market history (`day_average_sell`/`day_average_buy`, one entry per
- * calendar day, refreshed daily), mirrored as public static JSON by
- * nesleykent/tibia-warzones-schedule — the exact dataset that site's own trend/average
- * calculations are built on (its scripts/economic_ranking.py and assets/world.js), sourced
- * upstream from api.tibiamarket.top's /item_history endpoint. Reusing this published
- * mirror instead of calling that endpoint directly avoids needing its auth token, and
- * gives years of real daily granularity immediately instead of the single current-tick
- * snapshot a live "market_values"-style call would provide.
+ * What the API has already told us this session, by world.
+ *
+ * Worth keeping in a way the warzone schedule's own cache above is not: every entry here
+ * cost three rate-limited requests spread over some fifteen seconds, and the reader
+ * comparing a few worlds would otherwise pay that again for each one every time they came
+ * back. The feed gains an entry once a day, so nothing is lost by holding it — and it is
+ * dropped whenever the reader asks for a refresh, or the poll comes round.
  */
-async function fetchMarketHistoryDirect(worldName: string): Promise<Record<MarketPriceId, PriceSnapshot[]>> {
-  const [tibiaCoin, goldToken, silverToken] = await Promise.all([
-    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.tibiaCoin),
-    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.goldToken),
-    fetchItemHistory(worldName, MARKET_ITEM_SLUGS.silverToken),
-  ]);
-
-  return {
-    tibiaCoinSell: mapMarketHistoryEntries(tibiaCoin, "day_average_sell"),
-    tibiaCoinBuy: mapMarketHistoryEntries(tibiaCoin, "day_average_buy"),
-    goldTokenSell: mapMarketHistoryEntries(goldToken, "day_average_sell"),
-    silverTokenSell: mapMarketHistoryEntries(silverToken, "day_average_sell"),
-  };
-}
+const marketHistoryCache = new Map<string, MarketHistory>();
 
 interface ResourceState<T> {
   data: T | null;
@@ -245,10 +238,10 @@ function useAsyncResource<T>(
   return { ...state, refresh };
 }
 
-/** How often the market history is re-fetched while the dashboard stays open. The
- * upstream dataset itself only gains a new day's entry once daily, and the response
- * carries a 10-minute Cache-Control the browser already honors — this just catches a
- * same-day correction or a session left open across a day boundary. */
+/** How often the market history is re-fetched while the dashboard stays open. The feed
+ * itself only gains a new day's entry once daily — this just catches a same-day correction
+ * or a session left open across a day boundary, and it is deliberately far longer than the
+ * API's rate-limit window so polling never competes with a world switch for a slot. */
 const MARKET_POLL_INTERVAL_MS = 15 * 60 * 1000;
 
 export function useWorldsQuery() {
@@ -276,10 +269,107 @@ export function useWarzoneScheduleQuery(worldName: string | null) {
   );
 }
 
+/**
+ * Day-by-day market history for the world on screen, from api.tibiamarket.top.
+ *
+ * Not built on useAsyncResource, because this is the one feed that cannot be fetched in a
+ * single shot: the API is rate-limited per address and has no endpoint returning several
+ * items' histories at once, so the three items go one after another (see
+ * MIN_REQUEST_GAP_MS) and the whole set takes some fifteen seconds. Waiting for all of it
+ * would leave the Market panel empty for that whole time, so each item is published the
+ * moment it arrives — Tibia Coins, which carry the two headline numbers, within the first
+ * second — and the rest fill in behind it. `data` is therefore partial until the last one
+ * lands.
+ *
+ * `error` is only set when *every* item failed. A single item that could not be fetched
+ * leaves the others showing and simply says nothing about itself, which is what the rest of
+ * the app does with a fact it does not have.
+ */
 export function useMarketHistoryQuery(worldName: string | null) {
-  return useAsyncResource<Record<MarketPriceId, PriceSnapshot[]>>(
-    worldName ? `marketHistory:${worldName}` : null,
-    () => fetchMarketHistoryDirect(worldName!),
-    MARKET_POLL_INTERVAL_MS,
-  );
+  const [state, setState] = useState<ResourceState<MarketHistory>>({
+    data: null,
+    isLoading: Boolean(worldName),
+    error: null,
+  });
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  // Same sanctioned fetch-in-an-Effect pattern as useAsyncResource above; the setState
+  // calls here deliberately mark loading before the requests settle.
+  useEffect(() => {
+    if (!worldName) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({ data: null, isLoading: false, error: null });
+      return;
+    }
+
+    const cached = marketHistoryCache.get(worldName);
+    if (cached) {
+      setState({ data: cached, isLoading: false, error: null });
+      return;
+    }
+
+    // Abandoning a request also drops the ones still queued behind it, so switching world
+    // twice in a row doesn't leave the third world waiting on the first two.
+    const controller = new AbortController();
+    setState({ data: null, isLoading: true, error: null });
+
+    void (async () => {
+      const collected: MarketHistory = {};
+      // Re-published as a fresh object each time an item lands, so consumers keyed on this
+      // value see each arrival; held onto so the final state does not needlessly change
+      // identity once more when nothing new has come in.
+      let published: MarketHistory | null = null;
+      let delivered = 0;
+      let lastError: unknown = null;
+
+      for (const item of MARKET_ITEMS) {
+        try {
+          const entries = await fetchItemHistory(worldName, item.id, controller.signal);
+          if (controller.signal.aborted) return;
+          delivered += 1;
+          Object.assign(collected, item.toHistory(entries));
+          published = { ...collected };
+          setState({ data: published, isLoading: true, error: null });
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          lastError = error;
+        }
+      }
+
+      if (controller.signal.aborted) return;
+      // Only a complete set is worth remembering: a half-answer served back from the cache
+      // would look like the API had nothing more to say about the missing asset.
+      if (delivered === MARKET_ITEMS.length) marketHistoryCache.set(worldName, collected);
+      setState({
+        data: published,
+        isLoading: false,
+        error:
+          published === null && lastError !== null
+            ? lastError instanceof Error
+              ? lastError.message
+              : "Something went wrong"
+            : null,
+      });
+    })();
+
+    return () => controller.abort();
+  }, [worldName, refreshToken]);
+
+  // Refreshing means forgetting what was cached — otherwise Retry, and the poll, would
+  // cheerfully hand back the very answer the reader is asking us to go and check.
+  const refresh = useCallback(() => {
+    if (worldName) marketHistoryCache.delete(worldName);
+    setRefreshToken((n) => n + 1);
+  }, [worldName]);
+
+  useEffect(() => {
+    if (!worldName) return;
+    const id = setInterval(() => {
+      marketHistoryCache.delete(worldName);
+      setRefreshToken((n) => n + 1);
+    }, MARKET_POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [worldName]);
+
+  return { ...state, refresh };
 }

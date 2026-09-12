@@ -14,6 +14,16 @@ export interface PriceSnapshot {
   timestamp: number;
 }
 
+/**
+ * Day-by-day history for each tracked price, as the live feed delivers it.
+ *
+ * Partial on purpose: api.tibiamarket.top rate-limits by address, so the three items are
+ * fetched one after another and each one is handed over as it lands rather than the reader
+ * waiting on the slowest. An id that isn't here yet simply hasn't arrived; every consumer
+ * already treats a price with no history as one it cannot speak about.
+ */
+export type MarketHistory = Partial<Record<MarketPriceId, PriceSnapshot[]>>;
+
 export interface MarketPrice {
   id: MarketPriceId;
   label: string;

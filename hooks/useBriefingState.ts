@@ -425,11 +425,14 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
     briefingRepository.setMarketTrendBasis(basis);
   }, []);
 
-  // Merge the real day-by-day market history in (see fetchMarketHistoryDirect in
-  // lib/data/worldProvider.ts for where it comes from — the same dataset
-  // tibia-warzones-schedule's own trend/average calculations are built on). Prices are
-  // fully read-only here — see MarketPriceCard — so this always replaces each price's
-  // history wholesale with the authoritative dataset rather than diffing incrementally.
+  // Merge the real day-by-day market history in (see useMarketHistoryQuery in
+  // lib/data/worldProvider.ts — api.tibiamarket.top's own /item_history rows). Prices are
+  // fully read-only here, so this always replaces each price's history wholesale with the
+  // authoritative dataset rather than diffing incrementally.
+  //
+  // The feed arrives an item at a time, so this effect runs once per item and each run
+  // carries only the ids that have landed so far. Anything absent is left exactly as it
+  // was, which is also what keeps a price the API could not give us from being blanked.
   useEffect(() => {
     const history = marketHistoryQuery.data;
     if (!history) return;
@@ -443,7 +446,7 @@ export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBri
       for (const id of Object.keys(history) as (keyof typeof history)[]) {
         const current = nextPrices[id];
         const snapshots = history[id];
-        if (!current || snapshots.length === 0) continue;
+        if (!current || !snapshots || snapshots.length === 0) continue;
         const latest = snapshots[snapshots.length - 1]!;
         const alreadyCurrent =
           current.history.length === snapshots.length &&
