@@ -1,5 +1,6 @@
 import "server-only";
 import type { ActiveEvent, EventCertainty, UpcomingEvent } from "@/types/event";
+import { addTibiaDays } from "@/lib/utils/date";
 import { getNextServerSave } from "@/lib/utils/serverSave";
 
 const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
@@ -142,8 +143,8 @@ export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEven
       const { title, href } = extractLinkTitleAndHref(block);
       const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
       const daysRemaining = extractDaysNumber(strippedBlock);
-      const endAt = new Date(
-        referenceDate.getTime() + daysRemaining * DAY_MS,
+      const endAt = serverSaveForDateKey(
+        addTibiaDays(referenceDate, daysRemaining),
       ).toISOString();
 
       const dateKeys = await fetchEventDateKeys(title);
@@ -180,19 +181,17 @@ export async function fetchUpcomingEvents(referenceDate: Date): Promise<Upcoming
       const certainty: EventCertainty =
         /\bmight\b/i.test(strippedBlock) ? "estimated" : "confirmed";
 
-      const provisionalStartAt = new Date(
-        referenceDate.getTime() + daysUntil * DAY_MS,
-      );
+      const provisionalDateKey = addTibiaDays(referenceDate, daysUntil);
 
       const dateKeys = await fetchEventDateKeys(title);
       const scheduledDateKey = nearestDateKey(
         dateKeys,
-        provisionalStartAt.toISOString().slice(0, 10),
+        provisionalDateKey,
       );
 
       const startAt = scheduledDateKey
         ? serverSaveForDateKey(scheduledDateKey).toISOString()
-        : provisionalStartAt.toISOString();
+        : serverSaveForDateKey(provisionalDateKey).toISOString();
 
       return {
         id: `upcoming-${index}-${title}`,

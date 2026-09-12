@@ -31,7 +31,7 @@ describe("fetchActiveEvents", () => {
       url: "https://tibia.fandom.com/wiki/Hot_Cuisine_Quest",
       daysRemaining: 13,
     });
-    expect(events[0]!.endAt).toBe(new Date(REFERENCE.getTime() + 13 * 86400000).toISOString());
+    expect(events[0]!.endAt).toBe("2026-08-31T08:00:00.000Z");
   });
 });
 
@@ -48,9 +48,17 @@ describe("fetchUpcomingEvents", () => {
       "Annual Autumn Vintage",
     ]);
     expect(events[0]!.certainty).toBe("confirmed");
-    expect(events[0]!.startAt).toBe(new Date(REFERENCE.getTime() + 3 * 86400000).toISOString());
+    expect(events[0]!.startAt).toBe("2026-08-21T08:00:00.000Z");
     const rapidRespawn = events.find((e) => e.title === "Rapid Respawn Events")!;
     expect(rapidRespawn.certainty).toBe("estimated");
+  });
+
+  it("anchors a fallback countdown to the next server saves, not 24-hour clock math", async () => {
+    mockFetchOnce('<div data-type="upcoming"><a href="/wiki/Example" title="Example">Example</a> starts in <b>1 day</b>.</div>');
+
+    const events = await fetchUpcomingEvents(new Date("2026-09-11T22:00:00Z"));
+
+    expect(events[0]!.startAt).toBe("2026-09-12T08:00:00.000Z");
   });
 
   it("tags repeated titles with an occurrence index/count instead of hiding the duplication", async () => {

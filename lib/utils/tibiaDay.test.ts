@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getLastServerSave, getNextServerSave } from "./serverSave";
-import { tibiaDayDiff, toTibiaBriefingDate, toTibiaDayKey } from "./date";
+import { addTibiaDays, tibiaDayDiff, toTibiaBriefingDate, toTibiaDayKey } from "./date";
 import { createDefaultOverrides } from "@/lib/defaults";
 import { storageKeys } from "@/lib/storage/storageKeys";
 
@@ -64,6 +64,12 @@ describe("tibiaDayDiff", () => {
     const nextSave = new Date("2026-09-12T08:00:00Z");
 
     expect(tibiaDayDiff(now, nextSave)).toBe(1);
+  });
+});
+
+describe("addTibiaDays", () => {
+  it("advances by save periods even when the next period starts tomorrow locally", () => {
+    expect(addTibiaDays(new Date("2026-09-11T22:00:00Z"), 1)).toBe("2026-09-12");
   });
 });
 

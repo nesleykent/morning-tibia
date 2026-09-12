@@ -56,6 +56,12 @@ export function tibiaDayDiff(from: Date, to: Date): number {
   return Math.round((toUTC - fromUTC) / DAY_MS);
 }
 
+/** Return the Tibia calendar key after a number of server-save periods. */
+export function addTibiaDays(now: Date, days: number): string {
+  const [year, month, day] = toTibiaDayKey(now).split("-").map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day! + days)).toISOString().slice(0, 10);
+}
+
 /** Whole days elapsed between two dates, ignoring time-of-day. */
 export function daysBetween(from: Date, to: Date): number {
   const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
