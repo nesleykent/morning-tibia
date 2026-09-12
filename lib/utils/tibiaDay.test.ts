@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getLastServerSave, getNextServerSave } from "./serverSave";
-import { toTibiaDayKey } from "./date";
+import { toTibiaBriefingDate, toTibiaDayKey } from "./date";
 import { createDefaultOverrides } from "@/lib/defaults";
 import { storageKeys } from "@/lib/storage/storageKeys";
 
@@ -35,6 +35,19 @@ describe("toTibiaDayKey", () => {
   it("stays correct in winter time (CET, save at 09:00Z)", () => {
     expect(toTibiaDayKey(new Date("2026-01-15T08:59:00Z"))).toBe("2026-01-14");
     expect(toTibiaDayKey(new Date("2026-01-15T09:00:00Z"))).toBe("2026-01-15");
+  });
+});
+
+describe("toTibiaBriefingDate", () => {
+  it("keeps the previous briefing date after local midnight until the server save", () => {
+    // Midnight in Berlin on 12 September is still the Tibia day started by the 11 September save.
+    const beforeSave = new Date("2026-09-11T22:00:00Z");
+    expect(toTibiaBriefingDate(beforeSave)).toBe("11/09/2026");
+  });
+
+  it("advances the briefing date at the server save", () => {
+    const afterSave = new Date("2026-09-12T08:00:00Z");
+    expect(toTibiaBriefingDate(afterSave)).toBe("12/09/2026");
   });
 });
 

@@ -14,9 +14,8 @@ import { getLastServerSave } from "./serverSave";
  * calendar date of the save that *started* the current day, so it advances exactly when the
  * world does.
  *
- * Note this is deliberately not the same thing as the date shown to the reader — see
- * `toBriefingDate`, which stays on the viewer's own calendar because "today" in a message
- * pasted into a guild chat means the sender's today.
+ * The briefing dateline uses this same key, so it advances with the game world rather than
+ * at the viewer's local midnight.
  */
 export function toTibiaDayKey(now: Date): string {
   const save = getLastServerSave(now);
@@ -38,6 +37,12 @@ export function toBriefingDate(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${d}/${m}/${y}`;
+}
+
+/** dd/mm/yyyy for the Tibia day containing `now` (the period since the last server save). */
+export function toTibiaBriefingDate(now: Date): string {
+  const [year, month, day] = toTibiaDayKey(now).split("-");
+  return `${day}/${month}/${year}`;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

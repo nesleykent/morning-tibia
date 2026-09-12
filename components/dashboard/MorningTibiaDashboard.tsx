@@ -25,7 +25,7 @@ import { buildDailyDigest } from "@/lib/dashboard/dailyDigest";
 import { deriveOpportunities } from "@/lib/opportunities/deriveOpportunities";
 import { composeDispatch } from "@/lib/dispatch/composeDispatch";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
-import { toBriefingDate, toTibiaDayKey } from "@/lib/utils/date";
+import { toTibiaBriefingDate, toTibiaDayKey } from "@/lib/utils/date";
 import { useNowMs } from "@/lib/utils/clock";
 import type { MarketTrendBasis } from "@/types/market";
 
@@ -211,7 +211,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
                   {/* Says exactly what it does, because it now does exactly this. */}
                   <DialogDescription>
                     Clears the board reading, guide answers, boosted region and anything else
-                    you filled in for {state.world} on {toBriefingDate(state.referenceDate)}.
+                    you filled in for {state.world} on {toTibiaBriefingDate(state.referenceDate)}.
                     Other worlds, other days and your settings are left alone.
                   </DialogDescription>
                 </DialogHeader>
@@ -262,7 +262,7 @@ export function MorningTibiaDashboard(props: UseBriefingStateProps) {
           <div className="dashboard-layout">
             <div className="dashboard-masthead">
               <Masthead
-                dateLabel={toBriefingDate(state.referenceDate)}
+                dateLabel={toTibiaBriefingDate(state.referenceDate)}
                 world={state.world}
                 detail={state.worldDetailQuery.data}
                 creature={state.boostedQuery.data?.creature ?? null}

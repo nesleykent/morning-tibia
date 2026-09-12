@@ -178,6 +178,17 @@ describe("bulletin structure", () => {
     expect(generatePlainTextBriefing(makeInput())).toMatch(/^2026-08-17\nBom dia, Ustebra!\n/);
   });
 
+  it("keeps the dateline on the Tibia day before the next server save", () => {
+    // 00:00 in Berlin on 12 September is still the Tibia day that began on the 11th.
+    const referenceDate = new Date("2026-09-11T22:00:00Z");
+    const input = emptyInput();
+    input.referenceDate = referenceDate;
+    input.overrides = createDefaultOverrides(input.world, referenceDate);
+
+    expect(generateBriefingMessage(input)).toMatch(/^📅 \*2026-09-11\*\n/);
+    expect(generatePlainTextBriefing(input)).toMatch(/^2026-09-11\n/);
+  });
+
   it("puts a change's state and what it is worth in the same entry", () => {
     // The two used to be separate sections, so a reader met "Overhunting: starving wolves" at
     // the top and "Overhunting / Starving Wolf — Bestiary" forty lines below, and had to hold

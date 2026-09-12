@@ -6,10 +6,10 @@ import type { DromeRotationInfo } from "@/types/drome";
 import type { MarketPriceId, MarketTrendBasis } from "@/types/market";
 import { MINI_WORLD_CHANGE_DEFINITIONS, isUnannounced } from "@/lib/defaults/miniWorldChanges";
 import { WORLD_CHANGE_DEFINITIONS } from "@/lib/defaults/worldChanges";
-import { toBriefingDate } from "@/lib/utils/date";
+import { toTibiaBriefingDate, toTibiaDayKey } from "@/lib/utils/date";
 import { convertTimeBetweenZones } from "@/lib/utils/timezone";
 import { ENTRIES_BY_BASIS, averageOfLastEntries, computeTrendForBasis } from "@/lib/utils/priceTrend";
-import { formatIsoDateUTC, formatShortDateInZone, formatTimeInZone } from "./dateFormat";
+import { formatShortDateInZone, formatTimeInZone } from "./dateFormat";
 import { eventEmoji } from "./eventEmoji";
 import { eventPreviewFor } from "@/lib/defaults/eventPreviews";
 import {
@@ -559,8 +559,8 @@ export function buildBriefingModel(input: BriefingInput): BriefingModel {
   return {
     language: input.language,
     t,
-    dateLabel: toBriefingDate(input.referenceDate),
-    isoDateLabel: formatIsoDateUTC(input.referenceDate),
+    dateLabel: toTibiaBriefingDate(input.referenceDate),
+    isoDateLabel: toTibiaDayKey(input.referenceDate),
     worldName: input.world,
     boostedCreatureLabel: input.unavailable?.boosted
       ? null
