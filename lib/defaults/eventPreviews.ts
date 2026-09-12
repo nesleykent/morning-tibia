@@ -1,4 +1,5 @@
 import type { LocalizedText } from "@/types/opportunity";
+import { eventLookupTitle } from "@/lib/events/eventTitle";
 
 /**
  * What each upcoming event is actually worth turning up for.
@@ -323,6 +324,7 @@ export const EVENT_PREVIEWS: readonly EventPreview[] = [
 /** The preview for an event title, or null when none is catalogued. Longest match wins, so a
  * specific title is never shadowed by a shorter one that happens to be a substring of it. */
 export function eventPreviewFor(title: string): EventPreview | null {
+  title = eventLookupTitle(title);
   const matches = EVENT_PREVIEWS.filter((preview) => title.includes(preview.match));
   if (matches.length === 0) return null;
   return matches.reduce((best, preview) =>

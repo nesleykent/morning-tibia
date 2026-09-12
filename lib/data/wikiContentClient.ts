@@ -7,7 +7,9 @@ const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Build-time only. Fetches rendered HTML from TibiaWiki's "gadget" pages — small,
+ * Build-time only. Used for Drome and as the event availability fallback when the
+ * official calendar cannot be fetched (see eventContentClient.ts).
+ * Fetches rendered HTML from TibiaWiki's "gadget" pages — small,
  * template-computed fragments the wiki itself keeps live (e.g. "starts in 3 days on
  * August 21", recalculated on every page render). These mirror tibia.com's own event
  * calendar and Tibiadrome's documented fixed bi-weekly rotation, without needing to

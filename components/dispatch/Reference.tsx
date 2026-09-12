@@ -186,7 +186,7 @@ export function Reference({
           {activeEvents.length === 0 && visibleEvents.length === 0 && (
             <p className="px-3 py-2.5 text-[12.5px] text-ink-faint">Nothing in this window.</p>
           )}
-          {/* Every event already arrives with its own wiki URL from the build-time fetch. */}
+          {/* Each event carries its source URL from the build-time fetch. */}
           {activeEvents.map((e) => (
             <Row key={e.id} name={e.title} emoji={eventEmoji(e.title)} accent href={e.url}>
               <span className="text-[12.5px] font-medium text-live">

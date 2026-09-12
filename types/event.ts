@@ -1,13 +1,28 @@
 /**
- * Sourced at build time from TibiaWiki's Active Events / Upcoming Events gadget pages
- * (community-maintained live mirrors of tibia.com's own event calendar — see
- * lib/data/wikiContentClient.ts). Not user-editable; refreshes on the next deploy.
+ * Sourced at build time from Tibia.com's official calendar, with TibiaWiki as an
+ * availability fallback (see lib/data/eventContentClient.ts). Refreshes on deploy.
  * Carries structured timestamps rather than pre-formatted prose so the formatter can
  * render relative dates in the selected briefing language.
  */
 export type EventCertainty = "confirmed" | "estimated";
 
-export interface ActiveEvent {
+export interface EventSourceMetadata {
+  source?: "tibia.com" | "tibiawiki";
+  /** Plain text from the official tooltip, in the source's original language. */
+  description?: string | null;
+}
+
+export interface OfficialCalendarEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  url: string;
+  startAt: string;
+  endAt: string;
+  source: "tibia.com";
+}
+
+export interface ActiveEvent extends EventSourceMetadata {
   id: string;
   title: string;
   url: string | null;
@@ -16,17 +31,19 @@ export interface ActiveEvent {
   daysRemaining: number;
   /**
    * Server-save instant for the official start date of this occurrence when
-   * TibiaWiki exposes a /Dates page for the event.
+   * the source exposes a complete period for the event.
    */
   scheduledStartAt?: string | null;
 }
 
-export interface UpcomingEvent {
+export interface UpcomingEvent extends EventSourceMetadata {
   id: string;
   title: string;
   url: string | null;
   /** ISO timestamp for when the event starts. */
   startAt: string;
+  /** Available from the official calendar; permits client-side promotion/expiry. */
+  endAt?: string;
   daysUntil: number;
   /** "estimated" when the source hedges with "might" (a recurring/inferred date). */
   certainty: EventCertainty;

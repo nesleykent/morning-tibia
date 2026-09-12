@@ -48,7 +48,7 @@ function keepLiveData(
 }
 
 export interface UseBriefingStateProps {
-  /** Build-time content from TibiaWiki (see lib/data/wikiContentClient.ts) — not user-editable. */
+  /** Build-time calendar content (see lib/data/eventContentClient.ts); not user-editable. */
   activeEvents: ActiveEvent[];
   upcomingEvents: UpcomingEvent[];
   drome: DromeRotationInfo | null;

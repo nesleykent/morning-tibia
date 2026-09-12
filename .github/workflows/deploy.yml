@@ -5,7 +5,7 @@ on:
     branches: [main]
   schedule:
     # Refreshes the build-time-fetched Active/Upcoming Events and Tibia Drome rotation
-    # data (see lib/data/wikiContentClient.ts) every 6 hours, since there's no server at
+    # data (see lib/data/eventContentClient.ts and wikiContentClient.ts) every 6 hours, since there's no server at
     # runtime to fetch it live.
     - cron: "17 */6 * * *"
   workflow_dispatch: {}

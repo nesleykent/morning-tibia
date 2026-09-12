@@ -1,3 +1,5 @@
+import { eventLookupTitle } from "@/lib/events/eventTitle";
+
 /** Best-effort per-event icon for known, recurring Tibia events; unrecognized titles
  * (including one-off "Mini World Change" style entries from the events calendar) fall
  * back to a generic celebration emoji. */
@@ -34,6 +36,7 @@ const EVENT_EMOJI: Record<string, string> = {
 const DEFAULT_EVENT_EMOJI = "🎉";
 
 export function eventEmoji(title: string): string {
+  title = eventLookupTitle(title);
   for (const [key, emoji] of Object.entries(EVENT_EMOJI)) {
     if (title.includes(key)) return emoji;
   }
