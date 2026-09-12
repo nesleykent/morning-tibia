@@ -9,7 +9,7 @@ import type { WorldChangeValue } from "@/types/worldChange";
 import type { Merchant, MerchantId } from "@/types/merchant";
 import type { MarketTrendBasis } from "@/types/market";
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
-import type { DromeRotationInfo } from "@/types/drome";
+import { getDromeRotation } from "@/lib/drome/dromeRotation";
 import {
   useBoostedQuery,
   useMarketHistoryQuery,
@@ -51,14 +51,16 @@ export interface UseBriefingStateProps {
   /** Build-time calendar content (see lib/data/eventContentClient.ts); not user-editable. */
   activeEvents: ActiveEvent[];
   upcomingEvents: UpcomingEvent[];
-  drome: DromeRotationInfo | null;
 }
 
-export function useBriefingState({ activeEvents, upcomingEvents, drome }: UseBriefingStateProps) {
+export function useBriefingState({ activeEvents, upcomingEvents }: UseBriefingStateProps) {
   // The moment this dispatch's Tibia day was established. Settable, because a tab left open
   // across a server save is describing a world that no longer exists — startNewDay() moves
   // the anchor forward rather than making the reader reload.
   const [referenceDate, setReferenceDate] = useState(() => new Date());
+  // The bulletin describes this chosen Tibia day. Recompute on load/new dispatch,
+  // while the status bar independently follows the shared live clock.
+  const drome = useMemo(() => getDromeRotation(referenceDate), [referenceDate]);
   // Keyed on the Tibia day (server save to server save), not the device's calendar date —
   // see toTibiaDayKey. Two sessions either side of 10:00 CET are different days and must not
   // share a bucket.

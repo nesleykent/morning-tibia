@@ -1,18 +1,17 @@
 import "server-only";
 import type { ActiveEvent, EventCertainty, UpcomingEvent } from "@/types/event";
-import type { DromeRotationInfo } from "@/types/drome";
 import { getNextServerSave } from "@/lib/utils/serverSave";
 
 const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Build-time only. Used for Drome and as the event availability fallback when the
+ * Build-time only. Used as the event availability fallback when the
  * official calendar cannot be fetched (see eventContentClient.ts).
  * Fetches rendered HTML from TibiaWiki's "gadget" pages — small,
  * template-computed fragments the wiki itself keeps live (e.g. "starts in 3 days on
  * August 21", recalculated on every page render). These mirror tibia.com's own event
- * calendar and Tibiadrome's documented fixed bi-weekly rotation, without needing to
+ * calendar, without needing to
  * scrape tibia.com directly (which sits behind a Cloudflare bot challenge) or reimplement
  * the date math ourselves. The MediaWiki API doesn't send CORS headers, so this only
  * works from a Node/build environment, never from the browser — callers must be Server
@@ -231,34 +230,4 @@ export async function fetchUpcomingEvents(referenceDate: Date): Promise<Upcoming
       occurrenceCount: occurrenceCounts.get(event.title)!,
     };
   });
-}
-
-function parseDurationToMinutes(text: string | null): number | null {
-  if (!text) return null;
-  const match = text.match(/(\d+)\s*days?,\s*(\d+)h,\s*(\d+)\s*min/i);
-  if (!match) return null;
-  return Number(match[1]) * 24 * 60 + Number(match[2]) * 60 + Number(match[3]);
-}
-
-export async function fetchDromeRotation(referenceDate: Date): Promise<DromeRotationInfo | null> {
-  const html = await fetchWikiPageHtml("Tibiadrome/Rotation");
-  if (!html) return null;
-
-  const extractRow = (label: string): string | null => {
-    const pattern = new RegExp(`<th>${label}[^<]*</th>\\s*<td><b>([^<]+)</b>`, "i");
-    const match = html.match(pattern);
-    return match ? decodeEntities(match[1]!.trim()) : null;
-  };
-
-  // Each call finds the first (leftmost) match, and "Current rotation</th>" occurs
-  // earlier in the source than "Current rotation started</th>", so order matters here
-  // but no lookahead is needed to keep them from colliding.
-  const rotationNumber = extractRow("Current rotation");
-  const nextRotationInMinutes = parseDurationToMinutes(extractRow("Next rotation starts in"));
-  const endsAt =
-    nextRotationInMinutes !== null
-      ? new Date(referenceDate.getTime() + nextRotationInMinutes * 60_000).toISOString()
-      : null;
-
-  return { rotationNumber, endsAt };
 }

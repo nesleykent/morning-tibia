@@ -1,28 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchActiveEvents, fetchDromeRotation, fetchUpcomingEvents } from "./wikiContentClient";
+import { fetchActiveEvents, fetchUpcomingEvents } from "./wikiContentClient";
 
 const ACTIVE_EVENTS_HTML = `<div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><div style="display:flex;flex-flow: column;"><div data-type="active" style="order:13;"><a href="/wiki/Hot_Cuisine_Quest" title="Hot Cuisine Quest">Hot Cuisine Quest</a> is currently active with <b>13 days</b> remaining ending on August 31.</div><br /></div></div>`;
 
 const UPCOMING_EVENTS_HTML = `<div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><div style="display:flex;flex-flow: column;"><div data-type="upcoming" style="order:3;"><a href="/wiki/A_Pirate%27s_Death_to_Me" title="A Pirate&#39;s Death to Me">A Pirate's Death to Me</a> will start in <b>3 days</b> on August 21.</div><br /><div data-type="upcoming" style="order:49;"><a href="/wiki/Rapid_Respawn_Events" title="Rapid Respawn Events">Rapid Respawn Events</a> <i>might</i>  start in <b>49 days</b> on October 06.</div><div data-type="upcoming" style="order:44;"><a href="/wiki/Annual_Autumn_Vintage" title="Annual Autumn Vintage">Annual Autumn Vintage</a> will start in <b>44 days</b> on October 1.</div><br /><div data-type="upcoming" style="order:60;"><a href="/wiki/Annual_Autumn_Vintage" title="Annual Autumn Vintage">Annual Autumn Vintage</a> will start in <b>60 days</b> on October 17.</div></div></div>`;
-
-const DROME_ROTATION_HTML = `<div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><center>
-<table class="wikitable">
-
-<tbody><tr>
-<th>Current rotation
-</th>
-<td><b>#133</b>
-</td></tr>
-<tr>
-<th>Current rotation started
-</th>
-<td><b>13 days, 12h, 39 min ago</b>
-</td></tr>
-<tr>
-<th>Next rotation starts in
-</th>
-<td><b>0 days, 11h, 21 min</b>
-</td></tr></tbody></table></center></div>`;
 
 function mockFetchOnce(html: string) {
   vi.stubGlobal(
@@ -81,20 +62,5 @@ describe("fetchUpcomingEvents", () => {
     expect(vintages[0]!.occurrenceCount).toBe(2);
     expect(vintages[1]!.occurrenceIndex).toBe(1);
     expect(vintages[1]!.occurrenceCount).toBe(2);
-  });
-});
-
-describe("fetchDromeRotation", () => {
-  it("computes an ISO endsAt timestamp from the wiki's countdown", async () => {
-    mockFetchOnce(DROME_ROTATION_HTML);
-    const drome = await fetchDromeRotation(REFERENCE);
-    expect(drome?.rotationNumber).toBe("#133");
-    const expectedMinutes = 11 * 60 + 21;
-    expect(drome?.endsAt).toBe(new Date(REFERENCE.getTime() + expectedMinutes * 60000).toISOString());
-  });
-
-  it("returns null when the page can't be fetched", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
-    expect(await fetchDromeRotation(REFERENCE)).toBeNull();
   });
 });

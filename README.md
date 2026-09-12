@@ -222,7 +222,7 @@ defaults and stay manually editable.
 | Warzone schedule | [nesleykent/tibia-warzones-schedule](https://nesleykent.github.io/tibia-warzones-schedule/) (published `data/worlds.json`) | Also CORS-open, fetched directly from the browser. Includes the world's IANA timezone (`lib/utils/timezone.ts`); every displayed time — dashboard card and generated briefing alike — is converted to the viewer's own selected timezone. |
 | Tibia Coin, Gold Token, Silver Token sell/buy offers | [TibiaMarket](https://www.tibiamarket.top) — [`api.tibiamarket.top/item_history`](https://api.tibiamarket.top/docs), one call per item per world (item ids 22118 / 22721 / 22516) | No token, CORS-open, fetched straight from the browser (`lib/data/tibiaMarketClient.ts` + `marketHistoryMapping.ts` + `worldProvider.ts`), re-fetched every 15 minutes while the dashboard is open and cached per world for the session. Fully read-only — no manual override. Real day-by-day history (90 days of `day_average_sell`/`day_average_buy` entries, one per day) rather than a single current-tick snapshot, so the trend/average basis selector has genuine data from the first load. The API rate-limits by address, so requests are queued one at a time with a gap between them, refusals are backed off and retried, and each item is published to the page as it lands instead of the panel waiting on the slowest. Mapping is literal — our `*Sell`/`*Buy` price ids hold exactly that field, with no reinterpretation into a "what the player pays/receives" framing (see `hooks/useBriefingState.ts`). |
 | Active and upcoming events | [Official Tibia.com calendar](https://www.tibia.com/news/?subtopic=eventcalendar), with TibiaWiki gadget pages as an availability fallback | Fetched **at build time** by `lib/data/eventContentClient.ts`. The official client fetches the previous/current/next month plus a trailing month, joins overlapping calendar cells, and extracts the original title, plain-text tooltip description, source URL and complete period. Timestamps use 10:00 Europe/Berlin, including DST; occurrences are deduplicated and reclassified at the viewer's current reference date. Each build fetches fresh pages once per month, with a 15-second timeout. The scheduled GitHub Actions rebuild runs weekly on Tuesdays at 12:00 Europe/Berlin (CET/CEST automatically). Pushes to main and manual workflow runs also rebuild and refresh the data. HTTP errors, bot challenges or incomplete relevant periods produce a build warning and switch the whole batch to the existing Wiki source; `source` identifies the provider on every returned event. No proxy or browser scraping service is used. |
-| Tibia Drome rotation | [TibiaWiki](https://tibia.fandom.com/) `Tibiadrome/Rotation` gadget | Fetched at build time via the MediaWiki API (`lib/data/wikiContentClient.ts`), unchanged by the calendar integration. |
+| Tibia Drome rotation | Fixed fortnightly schedule, cross-checked against the [official leaderboards](https://www.tibia.com/community/?subtopic=leaderboards) | Computed locally by `lib/drome/dromeRotation.ts`: every other Wednesday at 10:00 Europe/Berlin, accounting for CET/CEST. Rotation #2 started July 28, 2021; the initial July 12–28 launch rotation is handled separately. The status bar uses the shared live clock and advances automatically; the briefing uses its selected reference date. No Wiki request, cache or weekly rebuild is needed. |
 
 Calendar verification: `npm test` covers the parser and integration with deterministic fixtures, including an original HTML cell captured from Tibia.com on September 12, 2026 (`lib/data/__fixtures__/tibia-calendar-2026-11-12.html`). `npm run test:calendar:live` explicitly tests HTTP fetching and extraction against Tibia.com **without fallback**. On September 12, 2026, the live check returned HTTP 403 from Cloudflare in this environment; the calendar and its September–November pages loaded in the browser, where the markup, descriptions and periods were verified. A successful browser visit does not mean an unattended build runner can pass the same challenge. When the official endpoint is blocked, the deployed app continues using the labeled Wiki fallback. Descriptions and full periods are available to consumers without adding UI elements.
 | Rashid's location | Computed locally (`lib/rashid/rashidRotation.ts`) | Fixed, publicly documented weekday rotation, resolved against Europe/Berlin time and rolled over at the 10:00 CET/CEST server save (not local midnight) — DST-safe. Shown read-only in the UI; there's no known case where it needs correcting. |
@@ -239,9 +239,9 @@ Calendar verification: `npm test` covers the parser and integration with determi
 ```
 app/
   layout.tsx           — root shell: single top bar (brand + TopStatusBar), wraps
-                          everything in ViewerSettingsProvider; also fetches Drome at
-                          build time for the status bar's countdown
-  page.tsx             — async Server Component: fetches events/Drome at build time,
+                          everything in ViewerSettingsProvider; status-bar countdowns
+                          are calculated locally from the shared live clock
+  page.tsx             — async Server Component: fetches calendar events at build time,
                           passes them into the client dashboard as props
   globals.css
 components/
@@ -258,7 +258,7 @@ components/
                    ToolbarActions, …
 hooks/
   useBriefingState.ts   — the single orchestrating hook: live client queries + build-time
-                           event/Drome props + persisted overrides + derived briefing
+                           event props + local Drome calculation + persisted overrides + derived briefing
                            text; reads the viewer timezone from ViewerSettingsContext
                            rather than keeping its own copy
   useCopyToClipboard.ts, useIsClient.ts
@@ -400,9 +400,10 @@ npm test            # Vitest — formatter, parsers, timezone/time-ago, Rashid r
   reference date rather than doing full calendar-aware conversion — it can be off by a
   day boundary or mid-window DST transition in rare edge cases. (Rashid's rotation uses a
   precise `Intl`-based conversion instead, so it isn't affected by this.)
-- Active events, upcoming events, and the Tibia Drome rotation are as fresh as the last
+- Active and upcoming event schedules are as fresh as the last
   deploy (scheduled weekly on Tuesdays at 12:00 Europe/Berlin), not truly real-time — there's no server to poll them
-  live from a static GitHub Pages site.
+  live from a static GitHub Pages site. Drome rotation and server-save countdowns are
+  calculated locally and do not depend on deployments.
 - Mini World Change / World Change item names in the generated briefing stay in their
   canonical English Tibia names regardless of briefing language (translating ~40 in-game
   proper names into 4 languages was out of scope) — only section headers, labels, and the

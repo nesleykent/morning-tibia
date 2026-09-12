@@ -1,7 +1,6 @@
 /**
- * Sourced at build time from TibiaWiki's Tibiadrome/Rotation gadget page, which computes
- * the current rotation number and countdown from Tibiadrome's fixed, publicly documented
- * bi-weekly schedule (every other Wednesday at server save). Not user-editable.
+ * Computed locally by lib/drome/dromeRotation.ts from Tibiadrome's fixed schedule:
+ * every other Wednesday at 10:00 Europe/Berlin. No network or build-time snapshot.
  */
 export interface DromeRotationInfo {
   rotationNumber: string | null;

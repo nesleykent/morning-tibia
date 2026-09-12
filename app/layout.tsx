@@ -3,7 +3,6 @@ import { Sunrise } from "lucide-react";
 import { Inter, Spectral } from "next/font/google";
 import { ViewerSettingsProvider } from "@/lib/context/ViewerSettingsContext";
 import { TopStatusBar } from "@/components/dashboard/TopStatusBar";
-import { fetchDromeRotation } from "@/lib/data/wikiContentClient";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -27,11 +26,7 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Fetched here too (not just in app/page.tsx) since the status bar's Drome countdown
-  // lives in the chrome, above the page — Next.js dedupes identical build-time fetches.
-  const drome = await fetchDromeRotation(new Date());
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable}`}>
       <body>
@@ -52,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     Morning Tibia
                   </span>
                 </span>
-                <TopStatusBar drome={drome} />
+                <TopStatusBar />
               </div>
             </header>
             <main className="flex-1">{children}</main>

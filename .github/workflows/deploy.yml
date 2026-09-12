@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    # Refresh build-time events and Drome every Tuesday at noon in Germany.
+    # Refresh build-time calendar events every Tuesday at noon in Germany.
     # Europe/Berlin keeps noon local through CET/CEST changes.
     - cron: "0 12 * * 2"
       timezone: "Europe/Berlin"

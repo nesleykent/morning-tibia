@@ -1,26 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Server, Timer } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useViewerSettings } from "@/lib/context/ViewerSettingsContext";
-import { useIsClient } from "@/hooks/useIsClient";
 import { getNextServerSave } from "@/lib/utils/serverSave";
 import { formatCountdownClock } from "@/lib/formatter/dateFormat";
 import { COMMON_TIME_ZONES } from "@/lib/utils/timezoneList";
-import type { DromeRotationInfo } from "@/types/drome";
-
-const TICK_MS = 1000;
-
-function useNow(enabled: boolean): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    if (!enabled) return;
-    const id = setInterval(() => setNow(new Date()), TICK_MS);
-    return () => clearInterval(id);
-  }, [enabled]);
-  return now;
-}
+import { useNowMs } from "@/lib/utils/clock";
+import { getDromeRotation } from "@/lib/drome/dromeRotation";
 
 /**
  * Lives inline inside app/layout.tsx's single top bar, alongside the brand mark — not a bar of
@@ -29,13 +16,14 @@ function useNow(enabled: boolean): Date {
  *
  * Everything here is sans and small: it is instrumentation, not editorial.
  */
-export function TopStatusBar({ drome }: { drome: DromeRotationInfo | null }) {
-  const isClient = useIsClient();
-  const now = useNow(isClient);
+export function TopStatusBar() {
+  const nowMs = useNowMs();
+  const now = new Date(nowMs);
+  const drome = nowMs > 0 ? getDromeRotation(now) : null;
   const { viewerTimeZone, setViewerTimeZone } = useViewerSettings();
 
-  const serverSaveMsLeft = isClient ? getNextServerSave(now).getTime() - now.getTime() : null;
-  const dromeMsLeft = isClient && drome?.endsAt ? new Date(drome.endsAt).getTime() - now.getTime() : null;
+  const serverSaveMsLeft = nowMs > 0 ? getNextServerSave(now).getTime() - nowMs : null;
+  const dromeMsLeft = drome?.endsAt ? new Date(drome.endsAt).getTime() - nowMs : null;
 
   return (
     <div className="flex min-w-0 items-center justify-end gap-x-4 gap-y-1 text-[11.5px]">
