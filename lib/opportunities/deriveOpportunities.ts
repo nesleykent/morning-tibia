@@ -81,10 +81,11 @@ export function deriveOpportunities(input: OpportunityInput): Opportunity[] {
       opportunities.push({
         definition,
         emoji: def.emoji,
-        // The short label, not the catalog name: the WORLD CHANGES section above prints
-        // "MASTER'S VOICE", and heading its opportunities "THEIR MASTER'S VOICE" makes the
-        // reader work out that the two are the same thing.
-        conditionName: def.shortLabel,
+        // The catalog name, the same one the Mini World Change branch above uses and the same
+        // one the bulletin and the reference view print. It used to be `shortLabel`, to agree
+        // with a bulletin that was itself printing short labels; both now say "Their Master's
+        // Voice", which is what a reader who goes looking for it will find.
+        conditionName: def.name,
         conditionState: def.states.find((s) => s.id === value.stateId)?.label ?? null,
       });
       continue;

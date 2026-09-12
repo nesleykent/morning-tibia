@@ -87,9 +87,7 @@ describe("every World Change state", () => {
 
           const rich = generateBriefingMessage(input);
           expectWellFormed(rich, context);
-          expect(rich, context).toMatch(
-            nameLinePattern(definition.emoji, definition.shortLabel),
-          );
+          expect(rich, context).toMatch(nameLinePattern(definition.emoji, definition.name));
           expectWellFormed(generatePlainTextBriefing(input), `${context} (plain)`);
         }
       }

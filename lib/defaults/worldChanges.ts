@@ -29,7 +29,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "horestis",
     name: "The Mummy's Curse",
-    shortLabel: "Horestis",
     emoji: "🏺",
     guideKeyword: "Horestis",
     location: "Horestis Tomb, near Ankrahmun",
@@ -46,7 +45,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "mage-tower",
     name: "The Mage's Tower",
-    shortLabel: "Mage Tower",
     emoji: "🗼",
     guideKeyword: "Mage Tower",
     location: "Zao Steppe, and another dimension",
@@ -61,7 +59,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "masters-voice",
     name: "Their Master's Voice",
-    shortLabel: "Master's Voice",
     emoji: "📯",
     guideKeyword: "Master's Voice",
     location: "Mad Mage Dungeon, Edron",
@@ -75,7 +72,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "swamp-fever",
     name: "Swamp Fever",
-    shortLabel: "Swamp Fever",
     emoji: "🦟",
     guideKeyword: "Swamp Fever",
     location: "Venore",
@@ -95,7 +91,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "thornfire",
     name: "Thornfire",
-    shortLabel: "Thornfire",
     emoji: "🌵",
     guideKeyword: "Thornfire",
     location: "Shadowthorn",
@@ -112,7 +107,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "twisted-waters",
     name: "Twisted Waters",
-    shortLabel: "Twisted Waters",
     emoji: "💧",
     guideKeyword: "Twisted Waters",
     location: "Lake Equivocolao, north of Port Hope",
@@ -128,7 +122,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "awash",
     name: "Awash",
-    shortLabel: "Awash",
     emoji: "⛏️",
     guideKeyword: "Awash",
     location: "Kazordoon",
@@ -145,7 +138,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "steamship",
     name: "Steamship",
-    shortLabel: "Steamship",
     emoji: "🚢",
     guideKeyword: "Steamship",
     location: "Thais",
@@ -158,7 +150,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "horse-station",
     name: "Horse Station",
-    shortLabel: "Horse Station",
     emoji: "🐴",
     guideKeyword: "Horses",
     location: "East of Thais, west of Venore",
@@ -173,7 +164,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "overhunting",
     name: "Overhunting",
-    shortLabel: "Overhunting",
     emoji: "🦌",
     guideKeyword: "Overhunting",
     location: "Forests around Ab'Dendriel, and near Carlin and the Orc Fortress",
@@ -191,7 +181,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "demon-war",
     name: "Demon Wars",
-    shortLabel: "Demon War",
     emoji: "😈",
     guideKeyword: "Demon War",
     location: "Hero Cave, Edron",
@@ -208,7 +197,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "sea-serpent",
     name: "The Fire-Feathered Serpent",
-    shortLabel: "Sea Serpent",
     emoji: "🐍",
     guideKeyword: "Sea Serpent",
     location: "Seacrest Grounds",
@@ -222,7 +210,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "deeplings",
     name: "Deeplings",
-    shortLabel: "Deeplings",
     emoji: "🐙",
     guideKeyword: "Deepling",
     location: "Quirefang",
@@ -236,7 +223,6 @@ export const WORLD_CHANGE_DEFINITIONS: WorldChangeDefinition[] = [
   {
     id: "hive-born",
     name: "Hive Born",
-    shortLabel: "Hive Born",
     emoji: "🐝",
     guideKeyword: "Hive",
     location: "Quirefang",

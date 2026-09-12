@@ -94,7 +94,10 @@ export interface MiniWorldChangeObservation {
 
 export interface MiniWorldChangeDefinition {
   id: string;
-  /** Canonical TibiaWiki Mini World Change name. */
+  /**
+   * Canonical TibiaWiki Mini World Change name, and the only name anything shows a player.
+   * See `name` on WorldChangeDefinition for the `shortLabel` this replaced and why.
+   */
   name: string;
   /**
    * Override for the TibiaWiki article title, when it isn't `<name> Mini World Change`.
@@ -102,7 +105,6 @@ export interface MiniWorldChangeDefinition {
    * lib/utils/tibiaWiki.ts for why this is never derived from `name` alone.
    */
   wikiTitle?: string | null;
-  shortLabel: string;
   emoji: string;
   /** Where it happens, per TibiaWiki's own Location field. */
   location: string;

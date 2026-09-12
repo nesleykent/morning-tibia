@@ -170,20 +170,6 @@ function changeBlock(style: Style, line: ChangeLine): string {
   ]);
 }
 
-/**
- * Changes with something to act on first, then the rest.
- *
- * The bulletin is read to decide what to do with a morning, so the entries that answer that
- * come first. Ordering is otherwise left alone: inside each half the catalog order is kept, so
- * the same world reads the same way from one day to the next.
- */
-function byUsefulness(lines: ChangeLine[]): ChangeLine[] {
-  return [
-    ...lines.filter((line) => line.notes.length > 0),
-    ...lines.filter((line) => line.notes.length === 0),
-  ];
-}
-
 const MARKET_ITEMS = ["Tibia Coin", "Gold Token", "Silver Token"] as const;
 
 function marketItemOf(id: MarketPriceId): string {
@@ -329,13 +315,14 @@ function render(model: BriefingModel, style: Style): string {
     style,
     "🎎",
     t.sectionMiniWorldChanges,
-    byUsefulness(model.miniWorldChangeLines).map((line) => changeBlock(style, line)),
+    model.miniWorldChangeLines.map((line) => changeBlock(style, line)),
   );
 
-  const worldBody = byUsefulness(model.worldChangeLines).map((line) => changeBlock(style, line));
+  const worldBody = model.worldChangeLines.map((line) => changeBlock(style, line));
   const world = join(WITHIN, [
     section(style, "🌍", t.sectionWorldChanges, worldBody, { empty: t.notCheckedToday }),
-    // Unasked keywords, named so "we don't know" cannot be read as "nothing is happening".
+    // The ones still unasked, named so "we don't know" cannot be read as "nothing is
+    // happening". Same names and same alphabetical order as the blocks above them.
     worldBody.length > 0 && model.worldChangesUnchecked.length > 0
       ? italic(style, t.worldChangesUnchecked(model.worldChangesUnchecked))
       : null,

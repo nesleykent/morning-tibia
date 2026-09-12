@@ -209,14 +209,75 @@ describe("bulletin structure", () => {
     expect(message).not.toContain("FIRE FROM THE EARTH");
   });
 
-  it("orders changes that offer something above the ones that only report", () => {
-    // Horse Station's only entry is the stable service, which restates its own state line —
-    // so it contributes no markers and belongs below anything that does.
+  it("calls every change what TibiaWiki calls it, not what the catalog calls it in passing", () => {
+    // Five World Changes have a canonical name that is not the keyword a Guide answers to, and
+    // the bulletin used to print the keyword-ish short label for all five. A reader who takes
+    // "Master's Voice" to the wiki finds nothing; "Their Master's Voice" is the article.
     const input = makeInput();
-    setMini(input, "stampede"); // has opportunities
-    setWorld(input, "horse-station", "normal");
+    for (const [id, stateId] of [
+      ["horestis", "risen"],
+      ["mage-tower", "portal-open"],
+      ["masters-voice", "passable"],
+      ["demon-war", "stalemate"],
+      ["sea-serpent", "awake"],
+    ] as const) {
+      setWorld(input, id, stateId);
+    }
     const message = generateBriefingMessage(input);
-    expect(message.indexOf("*Stampede*")).toBeLessThan(message.indexOf("*Horse Station*"));
+
+    for (const [canonical, short] of [
+      ["The Mummy's Curse", "Horestis"],
+      ["The Mage's Tower", "Mage Tower"],
+      ["Their Master's Voice", "Master's Voice"],
+      ["Demon Wars", "Demon War"],
+      ["The Fire-Feathered Serpent", "Sea Serpent"],
+    ]) {
+      expect(message, canonical).toContain(`*${canonical}*`);
+      expect(message, short).not.toContain(`*${short}*`);
+    }
+  });
+
+  it("orders both change sections alphabetically by the name it prints", () => {
+    // The catalog order is the game's: the Guide's keyword recitation, and the wiki's own
+    // list. Neither is an order a reader can navigate, so a forwarded bulletin had to be read
+    // end to end to find one change. Alphabetical by the printed name can be.
+    const input = makeInput();
+    for (const id of ["stampede", "bank-robbery", "grimvale", "nomads"]) setMini(input, id);
+    for (const [id, stateId] of [
+      ["overhunting", "wolves"],
+      ["awash", "flooded"],
+      ["masters-voice", "passable"],
+      ["horse-station", "normal"],
+    ] as const) {
+      setWorld(input, id, stateId);
+    }
+
+    const sections = generateBriefingMessage(input).split("\n\n\n");
+    const namesIn = (heading: string) =>
+      sections
+        .find((section) => section.startsWith(heading))!
+        .split("\n")
+        .filter(isNameLine)
+        .map((line) => line.match(/\*([^*]+)\*/)![1]!);
+
+    for (const heading of ["🎎 ", "🌍 "]) {
+      const names = namesIn(heading);
+      expect(names.length, heading).toBeGreaterThan(1);
+      expect(names, heading).toEqual([...names].sort((a, b) => a.localeCompare(b, "en")));
+    }
+  });
+
+  it("lists the still-unasked World Changes by the same names, in the same order", () => {
+    // The unasked line is the other half of the same section: a reader scanning it for a change
+    // they care about must not have to know the app calls it something else there.
+    const input = makeInput();
+    setWorld(input, "overhunting", "wolves");
+    const message = generateBriefingMessage(input);
+
+    const unasked = message.match(/_Ainda sem resposta do Guide: (.+)\._$/m)![1]!.split(", ");
+    expect(unasked).toContain("Their Master's Voice");
+    expect(unasked).not.toContain("Master's Voice");
+    expect(unasked).toEqual([...unasked].sort((a, b) => a.localeCompare(b, "en")));
   });
 });
 
