@@ -60,6 +60,10 @@ export function reconcileEventServerSaveBoundaries(
       scheduledStartAt !== null &&
       Number.isFinite(scheduledStartAt.getTime());
 
+    // A wiki active snapshot without a validated start period is not safe to publish as fact.
+    // Official calendar events always carry their boundary; the fallback must fail closed.
+    if (!hasValidBoundary && event.source === "tibiawiki") continue;
+
     if (
       !hasValidBoundary ||
       now.getTime() >= scheduledStartAt.getTime()

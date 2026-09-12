@@ -23,7 +23,21 @@ const REFERENCE = new Date("2026-08-18T12:00:00Z");
 
 describe("fetchActiveEvents", () => {
   it("computes an ISO end timestamp from the wiki's own day countdown", async () => {
-    mockFetchOnce(ACTIVE_EVENTS_HTML);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => ({
+        ok: true,
+        json: async () => ({
+          parse: {
+            text: {
+              "*": String(input).includes("Dates")
+                ? "<ul><li>2026-08-18</li></ul>"
+                : ACTIVE_EVENTS_HTML,
+            },
+          },
+        }),
+      })),
+    );
     const events = await fetchActiveEvents(REFERENCE);
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
@@ -32,6 +46,12 @@ describe("fetchActiveEvents", () => {
       daysRemaining: 13,
     });
     expect(events[0]!.endAt).toBe("2026-08-31T08:00:00.000Z");
+  });
+
+  it("does not announce an active event when its server-save start cannot be verified", async () => {
+    mockFetchOnce(ACTIVE_EVENTS_HTML);
+
+    await expect(fetchActiveEvents(REFERENCE)).resolves.toEqual([]);
   });
 });
 

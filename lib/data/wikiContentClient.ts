@@ -138,8 +138,8 @@ export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEven
   const html = await fetchWikiPageHtml("Active_Events");
   if (!html) return [];
 
-  return Promise.all(
-    extractDivBlocks(html, "active").map(async (block, index) => {
+  const events = await Promise.all(
+    extractDivBlocks(html, "active").map(async (block, index): Promise<ActiveEvent | null> => {
       const { title, href } = extractLinkTitleAndHref(block);
       const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
       const daysRemaining = extractDaysNumber(strippedBlock);
@@ -157,6 +157,11 @@ export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEven
         ? serverSaveForDateKey(scheduledDateKey).toISOString()
         : null;
 
+      // An active snapshot without its own server-save start cannot be reconciled against the
+      // current Tibia day. Omitting it is safer than announcing an event that may have ended
+      // or belongs to a later occurrence (the wiki page is build-time data).
+      if (!scheduledStartAt) return null;
+
       return {
         id: `active-${index}-${title}`,
         title,
@@ -167,6 +172,8 @@ export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEven
       };
     }),
   );
+
+  return events.filter((event): event is ActiveEvent => event !== null);
 }
 
 export async function fetchUpcomingEvents(referenceDate: Date): Promise<UpcomingEvent[]> {

@@ -140,4 +140,24 @@ describe("reconcileEventServerSaveBoundaries", () => {
 
     expect(result.upcomingEvents[0]!.daysUntil).toBe(0);
   });
+
+  it("fails closed for an unverified wiki active snapshot", () => {
+    const result = reconcileEventServerSaveBoundaries(
+      [{
+        id: "wiki-grimvale",
+        title: "Grimvale Mini World Change",
+        url: null,
+        source: "tibiawiki",
+        endAt: "2026-09-15T08:00:00.000Z",
+        daysRemaining: 4,
+        scheduledStartAt: null,
+      }],
+      [],
+      new Date("2026-09-11T22:00:00Z"),
+      "America/Sao_Paulo",
+    );
+
+    expect(result.activeEvents).toEqual([]);
+    expect(result.upcomingEvents).toEqual([]);
+  });
 });
