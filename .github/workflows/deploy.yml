@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
   schedule:
-    # Refreshes the build-time-fetched Active/Upcoming Events and Tibia Drome rotation
-    # data (see lib/data/eventContentClient.ts and wikiContentClient.ts) every 6 hours, since there's no server at
-    # runtime to fetch it live.
-    - cron: "17 */6 * * *"
+    # Refresh build-time events and Drome every Tuesday at noon in Germany.
+    # Europe/Berlin keeps noon local through CET/CEST changes.
+    - cron: "0 12 * * 2"
+      timezone: "Europe/Berlin"
   workflow_dispatch: {}
 
 permissions:
