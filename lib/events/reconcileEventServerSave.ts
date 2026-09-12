@@ -1,5 +1,5 @@
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
-import { calendarDayDiff } from "@/lib/formatter/dateFormat";
+import { tibiaDayDiff } from "@/lib/utils/date";
 
 export interface ReconciledEvents {
   activeEvents: ActiveEvent[];
@@ -13,7 +13,7 @@ function utcDateKey(iso: string): string {
 /**
  * Tibia calendar events begin at the server save of their official start date.
  *
- * Reclassify complete official periods against the viewer's current instant,
+ * Reclassify complete official periods against the current instant,
  * including builds made before a save. Wiki entries with only a start date keep
  * their legacy behavior; their duration cannot safely be inferred.
  *
@@ -23,7 +23,7 @@ export function reconcileEventServerSaveBoundaries(
   activeEvents: ActiveEvent[],
   upcomingEvents: UpcomingEvent[],
   now: Date,
-  viewerTimeZone: string,
+  _viewerTimeZone: string,
 ): ReconciledEvents {
   const correctedActive: ActiveEvent[] = [];
 
@@ -37,14 +37,14 @@ export function reconcileEventServerSaveBoundaries(
           id: event.id, title: event.title, url: event.url,
           source: event.source, description: event.description,
           scheduledStartAt: event.startAt, endAt: event.endAt!,
-          daysRemaining: Math.max(0, calendarDayDiff(now, endAt, viewerTimeZone)),
+          daysRemaining: Math.max(0, tibiaDayDiff(now, endAt)),
         });
         continue;
       }
     }
     correctedUpcoming.push({
       ...event,
-      daysUntil: Math.max(0, calendarDayDiff(now, new Date(event.startAt), viewerTimeZone)),
+      daysUntil: Math.max(0, tibiaDayDiff(now, new Date(event.startAt))),
     });
   }
 
@@ -66,7 +66,7 @@ export function reconcileEventServerSaveBoundaries(
     ) {
       correctedActive.push({
         ...event,
-        daysRemaining: Math.max(0, calendarDayDiff(now, new Date(event.endAt), viewerTimeZone)),
+        daysRemaining: Math.max(0, tibiaDayDiff(now, new Date(event.endAt))),
       });
       continue;
     }
@@ -91,7 +91,7 @@ export function reconcileEventServerSaveBoundaries(
         startAt,
         daysUntil: Math.max(
           0,
-          calendarDayDiff(now, scheduledStartAt, viewerTimeZone),
+          tibiaDayDiff(now, scheduledStartAt),
         ),
         certainty: "confirmed",
         occurrenceIndex: 0,

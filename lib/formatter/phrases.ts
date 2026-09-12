@@ -1,5 +1,6 @@
 import type { ActiveEvent, UpcomingEvent } from "@/types/event";
 import type { MarketPriceId } from "@/types/market";
+import { toTibiaDayKey } from "@/lib/utils/date";
 import type { BriefingLanguage } from "./translations";
 import {
   calendarDayDiff,
@@ -18,6 +19,12 @@ type Lang<T> = Record<BriefingLanguage, T>;
 
 function pick<T>(map: Lang<T>, language: BriefingLanguage): T {
   return map[language];
+}
+
+/** Represent an instant by the calendar date of the Tibia day it belongs to. */
+function dateOnTibiaDay(instant: Date): Date {
+  const [year, month, day] = toTibiaDayKey(instant).split("-").map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day!, 12));
 }
 
 /** "hoje"/"amanhã"/"em N dias" — the relative-day chunk shared by active & upcoming lines. */
@@ -113,7 +120,7 @@ export function formatActiveEventLine(event: ActiveEvent, language: BriefingLang
       language,
     );
   }
-  const shortDate = formatShortDateUTC(new Date(event.endAt));
+  const shortDate = formatShortDateUTC(dateOnTibiaDay(new Date(event.endAt)));
   return `${activeUntilPrefix(language)} ${shortDate} (${daysRemainingPhrase(event.daysRemaining, language)})`;
 }
 
@@ -131,7 +138,7 @@ export function formatActiveEventLine(event: ActiveEvent, language: BriefingLang
  * rather than one run-on. See `formatUpcomingEventCountdown`.
  */
 export function formatUpcomingEventDate(event: UpcomingEvent, language: BriefingLanguage): string {
-  const date = formatLongDateUTC(new Date(event.startAt), language);
+  const date = formatLongDateUTC(dateOnTibiaDay(new Date(event.startAt)), language);
   const notes: string[] = [];
   if (event.certainty === "estimated") {
     notes.push(pick({ pt: "previsto", en: "estimated", es: "previsto", pl: "przewidywane" }, language));
@@ -175,7 +182,7 @@ export function formatEventInternalDate(
 }
 
 export function formatUpcomingEventLine(event: UpcomingEvent, language: BriefingLanguage): string {
-  const shortDate = formatShortDateUTC(new Date(event.startAt));
+  const shortDate = formatShortDateUTC(dateOnTibiaDay(new Date(event.startAt)));
   const withinThreshold = event.daysUntil <= UPCOMING_COUNTDOWN_THRESHOLD_DAYS;
   const countdown = withinThreshold ? `, ${relativeDayWord(event.daysUntil, language)}` : "";
   const base =

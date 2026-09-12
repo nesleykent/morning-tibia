@@ -189,6 +189,28 @@ describe("bulletin structure", () => {
     expect(generatePlainTextBriefing(input)).toMatch(/^2026-09-11\n/);
   });
 
+  it("does not call an event tomorrow when it starts before the next server save", () => {
+    const referenceDate = new Date("2026-09-11T22:00:00Z");
+    const input = emptyInput();
+    input.referenceDate = referenceDate;
+    input.overrides = createDefaultOverrides(input.world, referenceDate);
+    input.upcomingEvents = [{
+      id: "same-tibia-day",
+      title: "Same Tibia Day Event",
+      url: null,
+      startAt: "2026-09-12T01:00:00.000Z",
+      daysUntil: 0,
+      certainty: "confirmed",
+      occurrenceIndex: 0,
+      occurrenceCount: 1,
+    }];
+
+    const message = generateBriefingMessage(input);
+    expect(message).toContain("*11 de Setembro*");
+    expect(message).toContain("⏳ Hoje");
+    expect(message).not.toContain("Amanhã");
+  });
+
   it("puts a change's state and what it is worth in the same entry", () => {
     // The two used to be separate sections, so a reader met "Overhunting: starving wolves" at
     // the top and "Overhunting / Starving Wolf — Bestiary" forty lines below, and had to hold

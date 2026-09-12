@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getLastServerSave, getNextServerSave } from "./serverSave";
-import { toTibiaBriefingDate, toTibiaDayKey } from "./date";
+import { tibiaDayDiff, toTibiaBriefingDate, toTibiaDayKey } from "./date";
 import { createDefaultOverrides } from "@/lib/defaults";
 import { storageKeys } from "@/lib/storage/storageKeys";
 
@@ -48,6 +48,22 @@ describe("toTibiaBriefingDate", () => {
   it("advances the briefing date at the server save", () => {
     const afterSave = new Date("2026-09-12T08:00:00Z");
     expect(toTibiaBriefingDate(afterSave)).toBe("12/09/2026");
+  });
+});
+
+describe("tibiaDayDiff", () => {
+  it("does not call an event tomorrow just because it crosses local midnight", () => {
+    const now = new Date("2026-09-11T22:00:00Z");
+    const laterThatSameTibiaDay = new Date("2026-09-12T01:00:00Z");
+
+    expect(tibiaDayDiff(now, laterThatSameTibiaDay)).toBe(0);
+  });
+
+  it("counts the next server-save period as one Tibia day", () => {
+    const now = new Date("2026-09-11T22:00:00Z");
+    const nextSave = new Date("2026-09-12T08:00:00Z");
+
+    expect(tibiaDayDiff(now, nextSave)).toBe(1);
   });
 });
 

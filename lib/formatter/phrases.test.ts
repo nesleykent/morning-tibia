@@ -3,6 +3,7 @@ import {
   formatActiveEventLine,
   formatDromeLine,
   formatMarketPriceLabel,
+  formatUpcomingEventDate,
   formatUpcomingEventLine,
   formatYasirLabel,
   notAvailableText,
@@ -84,6 +85,16 @@ describe("formatUpcomingEventLine", () => {
     const second = upcomingEvent({ occurrenceIndex: 1, occurrenceCount: 2 });
     expect(formatUpcomingEventLine(first, "pt")).toContain("(início)");
     expect(formatUpcomingEventLine(second, "pt")).toContain("(segunda fase)");
+  });
+
+  it("uses the Tibia day for an event after local midnight but before the next save", () => {
+    const event = upcomingEvent({
+      startAt: "2026-09-12T01:00:00.000Z",
+      daysUntil: 0,
+    });
+
+    expect(formatUpcomingEventLine(event, "pt")).toBe("11/09, hoje");
+    expect(formatUpcomingEventDate(event, "pt")).toBe("11 de Setembro");
   });
 });
 

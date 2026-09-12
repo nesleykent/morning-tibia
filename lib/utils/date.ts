@@ -47,6 +47,15 @@ export function toTibiaBriefingDate(now: Date): string {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Whole Tibia days between two instants, using server-save boundaries. */
+export function tibiaDayDiff(from: Date, to: Date): number {
+  const fromKey = toTibiaDayKey(from);
+  const toKey = toTibiaDayKey(to);
+  const fromUTC = Date.parse(`${fromKey}T00:00:00Z`);
+  const toUTC = Date.parse(`${toKey}T00:00:00Z`);
+  return Math.round((toUTC - fromUTC) / DAY_MS);
+}
+
 /** Whole days elapsed between two dates, ignoring time-of-day. */
 export function daysBetween(from: Date, to: Date): number {
   const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());

@@ -99,7 +99,7 @@ describe("reconcileEventServerSaveBoundaries", () => {
     expect(result.upcomingEvents).toHaveLength(0);
   });
 
-  it("recomputes upcoming countdowns in the selected viewer timezone", () => {
+  it("recomputes upcoming countdowns in Tibia days", () => {
     const now = new Date("2026-08-20T01:30:00.000Z");
 
     const upcoming: UpcomingEvent = {
@@ -121,5 +121,23 @@ describe("reconcileEventServerSaveBoundaries", () => {
     );
 
     expect(result.upcomingEvents[0]!.daysUntil).toBe(2);
+  });
+
+  it("does not label an event tomorrow when it starts after local midnight but before the next save", () => {
+    const now = new Date("2026-09-11T22:00:00Z");
+    const upcoming: UpcomingEvent = {
+      id: "same-tibia-day",
+      title: "Same Tibia Day Event",
+      url: null,
+      startAt: "2026-09-12T01:00:00.000Z",
+      daysUntil: 999,
+      certainty: "confirmed",
+      occurrenceIndex: 0,
+      occurrenceCount: 1,
+    };
+
+    const result = reconcileEventServerSaveBoundaries([], [upcoming], now, "America/Sao_Paulo");
+
+    expect(result.upcomingEvents[0]!.daysUntil).toBe(0);
   });
 });

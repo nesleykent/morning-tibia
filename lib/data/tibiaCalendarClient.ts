@@ -1,7 +1,6 @@
 import "server-only";
 import type { OfficialCalendarEvent } from "@/types/event";
-import { toTibiaDayKey } from "@/lib/utils/date";
-import { calendarDayDiff } from "@/lib/formatter/dateFormat";
+import { tibiaDayDiff, toTibiaDayKey } from "@/lib/utils/date";
 import { assembleCalendarEvents, calendarMonthUrl, parseCalendarMonth } from "./tibiaCalendarMapping";
 
 /** Build-time only, like wikiContentClient. No persistent cache: each scheduled
@@ -31,7 +30,7 @@ export async function fetchTibiaCalendarEvents(referenceDate: Date): Promise<Off
   }
   for (const page of months) {
     for (const day of page.days) {
-      if (day.date < today || calendarDayDiff(referenceDate, new Date(`${day.date}T12:00:00Z`), "Europe/Berlin") > 14) continue;
+      if (day.date < today || tibiaDayDiff(referenceDate, new Date(`${day.date}T12:00:00Z`)) > 14) continue;
       for (const entry of day.events) {
         if (!events.some((event) => event.title === entry.title && event.startAt.slice(0, 10) <= day.date && event.endAt.slice(0, 10) >= day.date)) {
           throw new Error(`Incomplete official calendar period: ${entry.title} on ${day.date}`);
