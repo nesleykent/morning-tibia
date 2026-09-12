@@ -58,7 +58,15 @@ describe("fetchUpcomingEvents", () => {
 
     const events = await fetchUpcomingEvents(new Date("2026-09-11T22:00:00Z"));
 
-    expect(events[0]!.startAt).toBe("2026-09-12T08:00:00.000Z");
+    expect(events[0]!.startAt).toBe("2026-09-13T08:00:00.000Z");
+  });
+
+  it("counts the partial pre-save period when converting a wiki countdown", async () => {
+    mockFetchOnce('<div data-type="upcoming"><a href="/wiki/Example" title="Example">Example</a> starts in <b>3 days</b>.</div>');
+
+    const events = await fetchUpcomingEvents(new Date("2026-09-11T22:00:00Z"));
+
+    expect(events[0]!.startAt).toBe("2026-09-15T08:00:00.000Z");
   });
 
   it("tags repeated titles with an occurrence index/count instead of hiding the duplication", async () => {

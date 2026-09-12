@@ -62,6 +62,19 @@ export function addTibiaDays(now: Date, days: number): string {
   return new Date(Date.UTC(year!, month! - 1, day! + days)).toISOString().slice(0, 10);
 }
 
+/** Convert a calendar countdown into save periods, preserving the partial period before save. */
+export function addTibiaCountdownDays(now: Date, days: number): string {
+  const currentKey = toTibiaDayKey(now);
+  const berlinToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const partialPeriod = berlinToday === currentKey ? 0 : 1;
+  return addTibiaDays(now, days + partialPeriod);
+}
+
 /** Whole days elapsed between two dates, ignoring time-of-day. */
 export function daysBetween(from: Date, to: Date): number {
   const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());

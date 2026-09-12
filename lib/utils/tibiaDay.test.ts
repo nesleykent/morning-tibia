@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getLastServerSave, getNextServerSave } from "./serverSave";
-import { addTibiaDays, tibiaDayDiff, toTibiaBriefingDate, toTibiaDayKey } from "./date";
+import { addTibiaCountdownDays, addTibiaDays, tibiaDayDiff, toTibiaBriefingDate, toTibiaDayKey } from "./date";
 import { createDefaultOverrides } from "@/lib/defaults";
 import { storageKeys } from "@/lib/storage/storageKeys";
 
@@ -70,6 +70,16 @@ describe("tibiaDayDiff", () => {
 describe("addTibiaDays", () => {
   it("advances by save periods even when the next period starts tomorrow locally", () => {
     expect(addTibiaDays(new Date("2026-09-11T22:00:00Z"), 1)).toBe("2026-09-12");
+  });
+});
+
+describe("addTibiaCountdownDays", () => {
+  it("includes the upcoming save when the countdown is read before that save", () => {
+    expect(addTibiaCountdownDays(new Date("2026-09-11T22:00:00Z"), 3)).toBe("2026-09-15");
+  });
+
+  it("does not add a phantom save after today's save has passed", () => {
+    expect(addTibiaCountdownDays(new Date("2026-09-11T12:00:00Z"), 3)).toBe("2026-09-14");
   });
 });
 

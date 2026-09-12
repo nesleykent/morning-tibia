@@ -1,6 +1,6 @@
 import "server-only";
 import type { ActiveEvent, EventCertainty, UpcomingEvent } from "@/types/event";
-import { addTibiaDays } from "@/lib/utils/date";
+import { addTibiaCountdownDays } from "@/lib/utils/date";
 import { getNextServerSave } from "@/lib/utils/serverSave";
 
 const WIKI_API_BASE = "https://tibia.fandom.com/api.php";
@@ -144,7 +144,7 @@ export async function fetchActiveEvents(referenceDate: Date): Promise<ActiveEven
       const strippedBlock = block.replace(/<a[^>]*>.*?<\/a>/, "");
       const daysRemaining = extractDaysNumber(strippedBlock);
       const endAt = serverSaveForDateKey(
-        addTibiaDays(referenceDate, daysRemaining),
+        addTibiaCountdownDays(referenceDate, daysRemaining),
       ).toISOString();
 
       const dateKeys = await fetchEventDateKeys(title);
@@ -181,7 +181,7 @@ export async function fetchUpcomingEvents(referenceDate: Date): Promise<Upcoming
       const certainty: EventCertainty =
         /\bmight\b/i.test(strippedBlock) ? "estimated" : "confirmed";
 
-      const provisionalDateKey = addTibiaDays(referenceDate, daysUntil);
+      const provisionalDateKey = addTibiaCountdownDays(referenceDate, daysUntil);
 
       const dateKeys = await fetchEventDateKeys(title);
       const scheduledDateKey = nearestDateKey(
