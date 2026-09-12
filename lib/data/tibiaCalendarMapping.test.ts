@@ -78,6 +78,40 @@ describe("official calendar HTML", () => {
     expect(assembleCalendarEvents([month])[0]).toMatchObject({ title, description });
   });
 
+  it("splits two occurrences that hand over at one server save", () => {
+    // A single day carrying two marked bars of one title is an ending save and a
+    // starting save, not one continuous period.
+    const events = [
+      { title: "Handover", start: "2026-09-01", end: "2026-09-05" },
+      { title: "Handover", start: "2026-09-05", end: "2026-09-09" },
+    ];
+    const result = assembleCalendarEvents([parseCalendarMonth(calendarFixture(2026, 9, events))]);
+    expect(result.map((event) => [event.startAt, event.endAt])).toEqual([
+      ["2026-09-01T08:00:00.000Z", "2026-09-05T08:00:00.000Z"],
+      ["2026-09-05T08:00:00.000Z", "2026-09-09T08:00:00.000Z"],
+    ]);
+  });
+
+  it("anchors both boundaries on the asterisked days, not on the bar's first sighting", () => {
+    // The September grid also draws the event's opening days in its August spillover row.
+    const event = { title: "Spans August", start: "2026-08-28", end: "2026-09-03" };
+    const months = [8, 9].map((month) => parseCalendarMonth(calendarFixture(2026, month, [event])));
+    expect(assembleCalendarEvents(months)).toEqual([expect.objectContaining({
+      startAt: "2026-08-28T08:00:00.000Z", endAt: "2026-09-03T08:00:00.000Z",
+      url: "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=8&calendaryear=2026",
+    })]);
+    // Reading September alone cannot see the opening marker, so no date is invented.
+    expect(assembleCalendarEvents([months[1]!])).toEqual([]);
+  });
+
+  it("closes a period that runs from one year into the next", () => {
+    const event = { title: "New Year", start: "2026-12-30", end: "2027-01-02" };
+    const months = [parseCalendarMonth(calendarFixture(2026, 12, [event])), parseCalendarMonth(calendarFixture(2027, 1, [event]))];
+    expect(assembleCalendarEvents(months)).toEqual([expect.objectContaining({
+      id: "tibia-New%20Year-2026-12-30", startAt: "2026-12-30T09:00:00.000Z", endAt: "2027-01-02T09:00:00.000Z",
+    })]);
+  });
+
   it("distinguishes a valid empty month from a challenge or changed layout", () => {
     expect(assembleCalendarEvents([parseCalendarMonth(calendarFixture(2026, 9))])).toEqual([]);
     expect(() => parseCalendarMonth("<h1>Just a moment...</h1>")).toThrow(/Unrecognized/);

@@ -11,13 +11,16 @@ function utcDateKey(iso: string): string {
 }
 
 /**
- * Tibia calendar events begin at the server save of their official start date.
+ * Tibia calendar events begin and end at a server save, never at midnight.
  *
- * Reclassify complete official periods against the current instant,
- * including builds made before a save. Wiki entries with only a start date keep
- * their legacy behavior; their duration cannot safely be inferred.
+ * Classify complete official periods against the current instant: an event is active
+ * from its starting save until its ending save, upcoming before that, and gone after.
+ * The build bakes one classification in; this runs again in the browser on every render,
+ * so a page left open across a 10:00 Berlin save promotes and expires events on time
+ * without a rebuild. Events are independent, so any number may overlap.
  *
- * This function contains no event-name exceptions.
+ * This function contains no event-name and no source exceptions. An event whose start
+ * boundary is missing or unparseable is dropped rather than published as a guess.
  */
 export function reconcileEventServerSaveBoundaries(
   activeEvents: ActiveEvent[],
@@ -49,9 +52,8 @@ export function reconcileEventServerSaveBoundaries(
   }
 
   for (const event of activeEvents) {
-    // Wiki endAt comes from an integer-day countdown, not an exact ending save.
-    // In particular, "0 days" must not expire a still-active fallback event.
-    if (event.source === "tibia.com" && now.getTime() >= Date.parse(event.endAt)) continue;
+    // The ending save is an exact instant, so the comparison is exact too.
+    if (now.getTime() >= Date.parse(event.endAt)) continue;
     const scheduledStartAt = event.scheduledStartAt
       ? new Date(event.scheduledStartAt)
       : null;
@@ -60,14 +62,11 @@ export function reconcileEventServerSaveBoundaries(
       scheduledStartAt !== null &&
       Number.isFinite(scheduledStartAt.getTime());
 
-    // A wiki active snapshot without a validated start period is not safe to publish as fact.
-    // Official calendar events always carry their boundary; the fallback must fail closed.
-    if (!hasValidBoundary && event.source === "tibiawiki") continue;
+    // Fail closed: an active snapshot with no validated starting save cannot be placed
+    // in the current Tibia day, and announcing it would be stating an unverified fact.
+    if (!hasValidBoundary) continue;
 
-    if (
-      !hasValidBoundary ||
-      now.getTime() >= scheduledStartAt.getTime()
-    ) {
+    if (now.getTime() >= scheduledStartAt.getTime()) {
       correctedActive.push({
         ...event,
         daysRemaining: Math.max(0, tibiaDayDiff(now, new Date(event.endAt))),
@@ -91,7 +90,7 @@ export function reconcileEventServerSaveBoundaries(
         url: event.url,
         source: event.source,
         description: event.description,
-        endAt: event.source === "tibia.com" ? event.endAt : undefined,
+        endAt: event.endAt,
         startAt,
         daysUntil: Math.max(
           0,
@@ -106,7 +105,8 @@ export function reconcileEventServerSaveBoundaries(
 
   correctedUpcoming.sort(
     (a, b) =>
-      new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+      new Date(a.startAt).getTime() - new Date(b.startAt).getTime() ||
+      a.title.localeCompare(b.title),
   );
 
   const counts = new Map<string, number>();

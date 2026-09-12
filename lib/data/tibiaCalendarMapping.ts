@@ -108,7 +108,12 @@ export function assembleCalendarEvents(months: CalendarMonth[]): OfficialCalenda
     for (const event of day.events) {
       const key = `${event.seasonal}:${event.title}`;
       const entries = byTitle.get(key) ?? [];
-      if (entries.at(-1)?.date !== day.date) entries.push({ date: day.date, event });
+      const previous = entries.at(-1);
+      // One bar per day is the rule; the exception is a day carrying two marked bars of
+      // the same title, which is one occurrence ending at that save and the next
+      // beginning at it. Collapsing those two would fuse both into one long period.
+      const sameDayHandover = previous?.date === day.date && previous.event.boundary && event.boundary;
+      if (previous?.date !== day.date || sameDayHandover) entries.push({ date: day.date, event });
       byTitle.set(key, entries);
     }
   }

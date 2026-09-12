@@ -14,8 +14,8 @@ import { eventLookupTitle } from "@/lib/events/eventTitle";
  *
  * ## Shape
  *
- * One entry per event, matched on the title the wiki's own Upcoming Events gadget prints (see
- * lib/data/wikiContentClient.ts), the same way `eventEmoji` matches. Each carries two or three
+ * One entry per event, matched on the title Tibia's own Event Schedule prints (see
+ * lib/data/tibiaCalendarMapping.ts), the same way `eventEmoji` matches. Each carries two or three
  * notes, because this is a preview and not the quest spoiler: enough to decide whether to
  * prepare, never enough to replace the wiki.
  *
