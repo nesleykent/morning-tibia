@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -32,6 +32,25 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Re-read Tibia.com's official calendar and commit the capture the build publishes.
+      # The calendar sits behind a Cloudflare challenge that usually refuses an unattended
+      # runner, in which case the script leaves the committed capture untouched and the
+      # build publishes that instead. Refresh it by hand from a machine that can load the
+      # page: `npm run calendar:refresh`, then commit lib/data/officialCalendar.json.
+      - name: Refresh the official calendar capture
+        run: npm run calendar:refresh
+      - name: Commit a refreshed capture
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet -- lib/data/officialCalendar.json; then
+            echo "Official calendar capture unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/data/officialCalendar.json
+          git commit -m "Refresh the official Tibia calendar capture"
+          git push
       - name: Build static export
         run: npm run build
         env:

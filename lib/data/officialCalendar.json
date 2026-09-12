@@ -1,0 +1,99 @@
+{
+  "$comment": "Events read from Tibia.com's official Event Schedule and committed here so a build can publish them without re-fetching. Regenerate with `npm run calendar:refresh`; do not hand-edit.",
+  "capturedAt": "2026-09-12T02:00:00.000Z",
+  "coversFrom": "2026-09-01",
+  "coversTo": "2026-11-03",
+  "source": "tibia.com",
+  "events": [
+    {
+      "id": "tibia-Rise%20of%20Devovorga-2026-09-01",
+      "title": "Rise of Devovorga",
+      "description": "A powerful ancient weapon meant to be sleeping forever has awoken deep under Vengoth. With thirst for revenge and burning rage she will destroy the world - unless you fight her back.",
+      "startAt": "2026-09-01T08:00:00.000Z",
+      "endAt": "2026-09-07T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=9&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-XP%2FSkill%20Event-2026-09-04",
+      "title": "XP/Skill Event",
+      "description": "XP/Skill Event! Gain more experience and skill points by killing monsters, through offline training or with exercise weapons.",
+      "startAt": "2026-09-04T08:00:00.000Z",
+      "endAt": "2026-09-07T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=9&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Full%20Moon-2026-09-12",
+      "title": "Full Moon",
+      "description": "The moon is full! Beware, lycanthropic creatures like werewolves, werefoxes or werebears roam the lands now. And they are more aggressive and numerous than usual.",
+      "startAt": "2026-09-12T08:00:00.000Z",
+      "endAt": "2026-09-15T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=9&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Colours%20of%20Magic-2026-09-15",
+      "title": "Colours of Magic",
+      "description": "Mysterious letters with coloured powders can now be found everywhere. Choose your wizard and make your friends join your cause - what is your true colour?",
+      "startAt": "2026-09-15T08:00:00.000Z",
+      "endAt": "2026-09-23T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=9&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Annual%20Autumn%20Vintage-2026-10-01",
+      "title": "Annual Autumn Vintage",
+      "description": null,
+      "startAt": "2026-10-01T08:00:00.000Z",
+      "endAt": "2026-10-08T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Exaltation%20Overload-2026-10-02",
+      "title": "Exaltation Overload",
+      "description": "Fight with the powers of the Exaltation Forge against dangerous influenced and fiendish monsters.",
+      "startAt": "2026-10-02T08:00:00.000Z",
+      "endAt": "2026-10-05T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Orcsoberfest-2026-10-09",
+      "title": "Orcsoberfest",
+      "description": "Join the Orgers in traditional festivities of fun and feast to earn their respect and tasty rewards!",
+      "startAt": "2026-10-09T08:00:00.000Z",
+      "endAt": "2026-10-16T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Full%20Moon-2026-10-12",
+      "title": "Full Moon",
+      "description": null,
+      "startAt": "2026-10-12T08:00:00.000Z",
+      "endAt": "2026-10-15T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Annual%20Autumn%20Vintage-2026-10-17",
+      "title": "Annual Autumn Vintage",
+      "description": null,
+      "startAt": "2026-10-17T08:00:00.000Z",
+      "endAt": "2026-10-24T08:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    },
+    {
+      "id": "tibia-Halloween%20Event-2026-10-31",
+      "title": "Halloween Event",
+      "description": null,
+      "startAt": "2026-10-31T09:00:00.000Z",
+      "endAt": "2026-11-03T09:00:00.000Z",
+      "url": "https://www.tibia.com/news/?subtopic=eventcalendar&calendarmonth=10&calendaryear=2026",
+      "source": "tibia.com"
+    }
+  ]
+}

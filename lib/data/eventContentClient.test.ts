@@ -61,32 +61,43 @@ describe("event source integration", () => {
     expect(result.upcomingEvents.map((event) => event.title)).toEqual(["Starts Later"]);
   });
 
-  it("falls back to the Tibia client event schedule when the official page is challenged", async () => {
+  it("uses the committed official capture when the live page is challenged", async () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input.startsWith("https://www.tibia.com/")) return { ok: false, status: 403 };
       return { ok: true, json: async () => ({}) };
     }));
-    const result = await fetchEventContent(new Date("2026-11-01T12:00:00Z"));
-    expect(warning).toHaveBeenCalledWith(expect.stringContaining("Tibia client event schedule"), expect.stringContaining("HTTP 403"));
-    expect(result.activeEvents).toEqual([expect.objectContaining({ title: "Halloween Event", scheduledStartAt: "2026-10-31T09:00:00.000Z", endAt: "2026-11-03T09:00:00.000Z", source: "tibia.com" })]);
-    expect(result.upcomingEvents.map((event) => event.title)).toEqual(["Christmas", "New Year", "Tibia Anniversary", "Valentine's Day"]);
+    const result = await fetchEventContent(new Date("2026-09-12T12:00:00Z"));
+    expect(warning).toHaveBeenCalledWith(expect.stringMatching(/committed official capture.*HTTP 403|HTTP 403.*committed official capture/s));
+    // This is the tier that keeps a real build showing real events; it must not be empty.
+    expect(result.activeEvents).toEqual([expect.objectContaining({ title: "Full Moon", scheduledStartAt: "2026-09-12T08:00:00.000Z", endAt: "2026-09-15T08:00:00.000Z", source: "tibia.com" })]);
+    expect(result.upcomingEvents.map((event) => event.title)).toContain("Colours of Magic");
     expect(result.upcomingEvents.every((event) => event.source === "tibia.com" && event.certainty === "confirmed")).toBe(true);
   });
 
-  it("falls back when the calendar parses but a relevant period cannot be closed", async () => {
+  it("uses the capture when the live pages parse but a relevant period cannot be closed", async () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     stubOfficialCalendar([{ title: "Clipped", start: "2026-08-01", end: "2026-12-20" }]);
-    const result = await fetchEventContent(new Date("2026-11-01T12:00:00Z"));
-    expect(warning).toHaveBeenCalledWith(expect.stringContaining("Tibia client event schedule"), expect.stringMatching(/Incomplete/));
-    expect(result.activeEvents.map((event) => event.title)).toEqual(["Halloween Event"]);
+    const result = await fetchEventContent(new Date("2026-09-12T12:00:00Z"));
+    expect(warning).toHaveBeenCalledWith(expect.stringMatching(/Incomplete/));
+    expect(result.activeEvents.map((event) => event.title)).toEqual(["Full Moon"]);
   });
 
-  it("does not fall back for a genuinely empty official calendar", async () => {
+  it("falls through to the Tibia client schedule once the capture runs out of coverage", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+    // Past everything the committed capture covers, so only eventschedule.json is left.
+    const result = await fetchEventContent(new Date("2026-12-15T12:00:00Z"));
+    expect(warning).toHaveBeenCalledWith(expect.stringMatching(/run out of coverage/));
+    expect(result.activeEvents.map((event) => event.title)).toEqual(["Christmas"]);
+    expect(result.upcomingEvents.map((event) => event.title)).toEqual(["New Year", "Tibia Anniversary", "Valentine's Day"]);
+  });
+
+  it("does not fall through for a genuinely empty official calendar", async () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     stubOfficialCalendar([]);
-    // 2026-10-31 is inside the fallback's Halloween period, so a fallback here would show.
-    await expect(fetchEventContent(new Date("2026-11-01T12:00:00Z"))).resolves.toEqual({ activeEvents: [], upcomingEvents: [] });
+    // The capture has a Full Moon running on this date, so any fall-through would show it.
+    await expect(fetchEventContent(new Date("2026-09-12T12:00:00Z"))).resolves.toEqual({ activeEvents: [], upcomingEvents: [] });
     expect(warning).not.toHaveBeenCalled();
   });
 

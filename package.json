@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:calendar:live": "TIBIA_CALENDAR_LIVE=1 vitest run lib/data/tibiaCalendarLive.test.ts",
+    "calendar:refresh": "vite-node -c vitest.config.ts scripts/refreshOfficialCalendar.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
