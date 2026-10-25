@@ -18,7 +18,7 @@ import {
 import { mapMarketHistoryEntries, type RawMarketHistoryEntry } from "./marketHistoryMapping";
 import { fetchItemHistory, MARKET_ITEM_IDS } from "./tibiaMarketClient";
 
-const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
+const TIBIADATA_BASE = "https://api.tibiadata.com/v5";
 const WARZONES_SCHEDULE_ORIGIN = "https://nesleykent.github.io/tibia-warzones-schedule";
 const WARZONE_SCHEDULE_URL = `${WARZONES_SCHEDULE_ORIGIN}/data/worlds.json`;
 
